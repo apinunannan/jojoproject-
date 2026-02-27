@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The jojo project — รอเก็บเงิน</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #242424; --border: #2e2e2e;
+  --accent: #f0c040; --accent2: #e07830; --text: #f0ede8; --text2: #888; --text3: #555;
+  --green: #22c55e; --red: #ef4444; --blue: #4a9eff; --purple: #a855f7;
+  --mono: 'IBM Plex Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; height: 54px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 100; }
+.logo { font-family: var(--mono); font-size: 16px; font-weight: 500; color: var(--accent); }
+.logo span { color: var(--text3); }
+.logo-sub { font-size: 12px; color: var(--text2); padding: 3px 8px; background: #22c55e22; border: 1px solid #22c55e44; border-radius: 20px; color: var(--green); }
+.nav-links { margin-left: auto; display: flex; gap: 8px; }
+.nav-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-family: 'Sarabun', sans-serif; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; }
+.nav-btn:hover { border-color: var(--text2); color: var(--text); }
+.nav-btn.active { background: var(--surface2); color: var(--text); border-color: var(--accent); }
+
+.stats-bar { display: flex; gap: 16px; padding: 10px 20px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.stat-card { display: flex; align-items: center; gap: 8px; padding: 6px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+.stat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.stat-label { font-size: 12px; color: var(--text2); }
+.stat-num { font-family: var(--mono); font-size: 15px; font-weight: 600; }
+
+/* KANBAN */
+.kanban-wrap { display: flex; gap: 14px; padding: 16px 20px; overflow-x: auto; min-height: calc(100vh - 110px); align-items: flex-start; }
+.kanban-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; width: 280px; flex-shrink: 0; display: flex; flex-direction: column; max-height: calc(100vh - 130px); }
+.kc-header { padding: 12px 14px 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.kc-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.kc-title { font-size: 13px; font-weight: 700; flex: 1; }
+.kc-count { font-family: var(--mono); font-size: 11px; color: var(--text3); background: var(--surface2); padding: 2px 7px; border-radius: 10px; }
+.kc-body { overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+
+.card { background: var(--surface2); border: 1px solid var(--border); border-radius: 9px; padding: 12px 13px; cursor: pointer; transition: all 0.15s; position: relative; }
+.card:hover { border-color: var(--text3); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,0.3); }
+.card.dragging { opacity: 0.4; transform: rotate(2deg); }
+.card-name { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+.card-product { font-size: 11px; color: var(--text2); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-price { font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 600; }
+.card-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+.card-date { font-size: 10px; color: var(--text3); }
+.card-move-btns { display: flex; gap: 4px; margin-top: 8px; }
+.move-btn { flex: 1; padding: 4px 6px; border-radius: 5px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-size: 10px; cursor: pointer; font-family: 'Sarabun', sans-serif; transition: all 0.15s; white-space: nowrap; }
+.move-btn:hover { border-color: var(--text2); color: var(--text); }
+.move-btn.next { background: var(--accent); color: #111; border-color: var(--accent); font-weight: 600; }
+.move-btn.archive { background: #22c55e22; color: var(--green); border-color: #22c55e44; }
+.overdue { color: var(--red) !important; }
+
+.col-drop { border: 2px dashed var(--accent) !important; background: #f0c04008 !important; }
+.empty-col { color: var(--text3); font-size: 11px; text-align: center; padding: 24px 0; }
+
+/* DETAIL OVERLAY */
+.det-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 200; display: none; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
+.det-overlay.open { display: flex; }
+.det-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 460px; max-width: 95vw; max-height: 90vh; overflow-y: auto; animation: sUp 0.2s ease; }
+@keyframes sUp { from { transform: translateY(14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.det-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; align-items: flex-start; }
+.det-avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700; flex-shrink: 0; }
+.det-section { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.det-section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 9px; font-weight: 600; }
+.det-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; }
+.stage-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+.stage-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-family: 'Sarabun', sans-serif; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+.stage-btn:hover { border-color: var(--text2); color: var(--text); }
+.stage-btn.active { font-weight: 700; }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">The <span>jojo</span> project</div>
+  <div class="logo-sub">💰 รอเก็บเงิน</div>
+  <span id="syncStatus" style="font-size:11px;color:var(--text2);font-family:var(--mono);margin-left:4px"></span>
+  <div class="nav-links">
+    <a class="nav-btn" href="order-manager.html">🏭 ผลิต</a>
+    <a class="nav-btn active" href="payment-queue.html">💰 รอเก็บเงิน</a>
+    <a class="nav-btn" href="archive.html">📦 คลัง</a>
+  </div>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+
+<div class="kanban-wrap" id="kanbanWrap"></div>
+
+<!-- DETAIL OVERLAY -->
+<div class="det-overlay" id="detOverlay" onclick="closeDO(event)">
+  <div class="det-modal" id="detContent"></div>
+</div>
+
+<script>
+const STAGES = [
+  { key:'done',    label:'✅ ทำเสร็จแล้ว',      color:'#4a9eff', next:'packed' },
+  { key:'packed',  label:'📦 แพ็ครีดเสร็จแล้ว', color:'#f0c040', next:'shipped' },
+  { key:'shipped', label:'🚚 ส่งแล้ว',           color:'#a855f7', next:'paid' },
+  { key:'paid',    label:'💚 จ่ายเงินแล้ว',     color:'#22c55e', next:null },
+];
+const COLORS = ['#4a9eff','#f0c040','#e07830','#a855f7','#22c55e','#ef4444','#06b6d4','#f97316'];
+
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbws7IHT2gHIepnEGzCKBfERGW7VoITK0RpD63ZKgxIvfewyfIggeDQsDD04LIavUbhjZw/exec';
+let orders = [];
+let selId = null;
+let syncTimer = null;
+
+function showSyncStatus(msg, color='var(--text2)') {
+  let el = document.getElementById('syncStatus');
+  if (el) { el.textContent = msg; el.style.color = color; }
+}
+
+async function loadFromSheet() {
+  showSyncStatus('⏳ กำลังโหลด...', 'var(--text2)');
+  try {
+    const res = await fetch(GAS_URL + '?store=jojo_payment&t=' + Date.now());
+    const text = await res.text();
+    const data = JSON.parse(text);
+    orders = Array.isArray(data) ? data : [];
+    localStorage.setItem('jojo_payment', JSON.stringify(orders));
+    showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)');
+  } catch(e) {
+    console.error('loadFromSheet error:', e);
+    const cached = localStorage.getItem('jojo_payment');
+    orders = cached ? JSON.parse(cached) : [];
+    showSyncStatus('⚠️ ออฟไลน์ (ข้อมูลจากเครื่องนี้)', 'var(--accent2)');
+  }
+  render();
+}
+
+function save() {
+  localStorage.setItem('jojo_payment', JSON.stringify(orders));
+  showSyncStatus('💾 กำลังบันทึก...', 'var(--text2)');
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(async () => {
+    try {
+      await fetch(GAS_URL, { method:'POST', body: JSON.stringify({store:'jojo_payment', data:orders}) });
+      showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)');
+    } catch(e) {
+      showSyncStatus('⚠️ บันทึกออฟไลน์', 'var(--accent2)');
+    }
+  }, 800);
+}
+
+setInterval(async () => {
+  try {
+    const res = await fetch(GAS_URL + '?store=jojo_payment&t=' + Date.now());
+    const data = await res.json();
+    if (JSON.stringify(data) !== JSON.stringify(orders)) {
+      orders = Array.isArray(data) ? data : [];
+      localStorage.setItem('jojo_payment', JSON.stringify(orders));
+      render();
+      showSyncStatus('🔄 อัปเดตจากเครื่องอื่น', 'var(--blue)');
+      setTimeout(() => showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)'), 2000);
+    }
+  } catch(e) {}
+}, 30000);
+
+// save() defined above
+const today = () => new Date().toISOString().split('T')[0];
+const fmtDate = d => { if(!d) return '-'; const [y,m,day]=d.split('-'); return `${day}/${m}/${String(y).slice(2)}`; };
+const fmtDateTime = s => { if(!s) return '-'; const d=new Date(s); return `${d.getDate()}/${d.getMonth()+1}/${String(d.getFullYear()).slice(2)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
+const initials = n => n ? n[0].toUpperCase() : '?';
+const colorFor = n => { let h=0; for(let i=0;i<n.length;i++) h=(h*31+n.charCodeAt(i))&0xffffffff; return COLORS[Math.abs(h)%COLORS.length]; };
+const calcTotal = o => { const u=+(o.price)||0, q=+(o.qty)||1, b=u*q; return o.useVat ? b+Math.round(b*0.07) : b; };
+
+function render() {
+  renderStats();
+  renderKanban();
+}
+
+function renderStats() {
+  const bar = document.getElementById('statsBar');
+  bar.innerHTML = STAGES.map(s => {
+    const cnt = orders.filter(o=>o.payStage===s.key).length;
+    const total = orders.filter(o=>o.payStage===s.key).reduce((a,o)=>a+calcTotal(o),0);
+    return `<div class="stat-card">
+      <div class="stat-dot" style="background:${s.color}"></div>
+      <span class="stat-label">${s.label}</span>
+      <span class="stat-num" style="color:${s.color}">${cnt}</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--text3)">฿${total.toLocaleString()}</span>
+    </div>`;
+  }).join('') + `<div class="stat-card" style="margin-left:auto">
+    <span class="stat-label">รวมทั้งหมด</span>
+    <span class="stat-num" style="color:var(--accent)">${orders.length} ออเดอร์</span>
+    <span style="font-family:var(--mono);font-size:12px;color:var(--accent)">฿${orders.reduce((a,o)=>a+calcTotal(o),0).toLocaleString()}</span>
+  </div>`;
+}
+
+function renderKanban() {
+  const wrap = document.getElementById('kanbanWrap');
+  const grp = {};
+  STAGES.forEach(s => grp[s.key] = orders.filter(o => o.payStage === s.key));
+
+  wrap.innerHTML = STAGES.map(st => {
+    const cards = grp[st.key];
+    return `<div class="kanban-col" id="col-${st.key}" ondragover="onDragOver(event,'${st.key}')" ondrop="onDrop(event,'${st.key}')" ondragleave="onDragLeave(event,'${st.key}')">
+      <div class="kc-header" style="border-top:3px solid ${st.color}">
+        <div class="kc-dot" style="background:${st.color}"></div>
+        <div class="kc-title">${st.label}</div>
+        <div class="kc-count">${cards.length}</div>
+      </div>
+      <div class="kc-body">
+        ${cards.length === 0 ? '<div class="empty-col">ยังไม่มีออเดอร์</div>' :
+          cards.map(o => {
+            const col = colorFor(o.name);
+            const total = calcTotal(o);
+            const ov = o.deadline && o.deadline < today() && st.key !== 'paid';
+            const nextStage = STAGES.find(s => s.key === st.next);
+            const prevStage = STAGES.find((s,i) => STAGES[i+1]?.key === st.key);
+            return `<div class="card" draggable="true"
+              ondragstart="onDragStart(event,'${o.id}')"
+              ondragend="onDragEnd(event)"
+              onclick="openDetail('${o.id}')">
+              <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+                <div style="width:26px;height:26px;border-radius:50%;background:${col}22;color:${col};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${initials(o.name)}</div>
+                <div style="min-width:0">
+                  <div class="card-name">${o.name}</div>
+                  <div class="card-product">${o.product||''}${o.subproduct?' · '+o.subproduct:''}</div>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div class="card-price">฿${total.toLocaleString()}${o.useVat?'<span style="font-size:9px;color:var(--accent2);margin-left:2px">+V</span>':''}</div>
+                <div class="card-date ${ov?'overdue':''}">${o.deadline?'ส่ง '+fmtDate(o.deadline):''}</div>
+              </div>
+              <div class="card-move-btns">
+                ${prevStage ? `<button class="move-btn" onclick="event.stopPropagation();moveStage('${o.id}','${prevStage.key}')">← ${prevStage.label.replace(/^[^\s]+\s/,'')}</button>` : ''}
+                ${nextStage ? `<button class="move-btn next" onclick="event.stopPropagation();moveStage('${o.id}','${nextStage.key}')">${nextStage.label.replace(/^[^\s]+\s/,'')} →</button>` : ''}
+                ${st.key === 'paid' ? `<button class="move-btn archive" onclick="event.stopPropagation();archiveOrder('${o.id}')">📦 ย้ายไปคลัง</button>` : ''}
+              </div>
+            </div>`;
+          }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function moveStage(id, stage) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  o.payStage = stage;
+  if (stage === 'paid') o.paidAt = new Date().toISOString();
+  save(); render();
+  if (selId === id) openDetail(id);
+}
+
+function archiveOrder(id) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  if (!confirm('ย้าย "' + o.name + '" ไปคลังข้อมูล?')) return;
+  let archive = JSON.parse(localStorage.getItem('jojo_archive') || '[]');
+  if (!archive.find(x => x.id === o.id)) {
+    archive.unshift({ ...o, archivedAt: new Date().toISOString() });
+    localStorage.setItem('jojo_archive', JSON.stringify(archive));
+  }
+  orders = orders.filter(x => x.id !== id);
+  selId = null;
+  document.getElementById('detOverlay').classList.remove('open');
+  save(); render();
+}
+
+// DRAG AND DROP
+let dragId = null;
+function onDragStart(e, id) { dragId = id; e.dataTransfer.effectAllowed = 'move'; setTimeout(() => e.target.classList.add('dragging'), 0); }
+function onDragEnd(e) { e.target.classList.remove('dragging'); document.querySelectorAll('.col-drop').forEach(el => el.classList.remove('col-drop')); }
+function onDragOver(e, stageKey) { e.preventDefault(); document.getElementById('col-' + stageKey).querySelector('.kc-body').classList.add('col-drop'); }
+function onDragLeave(e, stageKey) { document.getElementById('col-' + stageKey).querySelector('.kc-body')?.classList.remove('col-drop'); }
+function onDrop(e, stageKey) { e.preventDefault(); if (dragId) moveStage(dragId, stageKey); dragId = null; }
+
+// DETAIL
+function openDetail(id) {
+  selId = id;
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  const col = colorFor(o.name);
+  const total = calcTotal(o);
+  const unitPrice = +(o.price) || 0;
+  const base = unitPrice * (+(o.qty) || 1);
+  const vat = o.useVat ? Math.round(base * 0.07) : 0;
+  const stage = STAGES.find(s => s.key === o.payStage);
+  const ov = o.deadline && o.deadline < today();
+
+  document.getElementById('detContent').innerHTML = `
+    <div class="det-header">
+      <div class="det-avatar" style="background:${col}22;color:${col}">${initials(o.name)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">${o.id}</div>
+        <div style="font-size:15px;font-weight:700">${o.name}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:1px">${o.product||''}${o.subproduct?' · '+o.subproduct:''}</div>
+        <div style="margin-top:5px">
+          <span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${stage?.color||'#888'}22;color:${stage?.color||'#888'};border:1px solid ${stage?.color||'#888'}44">${stage?.label||'-'}</span>
+        </div>
+      </div>
+      <button onclick="document.getElementById('detOverlay').classList.remove('open')" style="background:none;border:none;color:var(--text2);font-size:17px;cursor:pointer;padding:4px">✕</button>
+    </div>
+
+    <div class="det-section">
+      <div class="det-section-title">เปลี่ยนสถานะ</div>
+      <div class="stage-btns">
+        ${STAGES.map(s => `<button class="stage-btn ${o.payStage===s.key?'active':''}" style="${o.payStage===s.key?'background:'+s.color+'22;color:'+s.color+';border-color:'+s.color+';':''}" onclick="moveStage('${o.id}','${s.key}')">${s.label}</button>`).join('')}
+      </div>
+    </div>
+
+    <div class="det-section">
+      <div class="det-section-title">รายละเอียดออเดอร์</div>
+      <div class="det-row"><span style="color:var(--text2)">สินค้า</span><span style="font-weight:500">${o.product||'-'}</span></div>
+      ${o.subproduct ? `<div class="det-row"><span style="color:var(--text2)">สินค้าย่อย</span><span style="color:var(--text2)">${o.subproduct}</span></div>` : ''}
+      <div class="det-row"><span style="color:var(--text2)">จำนวน</span><span style="font-weight:500">${o.qty||'-'} ชิ้น</span></div>
+      <div style="margin-top:7px;padding:9px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+        <div class="det-row"><span style="color:var(--text2)">ราคาต่อชิ้น</span><span style="font-family:var(--mono);font-weight:600">฿${unitPrice.toLocaleString()}</span></div>
+        <div class="det-row"><span style="color:var(--text2)">ราคารวม (×${o.qty||0})</span><span>฿${base.toLocaleString()}</span></div>
+        ${o.useVat ? `<div class="det-row"><span style="color:var(--text2)">VAT 7%</span><span style="color:var(--accent2)">+฿${vat.toLocaleString()}</span></div>` : ''}
+        <div style="height:1px;background:var(--border);margin:5px 0"></div>
+        <div class="det-row"><span style="font-weight:700">ยอดรวมทั้งหมด</span><span style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent)">฿${total.toLocaleString()}</span></div>
+      </div>
+    </div>
+
+    <div class="det-section">
+      <div class="det-section-title">วันที่</div>
+      <div class="det-row"><span style="color:var(--text2)">รับออเดอร์</span><span>${fmtDate(o.date)||'-'}</span></div>
+      <div class="det-row"><span style="color:var(--text2)">กำหนดส่ง</span><span style="${ov?'color:var(--red)':''}">${fmtDate(o.deadline)||'ไม่ระบุ'}${ov?' ⚠':''}</span></div>
+      <div class="det-row"><span style="color:var(--text2)">ส่งเข้าคิว</span><span>${fmtDateTime(o.sentAt)}</span></div>
+      ${o.paidAt ? `<div class="det-row"><span style="color:var(--text2)">จ่ายเงินแล้ว</span><span style="color:var(--green)">${fmtDateTime(o.paidAt)}</span></div>` : ''}
+    </div>
+
+    ${o.address ? `<div class="det-section"><div class="det-section-title">ที่อยู่จัดส่ง</div><div style="font-size:12px;color:var(--text2);line-height:1.6">${o.address}</div></div>` : ''}
+    ${o.note ? `<div class="det-section"><div class="det-section-title">หมายเหตุ</div><div style="font-size:12px;color:var(--text2)">${o.note}</div></div>` : ''}
+
+    <div class="det-section" style="border-bottom:none">
+      <button onclick="archiveOrder('${o.id}')" style="width:100%;padding:8px;background:#22c55e22;border:1px solid #22c55e44;border-radius:7px;color:var(--green);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;font-weight:600">📦 ย้ายไปคลังข้อมูล</button>
+    </div>
+  `;
+  document.getElementById('detOverlay').classList.add('open');
+}
+
+function closeDO(e) {
+  if (e.target === document.getElementById('detOverlay')) document.getElementById('detOverlay').classList.remove('open');
+}
+
+// Poll for updates from order-manager
+// sync handled by setInterval above
+
+loadFromSheet();
+</script>
+</body>
+</html>

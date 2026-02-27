@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The jojo project — คลังข้อมูล</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #242424; --border: #2e2e2e;
+  --accent: #f0c040; --accent2: #e07830; --text: #f0ede8; --text2: #888; --text3: #555;
+  --green: #22c55e; --red: #ef4444; --blue: #4a9eff; --purple: #a855f7;
+  --mono: 'IBM Plex Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; height: 54px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 100; }
+.logo { font-family: var(--mono); font-size: 16px; font-weight: 500; color: var(--accent); }
+.logo span { color: var(--text3); }
+.logo-sub { font-size: 12px; padding: 3px 8px; background: #f0c04022; border: 1px solid #f0c04044; border-radius: 20px; color: var(--accent); }
+.nav-links { margin-left: auto; display: flex; gap: 8px; }
+.nav-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-family: 'Sarabun', sans-serif; font-size: 12px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s; }
+.nav-btn:hover { border-color: var(--text2); color: var(--text); }
+.nav-btn.active { background: var(--surface2); color: var(--text); border-color: var(--accent); }
+
+/* STATS */
+.stats-section { padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.stat-box { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+.stat-box-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 6px; }
+.stat-box-val { font-family: var(--mono); font-size: 24px; font-weight: 600; color: var(--accent); line-height: 1; }
+.stat-box-sub { font-size: 11px; color: var(--text2); margin-top: 4px; }
+
+/* CHART */
+.chart-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-top: 4px; }
+.chart-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 12px; }
+.bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 80px; }
+.bar-col { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; }
+.bar { border-radius: 3px 3px 0 0; min-width: 100%; background: var(--accent); transition: height 0.4s ease; cursor: pointer; }
+.bar:hover { filter: brightness(1.2); }
+.bar-label { font-size: 9px; color: var(--text3); font-family: var(--mono); white-space: nowrap; }
+.bar-val { font-size: 9px; color: var(--accent); font-family: var(--mono); }
+
+/* TOOLBAR */
+.toolbar { display: flex; gap: 10px; padding: 12px 20px; border-bottom: 1px solid var(--border); align-items: center; flex-wrap: wrap; }
+.search-input { flex: 1; min-width: 180px; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 7px 11px; color: var(--text); font-family: 'Sarabun', sans-serif; font-size: 13px; outline: none; }
+.search-input:focus { border-color: var(--accent); }
+.search-input::placeholder { color: var(--text3); }
+.filter-select { background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 7px 10px; color: var(--text); font-family: 'Sarabun', sans-serif; font-size: 12px; outline: none; cursor: pointer; }
+.sort-btn { padding: 7px 12px; border-radius: 7px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-size: 12px; cursor: pointer; font-family: 'Sarabun', sans-serif; transition: all 0.15s; }
+.sort-btn.active { border-color: var(--accent); color: var(--accent); }
+
+/* TABLE */
+.table-wrap { padding: 0 20px 20px; overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 14px; }
+.data-table th { text-align: left; padding: 9px 10px; border-bottom: 2px solid var(--border); font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px; color: var(--text3); font-weight: 600; white-space: nowrap; cursor: pointer; user-select: none; }
+.data-table th:hover { color: var(--text2); }
+.data-table td { padding: 10px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.data-table tr:hover td { background: var(--surface); cursor: pointer; }
+.av { width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
+.empty { padding: 48px; text-align: center; color: var(--text3); }
+
+/* DETAIL OVERLAY */
+.det-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 200; display: none; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
+.det-overlay.open { display: flex; }
+.det-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 460px; max-width: 95vw; max-height: 90vh; overflow-y: auto; animation: sUp 0.2s ease; }
+@keyframes sUp { from { transform: translateY(14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.det-section { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.det-section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 9px; font-weight: 600; }
+.det-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: 12px; }
+
+.a-inp { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:7px 10px; color:var(--text); font-family:'Sarabun',sans-serif; font-size:13px; outline:none; transition:border-color 0.15s; }
+.a-inp:focus { border-color:var(--accent); }
+.a-inp::placeholder { color:var(--text3); }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">The <span>jojo</span> project</div>
+  <div class="logo-sub">📦 คลังข้อมูล</div>
+  <span id="syncStatus" style="font-size:11px;color:var(--text2);font-family:var(--mono);margin-left:4px"></span>
+  <div class="nav-links">
+    <a class="nav-btn" href="order-manager.html">🏭 ผลิต</a>
+    <a class="nav-btn" href="payment-queue.html">💰 รอเก็บเงิน</a>
+    <a class="nav-btn active" href="archive.html">📦 คลัง</a>
+  </div>
+</div>
+
+<!-- STATS + CHART -->
+<div class="stats-section">
+  <div class="stats-grid" id="statsGrid"></div>
+  <div class="chart-wrap">
+    <div class="chart-title">ยอดขายรายเดือน (6 เดือนล่าสุด)</div>
+    <div class="bar-chart" id="barChart"></div>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <input class="search-input" type="text" id="searchInput" placeholder="🔍 ค้นหาชื่อ, สินค้า..." oninput="renderTable()">
+  <select class="filter-select" id="filterMonth" onchange="renderTable()">
+    <option value="">ทุกเดือน</option>
+  </select>
+  <button class="sort-btn" id="sortBtn" onclick="toggleSort()">⇅ ล่าสุด</button>
+  <span style="font-size:12px;color:var(--text2);margin-left:auto" id="countLabel"></span>
+  <button onclick="openAddModal()" style="padding:7px 14px;border-radius:7px;border:none;background:var(--accent);color:#111;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer">+ เพิ่มออเดอร์</button>
+</div>
+
+<!-- TABLE -->
+<div class="table-wrap">
+  <table class="data-table">
+    <thead><tr>
+      <th onclick="sortBy('name')">ลูกค้า</th>
+      <th onclick="sortBy('product')">สินค้า</th>
+      <th onclick="sortBy('qty')">จำนวน</th>
+      <th onclick="sortBy('total')">ยอดรวม ↕</th>
+      <th onclick="sortBy('date')">วันรับ</th>
+      <th onclick="sortBy('archivedAt')">วันจ่าย</th>
+    </tr></thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<!-- DETAIL OVERLAY -->
+<div class="det-overlay" id="detOverlay" onclick="closeDO(event)">
+  <div class="det-modal" id="detContent"></div>
+</div>
+
+<!-- ADD MODAL -->
+<div class="det-overlay" id="addOverlay" onclick="if(event.target===this)closeAddModal()">
+  <div class="det-modal" style="width:480px">
+    <div style="padding:16px 16px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:15px;font-weight:700">เพิ่มออเดอร์เก่าลงคลัง</span>
+      <button onclick="closeAddModal()" style="background:none;border:none;color:var(--text2);font-size:17px;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">ชื่อลูกค้า *</label><input class="a-inp" id="a_name" placeholder="ชื่อ-นามสกุล"></div>
+        <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">สินค้าหลัก *</label><input class="a-inp" id="a_product" placeholder="เสื้อยืด, กางเกง..."></div>
+      </div>
+      <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">สินค้าย่อย</label><input class="a-inp" id="a_subproduct" placeholder="สี, ลาย, รุ่น..."></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">จำนวน (ชิ้น)</label><input class="a-inp" id="a_qty" type="number" placeholder="1" min="1" oninput="updateAddCalc()"></div>
+        <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">ราคาต่อชิ้น (บาท)</label><input class="a-inp" id="a_price" type="number" placeholder="0" oninput="updateAddCalc()"></div>
+      </div>
+      <div id="addCalcPreview" style="display:none;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;font-size:12px">
+        <span style="color:var(--text2)">ยอดรวม: </span><span id="addCalcTotal" style="font-family:var(--mono);font-weight:700;color:var(--accent)"></span>
+        <span id="addCalcDetail" style="color:var(--text3);margin-left:6px"></span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">วันที่รับออเดอร์</label><input class="a-inp" id="a_date" type="date"></div>
+        <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">วันที่จ่ายเงิน *</label><input class="a-inp" id="a_paiddate" type="date"></div>
+      </div>
+      <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">หมายเหตุ</label><textarea class="a-inp" id="a_note" placeholder="รายละเอียดเพิ่มเติม..." style="resize:none;min-height:50px"></textarea></div>
+      <label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px">
+        <input type="checkbox" id="a_vat" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer">
+        <span style="font-size:13px">มี VAT 7%</span>
+      </label>
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeAddModal()" style="padding:7px 14px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer">ยกเลิก</button>
+      <button onclick="saveNewOrder()" style="padding:7px 16px;border-radius:7px;border:none;background:var(--accent);color:#111;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer">บันทึกลงคลัง</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbws7IHT2gHIepnEGzCKBfERGW7VoITK0RpD63ZKgxIvfewyfIggeDQsDD04LIavUbhjZw/exec';
+let orders = [];
+let syncTimer = null;
+
+function showSyncStatus(msg, color='var(--text2)') {
+  let el = document.getElementById('syncStatus');
+  if (el) { el.textContent = msg; el.style.color = color; }
+}
+
+async function loadFromSheet() {
+  showSyncStatus('⏳ กำลังโหลด...', 'var(--text2)');
+  try {
+    const res = await fetch(GAS_URL + '?store=jojo_archive&t=' + Date.now());
+    const text = await res.text();
+    const data = JSON.parse(text);
+    orders = Array.isArray(data) ? data : [];
+    localStorage.setItem('jojo_archive', JSON.stringify(orders));
+    showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)');
+  } catch(e) {
+    console.error('loadFromSheet error:', e);
+    const cached = localStorage.getItem('jojo_archive');
+    orders = cached ? JSON.parse(cached) : [];
+    showSyncStatus('⚠️ ออฟไลน์ (ข้อมูลจากเครื่องนี้)', 'var(--accent2)');
+  }
+  render();
+}
+
+function save() {
+  localStorage.setItem('jojo_archive', JSON.stringify(orders));
+  showSyncStatus('💾 กำลังบันทึก...', 'var(--text2)');
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(async () => {
+    try {
+      await fetch(GAS_URL, { method:'POST', body: JSON.stringify({store:'jojo_archive', data:orders}) });
+      showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)');
+    } catch(e) {
+      showSyncStatus('⚠️ บันทึกออฟไลน์', 'var(--accent2)');
+    }
+  }, 800);
+}
+
+setInterval(async () => {
+  try {
+    const res = await fetch(GAS_URL + '?store=jojo_archive&t=' + Date.now());
+    const data = await res.json();
+    if (JSON.stringify(data) !== JSON.stringify(orders)) {
+      orders = Array.isArray(data) ? data : [];
+      localStorage.setItem('jojo_archive', JSON.stringify(orders));
+      render();
+      showSyncStatus('🔄 อัปเดตจากเครื่องอื่น', 'var(--blue)');
+      setTimeout(() => showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)'), 2000);
+    }
+  } catch(e) {}
+}, 30000);
+let sortField = 'archivedAt', sortAsc = false;
+const COLORS = ['#4a9eff','#f0c040','#e07830','#a855f7','#22c55e','#ef4444','#06b6d4','#f97316'];
+
+// save() defined above
+const today = () => new Date().toISOString().split('T')[0];
+const fmtDate = d => { if(!d) return '-'; const [y,m,day]=d.split('-'); return `${day}/${m}/${String(y).slice(2)}`; };
+const fmtDateTime = s => { if(!s) return '-'; const d=new Date(s); return `${d.getDate()}/${d.getMonth()+1}/${String(d.getFullYear()).slice(2)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
+const initials = n => n ? n[0].toUpperCase() : '?';
+const colorFor = n => { let h=0; for(let i=0;i<n.length;i++) h=(h*31+n.charCodeAt(i))&0xffffffff; return COLORS[Math.abs(h)%COLORS.length]; };
+const calcTotal = o => { const u=+(o.price)||0, q=+(o.qty)||1, b=u*q; return o.useVat ? b+Math.round(b*0.07) : b; };
+const getYM = s => { if(!s) return ''; const d=new Date(s); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; };
+
+function render() {
+  orders = JSON.parse(localStorage.getItem('jojo_archive') || '[]');
+  renderStats();
+  populateMonthFilter();
+  renderTable();
+}
+
+function renderStats() {
+  const total = orders.reduce((a,o)=>a+calcTotal(o),0);
+  const avgOrder = orders.length ? Math.round(total/orders.length) : 0;
+  const topCustomer = (() => {
+    const m = {}; orders.forEach(o=>{m[o.name]=(m[o.name]||0)+calcTotal(o);});
+    const sorted = Object.entries(m).sort((a,b)=>b[1]-a[1]);
+    return sorted[0] ? sorted[0][0] : '-';
+  })();
+  const thisMonth = (() => {
+    const ym = getYM(new Date().toISOString());
+    return orders.filter(o=>getYM(o.archivedAt)===ym).reduce((a,o)=>a+calcTotal(o),0);
+  })();
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-box"><div class="stat-box-label">ออเดอร์ทั้งหมด</div><div class="stat-box-val">${orders.length}</div><div class="stat-box-sub">ออเดอร์ที่เก็บเงินแล้ว</div></div>
+    <div class="stat-box"><div class="stat-box-label">ยอดขายรวม</div><div class="stat-box-val">฿${total.toLocaleString()}</div><div class="stat-box-sub">ทั้งหมด</div></div>
+    <div class="stat-box"><div class="stat-box-label">เดือนนี้</div><div class="stat-box-val">฿${thisMonth.toLocaleString()}</div><div class="stat-box-sub">ยอดจ่ายเดือนนี้</div></div>
+    <div class="stat-box"><div class="stat-box-label">เฉลี่ยต่อออเดอร์</div><div class="stat-box-val">฿${avgOrder.toLocaleString()}</div><div class="stat-box-sub">ราคาเฉลี่ย</div></div>
+    <div class="stat-box"><div class="stat-box-label">ลูกค้าสูงสุด</div><div class="stat-box-val" style="font-size:16px;padding-top:4px">${topCustomer}</div><div class="stat-box-sub">ยอดสั่งซื้อมากที่สุด</div></div>
+  `;
+
+  // Bar chart - last 6 months
+  const now = new Date();
+  const months = [];
+  for (let i=5; i>=0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const ym = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const label = `${d.getMonth()+1}/${String(d.getFullYear()).slice(2)}`;
+    const val = orders.filter(o=>getYM(o.archivedAt)===ym).reduce((a,o)=>a+calcTotal(o),0);
+    months.push({ym, label, val});
+  }
+  const maxVal = Math.max(...months.map(m=>m.val), 1);
+  document.getElementById('barChart').innerHTML = months.map(m => {
+    const h = Math.max(4, Math.round(m.val/maxVal*72));
+    return `<div class="bar-col">
+      <div class="bar-val">${m.val ? '฿'+Math.round(m.val/1000)+'k' : ''}</div>
+      <div class="bar" style="height:${h}px" title="฿${m.val.toLocaleString()}"></div>
+      <div class="bar-label">${m.label}</div>
+    </div>`;
+  }).join('');
+}
+
+function populateMonthFilter() {
+  const sel = document.getElementById('filterMonth');
+  const yms = [...new Set(orders.map(o=>getYM(o.archivedAt)).filter(Boolean))].sort().reverse();
+  const TH_MONTHS=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">ทุกเดือน</option>' + yms.map(ym => {
+    const [y,m] = ym.split('-');
+    return `<option value="${ym}" ${ym===cur?'selected':''}>${TH_MONTHS[+m]} ${+y+543}</option>`;
+  }).join('');
+}
+
+function getFiltered() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const ym = document.getElementById('filterMonth').value;
+  return orders.filter(o => {
+    const mq = !q || o.name.toLowerCase().includes(q) || (o.product||'').toLowerCase().includes(q);
+    const mm = !ym || getYM(o.archivedAt) === ym;
+    return mq && mm;
+  });
+}
+
+function renderTable() {
+  const filtered = getFiltered().sort((a,b) => {
+    let av = a[sortField]||'', bv = b[sortField]||'';
+    if (sortField==='total') { av=calcTotal(a); bv=calcTotal(b); }
+    if (sortField==='qty') { av=+(a.qty)||0; bv=+(b.qty)||0; }
+    if (typeof av==='number') return sortAsc ? av-bv : bv-av;
+    return sortAsc ? av.localeCompare(bv) : bv.localeCompare(av);
+  });
+
+  document.getElementById('countLabel').textContent = filtered.length + ' ออเดอร์' + (filtered.length !== orders.length ? ` (กรองจาก ${orders.length})` : '');
+
+  const tbody = document.getElementById('tableBody');
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty">${orders.length ? 'ไม่พบออเดอร์ที่ค้นหา' : 'ยังไม่มีออเดอร์ในคลัง'}</div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = filtered.map(o => {
+    const col = colorFor(o.name);
+    const total = calcTotal(o);
+    return `<tr onclick="openDetail('${o.id}')">
+      <td><div style="display:flex;align-items:center;gap:7px">
+        <div class="av" style="background:${col}22;color:${col}">${initials(o.name)}</div>
+        <span style="font-weight:600">${o.name}</span>
+      </div></td>
+      <td>${o.product||'-'}${o.subproduct?'<span style="color:var(--text3);font-size:10px"> · '+o.subproduct+'</span>':''}</td>
+      <td style="text-align:center;font-family:var(--mono)">${o.qty||'-'}</td>
+      <td style="font-family:var(--mono);color:var(--accent);font-weight:600">฿${total.toLocaleString()}${o.useVat?'<span style="font-size:9px;color:var(--accent2)">+V</span>':''}</td>
+      <td style="color:var(--text2)">${fmtDate(o.date)}</td>
+      <td style="color:var(--green)">${fmtDateTime(o.archivedAt)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function sortBy(field) {
+  if (sortField === field) sortAsc = !sortAsc;
+  else { sortField = field; sortAsc = false; }
+  renderTable();
+}
+
+function toggleSort() {
+  sortAsc = !sortAsc;
+  document.getElementById('sortBtn').textContent = `⇅ ${sortAsc ? 'เก่าสุด' : 'ล่าสุด'}`;
+  renderTable();
+}
+
+function openDetail(id) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  const col = colorFor(o.name);
+  const total = calcTotal(o);
+  const unitPrice = +(o.price)||0, qty=+(o.qty)||1;
+  const base = unitPrice*qty, vat = o.useVat ? Math.round(base*0.07) : 0;
+
+  document.getElementById('detContent').innerHTML = `
+    <div style="padding:16px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start">
+      <div style="width:42px;height:42px;border-radius:50%;background:${col}22;color:${col};display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;flex-shrink:0">${initials(o.name)}</div>
+      <div style="flex:1">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3)">${o.id}</div>
+        <div style="font-size:15px;font-weight:700">${o.name}</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:1px">${o.product||''}${o.subproduct?' · '+o.subproduct:''}</div>
+        <div style="margin-top:5px;display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:#22c55e22;color:var(--green);border:1px solid #22c55e44">💚 จ่ายเงินแล้ว</div>
+      </div>
+      <button onclick="document.getElementById('detOverlay').classList.remove('open')" style="background:none;border:none;color:var(--text2);font-size:17px;cursor:pointer;padding:4px">✕</button>
+    </div>
+    <div class="det-section">
+      <div class="det-section-title">รายละเอียด</div>
+      <div class="det-row"><span style="color:var(--text2)">สินค้า</span><span style="font-weight:500">${o.product||'-'}</span></div>
+      ${o.subproduct?`<div class="det-row"><span style="color:var(--text2)">สินค้าย่อย</span><span style="color:var(--text2)">${o.subproduct}</span></div>`:''}
+      <div class="det-row"><span style="color:var(--text2)">จำนวน</span><span>${o.qty||'-'} ชิ้น</span></div>
+      <div style="margin-top:7px;padding:9px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+        <div class="det-row"><span style="color:var(--text2)">ราคาต่อชิ้น</span><span style="font-family:var(--mono);font-weight:600">฿${unitPrice.toLocaleString()}</span></div>
+        <div class="det-row"><span style="color:var(--text2)">ราคารวม (×${qty})</span><span>฿${base.toLocaleString()}</span></div>
+        ${o.useVat?`<div class="det-row"><span style="color:var(--text2)">VAT 7%</span><span style="color:var(--accent2)">+฿${vat.toLocaleString()}</span></div>`:''}
+        <div style="height:1px;background:var(--border);margin:5px 0"></div>
+        <div class="det-row"><span style="font-weight:700">ยอดรวมทั้งหมด</span><span style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent)">฿${total.toLocaleString()}</span></div>
+      </div>
+    </div>
+    <div class="det-section">
+      <div class="det-section-title">วันที่</div>
+      <div class="det-row"><span style="color:var(--text2)">รับออเดอร์</span><span>${fmtDate(o.date)||'-'}</span></div>
+      <div class="det-row"><span style="color:var(--text2)">กำหนดส่ง</span><span>${fmtDate(o.deadline)||'-'}</span></div>
+      ${o.paidAt?`<div class="det-row"><span style="color:var(--text2)">จ่ายเงินแล้ว</span><span style="color:var(--green)">${fmtDateTime(o.paidAt)}</span></div>`:''}
+      <div class="det-row"><span style="color:var(--text2)">เข้าคลัง</span><span style="color:var(--accent)">${fmtDateTime(o.archivedAt)}</span></div>
+    </div>
+    ${o.address?`<div class="det-section"><div class="det-section-title">ที่อยู่</div><div style="font-size:12px;color:var(--text2)">${o.address}</div></div>`:''}
+    ${o.note?`<div class="det-section"><div class="det-section-title">หมายเหตุ</div><div style="font-size:12px;color:var(--text2)">${o.note}</div></div>`:''}
+    <div class="det-section" style="border-bottom:none">
+      <button onclick="deleteFromArchive('${o.id}')" style="width:100%;padding:8px;background:#ef444422;border:1px solid #ef444444;border-radius:7px;color:var(--red);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer">🗑 ลบออกจากคลัง</button>
+    </div>
+  `;
+  document.getElementById('detOverlay').classList.add('open');
+}
+
+function closeDO(e) {
+  if (e.target === document.getElementById('detOverlay')) document.getElementById('detOverlay').classList.remove('open');
+}
+
+function deleteFromArchive(id) {
+  const o = orders.find(x=>x.id===id);
+  if (!o || !confirm('ลบ "'+o.name+'" ออกจากคลัง?')) return;
+  orders = orders.filter(x=>x.id!==id);
+  save();
+  document.getElementById('detOverlay').classList.remove('open');
+  render();
+}
+
+// auto-refresh handled by setInterval above
+
+function openAddModal(){
+  ['a_name','a_product','a_subproduct','a_qty','a_price','a_note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('a_vat').checked=false;
+  document.getElementById('a_date').value=today();
+  document.getElementById('a_paiddate').value=today();
+  document.getElementById('addCalcPreview').style.display='none';
+  document.getElementById('addOverlay').classList.add('open');
+}
+function closeAddModal(){ document.getElementById('addOverlay').classList.remove('open'); }
+function updateAddCalc(){
+  const qty=+(document.getElementById('a_qty').value)||0;
+  const price=+(document.getElementById('a_price').value)||0;
+  const prev=document.getElementById('addCalcPreview');
+  if(qty>0&&price>0){
+    prev.style.display='block';
+    document.getElementById('addCalcTotal').textContent='฿'+(qty*price).toLocaleString();
+    document.getElementById('addCalcDetail').textContent=`(${qty} × ฿${price.toLocaleString()})`;
+  } else { prev.style.display='none'; }
+}
+function saveNewOrder(){
+  const name=document.getElementById('a_name').value.trim();
+  const product=document.getElementById('a_product').value.trim();
+  const paiddate=document.getElementById('a_paiddate').value;
+  if(!name){ alert('กรุณากรอกชื่อลูกค้า'); return; }
+  if(!product){ alert('กรุณากรอกชื่อสินค้า'); return; }
+  if(!paiddate){ alert('กรุณาระบุวันที่จ่ายเงิน'); return; }
+  const paidISO = new Date(paiddate+'T12:00:00').toISOString();
+  const o = {
+    id: 'ORD-'+Date.now(),
+    name, product,
+    subproduct: document.getElementById('a_subproduct').value.trim(),
+    qty: document.getElementById('a_qty').value,
+    price: document.getElementById('a_price').value,
+    date: document.getElementById('a_date').value,
+    note: document.getElementById('a_note').value.trim(),
+    useVat: document.getElementById('a_vat').checked,
+    payStage: 'paid',
+    paidAt: paidISO,
+    archivedAt: paidISO,
+    manualEntry: true,
+  };
+  orders.unshift(o);
+  save();
+  closeAddModal();
+  render();
+}
+const today = () => new Date().toISOString().split('T')[0];
+loadFromSheet();
+</script>
+</body>
+</html>

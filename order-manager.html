@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The jojo project</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #242424; --border: #2e2e2e;
+  --accent: #f0c040; --accent2: #e07830; --text: #f0ede8; --text2: #888; --text3: #555;
+  --green: #22c55e; --red: #ef4444; --blue: #4a9eff; --purple: #a855f7; --yellow: #f0c040;
+  --radius: 10px; --mono: 'IBM Plex Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; }
+
+.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 18px; display: flex; align-items: center; gap: 12px; height: 54px; position: sticky; top: 0; z-index: 200; }
+.logo { font-family: var(--mono); font-size: 16px; font-weight: 500; color: var(--accent); white-space: nowrap; }
+.logo span { color: var(--text3); }
+.order-count { font-size: 12px; color: var(--text2); white-space: nowrap; }
+.view-tabs { display: flex; gap: 2px; background: var(--surface2); border-radius: 8px; padding: 3px; }
+.view-tab { padding: 5px 11px; border-radius: 5px; border: none; background: transparent; color: var(--text2); font-family: 'Sarabun', sans-serif; font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.15s; white-space: nowrap; }
+.view-tab:hover { color: var(--text); }
+.view-tab.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+.view-tab.active .ti { color: var(--accent); }
+.ti { font-size: 13px; }
+.header-right { margin-left: auto; display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+.btn { padding: 7px 14px; border-radius: 7px; border: none; cursor: pointer; font-family: 'Sarabun', sans-serif; font-size: 13px; font-weight: 500; transition: all 0.15s; }
+.btn-primary { background: var(--accent); color: #111; }
+.btn-primary:hover { background: #f8d060; transform: translateY(-1px); }
+.btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--text2); color: var(--text); }
+
+.view-container { display: none; }
+.view-container.active { display: block; }
+
+/* LIST VIEW */
+.list-layout { display: grid; grid-template-columns: 1fr 340px; height: calc(100vh - 54px); }
+.order-panel { border-right: 1px solid var(--border); overflow-y: auto; }
+.order-toolbar { display: flex; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 10; }
+.search-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 7px 11px; color: var(--text); font-family: 'Sarabun', sans-serif; font-size: 13px; outline: none; }
+.search-input:focus { border-color: var(--accent); }
+.search-input::placeholder { color: var(--text3); }
+.order-item { display: grid; grid-template-columns: 42px 1fr auto; gap: 9px; align-items: center; padding: 11px 14px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; position: relative; }
+.order-item:hover { background: var(--surface); }
+.order-item.selected { background: var(--surface2); }
+.order-item.selected::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); }
+.order-avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; }
+.order-info { min-width: 0; }
+.order-name { font-weight: 600; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.order-product { font-size: 11px; color: var(--text2); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.order-meta { text-align: right; flex-shrink: 0; }
+.order-price { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--accent); }
+.order-date { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+.detail-panel { overflow-y: auto; background: var(--surface); }
+.detail-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text3); gap: 10px; }
+.detail-header { padding: 16px; border-bottom: 1px solid var(--border); display: flex; gap: 10px; align-items: flex-start; }
+.detail-avatar { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700; flex-shrink: 0; }
+.detail-id { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-bottom: 2px; }
+.detail-name { font-size: 15px; font-weight: 700; }
+.detail-phone { font-size: 11px; color: var(--text2); margin-top: 1px; }
+.detail-section { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+.detail-section-title { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--text3); margin-bottom: 9px; font-weight: 600; }
+.detail-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; font-size: 12px; }
+.detail-row-label { color: var(--text2); }
+.detail-row-val { font-weight: 500; }
+
+.steps-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.step-item { display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: var(--surface2); border-radius: 6px; border: 1px solid var(--border); }
+.step-item.step-ok { border-color: #22c55e44; background: #22c55e0d; }
+.step-item.step-no { border-color: #ef444444; background: #ef44440d; }
+.step-item.step-pending { border-color: #f0c04055; background: #f0c0400d; }
+.step-num { font-family: var(--mono); font-size: 9px; color: var(--text3); flex-shrink: 0; width: 13px; }
+.step-label { font-size: 11px; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.step-toggle { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--surface); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 10px; flex-shrink: 0; transition: all 0.15s; }
+.step-toggle:hover { border-color: var(--text2); transform: scale(1.1); }
+.step-item.step-ok .step-toggle { background: var(--green); border-color: var(--green); color: #fff; }
+.step-item.step-no .step-toggle { background: var(--red); border-color: var(--red); color: #fff; }
+.step-item.step-pending .step-toggle { background: var(--yellow); border-color: var(--yellow); color: #111; }
+.step-other-input { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-family: 'Sarabun', sans-serif; font-size: 11px; min-width: 0; }
+.step-other-input::placeholder { color: var(--text3); }
+.steps-progress { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.steps-progress-bar { flex: 1; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.steps-progress-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--blue)); border-radius: 2px; transition: width 0.3s; }
+.steps-progress-text { font-family: var(--mono); font-size: 10px; color: var(--text2); white-space: nowrap; }
+
+.todo-input-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.todo-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 6px 9px; color: var(--text); font-family: 'Sarabun', sans-serif; font-size: 12px; outline: none; }
+.todo-input:focus { border-color: var(--accent); }
+.todo-input::placeholder { color: var(--text3); }
+.todo-add-btn { padding: 6px 11px; background: var(--accent); color: #111; border: none; border-radius: 6px; cursor: pointer; font-size: 15px; line-height: 1; }
+.todo-item { display: flex; align-items: flex-start; gap: 7px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.todo-item:last-child { border-bottom: none; }
+.todo-check { width: 15px; height: 15px; border: 2px solid var(--border); border-radius: 50%; cursor: pointer; flex-shrink: 0; margin-top: 1px; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+.todo-check.checked { background: var(--green); border-color: var(--green); }
+.todo-check.checked::after { content: '✓'; font-size: 8px; color: #fff; font-weight: 700; }
+.todo-text { flex: 1; font-size: 12px; line-height: 1.5; }
+.todo-text.done { text-decoration: line-through; color: var(--text3); }
+.todo-del { background: none; border: none; color: var(--text3); cursor: pointer; padding: 1px 3px; font-size: 13px; opacity: 0; line-height: 1; }
+.todo-item:hover .todo-del { opacity: 1; }
+.todo-del:hover { color: var(--red); }
+.notes-area { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 7px; color: var(--text); font-family: 'Sarabun', sans-serif; font-size: 12px; outline: none; resize: none; min-height: 55px; margin-top: 5px; }
+.notes-area:focus { border-color: var(--accent); }
+.notes-save-btn { margin-top: 5px; padding: 4px 11px; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; color: var(--text2); cursor: pointer; font-size: 11px; font-family: 'Sarabun', sans-serif; transition: all 0.15s; }
+.notes-save-btn:hover { border-color: var(--accent); color: var(--accent); }
+.no-orders { padding: 28px; text-align: center; color: var(--text3); }
+
+/* TABLE VIEW */
+.table-view-wrap { padding: 14px 18px; overflow-x: auto; }
+.data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.data-table th { text-align: left; padding: 9px 11px; border-bottom: 2px solid var(--border); font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px; color: var(--text3); font-weight: 600; white-space: nowrap; cursor: pointer; user-select: none; }
+.data-table th:hover { color: var(--text2); }
+.data-table td { padding: 9px 11px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.data-table tr:hover td { background: var(--surface); }
+.data-table tr.sel td { background: var(--surface2); }
+.data-table tr { cursor: pointer; transition: background 0.1s; }
+.pmini { height: 4px; background: var(--border); border-radius: 2px; width: 55px; overflow: hidden; display: inline-block; vertical-align: middle; margin-right: 4px; }
+.pmini-fill { height: 100%; border-radius: 2px; }
+.pre-dots { display: flex; gap: 3px; }
+.pre-dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--border); background: transparent; }
+.pre-dot.ok { background: var(--green); border-color: var(--green); }
+.pre-dot.no { background: var(--red); border-color: var(--red); }
+.pre-dot.pending { background: var(--yellow); border-color: var(--yellow); }
+
+/* KANBAN VIEW */
+.kanban-wrap { display: flex; gap: 12px; padding: 14px 18px; overflow-x: auto; min-height: calc(100vh - 54px); align-items: flex-start; }
+.kanban-col { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; width: 250px; flex-shrink: 0; display: flex; flex-direction: column; max-height: calc(100vh - 82px); }
+.kanban-col-header { padding: 11px 13px 9px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 7px; }
+.kch-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.kch-title { font-size: 12px; font-weight: 600; flex: 1; }
+.kch-count { font-family: var(--mono); font-size: 10px; color: var(--text3); background: var(--surface2); padding: 2px 6px; border-radius: 10px; }
+.kanban-body { overflow-y: auto; padding: 9px; display: flex; flex-direction: column; gap: 7px; flex: 1; }
+.kanban-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 11px; cursor: pointer; transition: all 0.15s; }
+.kanban-card:hover { border-color: var(--text3); transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.3); }
+.kanban-card.sel { border-color: var(--accent); }
+.kc-name { font-size: 12px; font-weight: 600; }
+.kc-product { font-size: 10px; color: var(--text2); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 7px; }
+.kc-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 7px; padding-top: 7px; border-top: 1px solid var(--border); }
+.kc-price { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+.kc-dl { font-size: 10px; color: var(--text3); }
+
+/* TIMELINE VIEW */
+.timeline-wrap { padding: 14px 18px; }
+.tl-item { display: flex; gap: 12px; margin-bottom: 0; position: relative; }
+.tl-item::before { content: ''; position: absolute; left: 13px; top: 28px; bottom: -16px; width: 1px; background: var(--border); }
+.tl-item:last-child::before { display: none; }
+.tl-dot-wrap { flex-shrink: 0; padding-top: 8px; }
+.tl-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--border); background: var(--surface); z-index: 1; }
+.tl-content { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 9px; padding: 11px 13px; margin-bottom: 14px; cursor: pointer; transition: border-color 0.15s; }
+.tl-content:hover { border-color: var(--text3); }
+.tl-content.sel { border-color: var(--accent); }
+.tl-dlabel { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-bottom: 5px; }
+.tl-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.tl-name { font-size: 13px; font-weight: 700; }
+.tl-price { font-family: var(--mono); font-size: 12px; color: var(--accent); }
+.tl-product { font-size: 11px; color: var(--text2); margin-top: 1px; }
+.tl-deadline { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; padding: 2px 8px; border-radius: 20px; background: var(--surface2); }
+.tl-deadline.ov { background: #ef444422; color: var(--red); }
+
+/* CALENDAR VIEW */
+.calendar-wrap { padding: 14px 18px; }
+.cal-nav { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.cal-nav-btn { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 5px 11px; cursor: pointer; font-size: 14px; transition: all 0.15s; }
+.cal-nav-btn:hover { border-color: var(--text2); }
+.cal-month-title { font-size: 15px; font-weight: 700; font-family: var(--mono); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 9px; overflow: hidden; }
+.cal-dh { background: var(--surface); padding: 7px 4px; text-align: center; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text3); font-weight: 600; }
+.cal-cell { background: var(--surface); min-height: 78px; padding: 5px; }
+.cal-cell.om { background: var(--bg); }
+.cal-cell.tod .cal-dn { background: var(--accent); color: #111; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+.cal-dn { font-size: 11px; color: var(--text2); margin-bottom: 3px; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; }
+.cal-ev { font-size: 10px; padding: 1px 4px; border-radius: 3px; margin-bottom: 2px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-ev:hover { opacity: 0.8; }
+.cal-ev.ev-r { background: #4a9eff22; color: var(--blue); border-left: 2px solid var(--blue); }
+.cal-ev.ev-d { background: #ef444422; color: var(--red); border-left: 2px solid var(--red); }
+.cal-more { font-size: 10px; color: var(--text3); padding: 1px 3px; cursor: pointer; }
+.cal-legend { display: flex; gap: 14px; margin-top: 9px; }
+.cal-leg { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text2); }
+.cal-leg-dot { width: 8px; height: 8px; border-radius: 1px; }
+
+/* DETAIL OVERLAY */
+.det-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 250; display: none; align-items: center; justify-content: center; backdrop-filter: blur(3px); }
+.det-overlay.open { display: flex; }
+.det-modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; width: 460px; max-width: 95vw; max-height: 92vh; overflow-y: auto; animation: sUp 0.2s ease; }
+@keyframes sUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 300; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; width: 430px; max-width: 95vw; max-height: 90vh; overflow-y: auto; animation: sUp 0.2s ease; }
+.modal-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; }
+.modal-close { background: none; border: none; color: var(--text2); font-size: 17px; cursor: pointer; padding: 2px 5px; }
+.form-group { margin-bottom: 11px; }
+.form-label { display: block; font-size: 11px; color: var(--text2); margin-bottom: 4px; font-weight: 500; }
+.form-input, .form-select, .form-textarea { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 7px; padding: 7px 10px; color: var(--text); font-family: 'Sarabun', sans-serif; font-size: 13px; outline: none; transition: border-color 0.15s; }
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+.form-textarea { resize: vertical; min-height: 55px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.modal-actions { display: flex; gap: 7px; justify-content: flex-end; margin-top: 16px; }
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">The <span>jojo</span> project</div>
+  <span class="order-count" id="cntLbl"></span>
+  <span id="syncStatus" style="font-size:11px;color:var(--text2);font-family:var(--mono)"></span>
+  <div class="view-tabs">
+    <button class="view-tab active" onclick="sw('list')"><span class="ti">☰</span> List</button>
+    <button class="view-tab" onclick="sw('table')"><span class="ti">⊞</span> Table</button>
+    <button class="view-tab" onclick="sw('kanban')"><span class="ti">▣</span> Kanban</button>
+    <button class="view-tab" onclick="sw('timeline')"><span class="ti">⟶</span> Timeline</button>
+    <button class="view-tab" onclick="sw('calendar')"><span class="ti">◫</span> Calendar</button>
+  </div>
+  <div class="header-right">
+    <button class="btn btn-primary" onclick="openModal()">+ เพิ่มออเดอร์</button>
+  </div>
+</div>
+
+<!-- LIST -->
+<div class="view-container active" id="view-list">
+  <div class="list-layout">
+    <div class="order-panel">
+      <div class="order-toolbar">
+        <input class="search-input" type="text" placeholder="🔍 ค้นหาชื่อ, สินค้า, เบอร์..." id="searchInput" oninput="renderList()">
+      </div>
+      <div id="orderList"></div>
+    </div>
+    <div class="detail-panel" id="detailPanelList">
+      <div class="detail-empty"><div style="font-size:34px">📋</div><div>เลือกออเดอร์เพื่อดูรายละเอียด</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- TABLE -->
+<div class="view-container" id="view-table">
+  <div class="table-view-wrap">
+    <table class="data-table">
+      <thead><tr>
+        <th>#</th><th>ลูกค้า</th><th>สินค้า</th><th>จำนวน</th>
+        <th>ยอดรวม</th><th>ก่อนผลิต</th><th>ความคืบหน้า</th>
+        <th>วันรับ</th><th>กำหนดส่ง</th>
+      </tr></thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- KANBAN -->
+<div class="view-container" id="view-kanban">
+  <div class="kanban-wrap" id="kanbanWrap"></div>
+</div>
+
+<!-- TIMELINE -->
+<div class="view-container" id="view-timeline">
+  <div class="timeline-wrap" id="timelineWrap"></div>
+</div>
+
+<!-- CALENDAR -->
+<div class="view-container" id="view-calendar">
+  <div class="calendar-wrap">
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="calPrev()">←</button>
+      <div class="cal-month-title" id="calTitle"></div>
+      <button class="cal-nav-btn" onclick="calNext()">→</button>
+      <button class="cal-nav-btn" onclick="calToday()" style="font-size:11px;padding:5px 10px">วันนี้</button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <div class="cal-legend">
+      <div class="cal-leg"><div class="cal-leg-dot" style="background:var(--blue)"></div>วันรับออเดอร์</div>
+      <div class="cal-leg"><div class="cal-leg-dot" style="background:var(--red)"></div>กำหนดส่ง</div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL OVERLAY -->
+<div class="det-overlay" id="detOverlay" onclick="closeDO(event)">
+  <div class="det-modal" id="detModalContent"></div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modalTitle">เพิ่มออเดอร์ใหม่</span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="form-group"><label class="form-label">ชื่อลูกค้า *</label><input class="form-input" id="f_name" placeholder="ชื่อ-นามสกุล"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">สินค้าหลัก *</label><input class="form-input" id="f_product" placeholder="เช่น เสื้อยืด, กางเกง..."></div>
+      <div class="form-group"><label class="form-label">สินค้าย่อย</label><input class="form-input" id="f_subproduct" placeholder="เช่น สีขาว, ลาย A..."></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">จำนวน (ชิ้น)</label><input class="form-input" id="f_qty" type="number" placeholder="1" min="1" oninput="updatePriceCalc()"></div>
+      <div class="form-group"><label class="form-label">ราคาต่อชิ้น (บาท)</label><input class="form-input" id="f_price" type="number" placeholder="0" oninput="updatePriceCalc()"></div>
+    </div>
+    <div id="priceCalcPreview" style="display:none;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;margin-bottom:11px;font-size:12px">
+      <span style="color:var(--text2)">ยอดรวม: </span><span id="priceCalcTotal" style="font-family:var(--mono);font-weight:700;color:var(--accent)"></span>
+      <span style="color:var(--text3);margin-left:6px" id="priceCalcDetail"></span>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">วันที่รับออเดอร์</label><input class="form-input" id="f_date" type="date"></div>
+      <div class="form-group"><label class="form-label">กำหนดส่ง</label><input class="form-input" id="f_deadline" type="date"></div>
+    </div>
+    <div class="form-group"><label class="form-label">ที่อยู่จัดส่ง</label><input class="form-input" id="f_address" placeholder="ที่อยู่หรือช่องทางรับสินค้า"></div>
+    <div class="form-group"><label class="form-label">หมายเหตุ</label><textarea class="form-textarea" id="f_note" placeholder="ไซส์, สี, รายละเอียด..."></textarea></div>
+    <div class="form-group">
+      <label class="form-label">VAT</label>
+      <label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px">
+        <input type="checkbox" id="f_vat" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer">
+        <span style="font-size:13px">ออเดอร์นี้มี VAT 7%</span>
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveOrder()">บันทึกออเดอร์</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PROD_STEPS = [
+  {key:'bill',label:'บิลงาน'},{key:'fabric',label:'ผ้า'},{key:'pattern',label:'แพทเทิร์น'},
+  {key:'mark',label:'วางมาร์ค'},{key:'cut',label:'ตัด'},{key:'design',label:'ขึ้นลาย'},
+  {key:'parts',label:'อะไหล่'},{key:'print',label:'ปัก/สกรีน'},{key:'sew',label:'เย็บ'},
+  {key:'finish',label:'แซก/ติดกระดุม'},
+];
+const PRE_STEPS = [
+  {key:'quotation',label:'ใบเสนอราคา'},
+  {key:'invoice',  label:'ใบแจ้งหนี้'},
+  {key:'deposit',  label:'จ่ายมัดจำ'},
+  {key:'taxinv',   label:'ใบกำกับภาษี'},
+  {key:'receipt',  label:'ใบเสร็จรับเงิน'},
+];
+// Kanban columns = production steps
+const KANBAN_COLS = [
+  {key:'bill',    label:'บิลงาน',         color:'#888'},
+  {key:'fabric',  label:'ผ้า',            color:'#4a9eff'},
+  {key:'pattern', label:'แพทเทิร์น',     color:'#06b6d4'},
+  {key:'mark',    label:'วางมาร์ค',      color:'#a855f7'},
+  {key:'cut',     label:'ตัด',            color:'#f97316'},
+  {key:'design',  label:'ขึ้นลาย',       color:'#f0c040'},
+  {key:'parts',   label:'อะไหล่',        color:'#e07830'},
+  {key:'print',   label:'ปัก/สกรีน',    color:'#ec4899'},
+  {key:'sew',     label:'เย็บ',           color:'#8b5cf6'},
+  {key:'finish',  label:'แซก/ติดกระดุม', color:'#22c55e'},
+];
+const COLORS = ['#4a9eff','#f0c040','#e07830','#a855f7','#22c55e','#ef4444','#06b6d4','#f97316'];
+
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbws7IHT2gHIepnEGzCKBfERGW7VoITK0RpD63ZKgxIvfewyfIggeDQsDD04LIavUbhjZw/exec';
+let orders = [];
+let selId = null, editId = null, curView = 'list';
+let calY = new Date().getFullYear(), calM = new Date().getMonth();
+let saving = false, syncTimer = null;
+
+function showSyncStatus(msg, color='var(--text2)') {
+  let el = document.getElementById('syncStatus');
+  if (!el) return;
+  el.textContent = msg; el.style.color = color;
+}
+
+async function loadFromSheet() {
+  showSyncStatus('⏳ กำลังโหลด...', 'var(--text2)');
+  // Show loading UI immediately
+  document.getElementById('cntLbl').textContent = 'กำลังโหลด...';
+  try {
+    const res = await fetch(GAS_URL + '?store=jojo_orders&t=' + Date.now());
+    const text = await res.text();
+    const data = JSON.parse(text);
+    orders = Array.isArray(data) ? data : [];
+    localStorage.setItem('jojo_orders', JSON.stringify(orders));
+    showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)');
+  } catch(e) {
+    console.error('loadFromSheet error:', e);
+    // Only fallback to localStorage if network error
+    const cached = localStorage.getItem('jojo_orders');
+    orders = cached ? JSON.parse(cached) : [];
+    showSyncStatus('⚠️ ออฟไลน์ (ข้อมูลจากเครื่องนี้)', 'var(--accent2)');
+  }
+  rv();
+}
+
+function save() {
+  localStorage.setItem('jojo_orders', JSON.stringify(orders));
+  showSyncStatus('💾 กำลังบันทึก...', 'var(--text2)');
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(async () => {
+    try {
+      await fetch(GAS_URL, { method:'POST', body: JSON.stringify({store:'jojo_orders', data:orders}) });
+      showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)');
+    } catch(e) {
+      showSyncStatus('⚠️ บันทึกออฟไลน์', 'var(--accent2)');
+    }
+  }, 800);
+}
+
+// Auto-sync every 30s
+setInterval(async () => {
+  try {
+    const res = await fetch(GAS_URL + '?store=jojo_orders&t=' + Date.now());
+    const data = await res.json();
+    if (JSON.stringify(data) !== JSON.stringify(orders)) {
+      orders = Array.isArray(data) ? data : [];
+      localStorage.setItem('jojo_orders', JSON.stringify(orders));
+      rv();
+      showSyncStatus('🔄 อัปเดตจากเครื่องอื่น', 'var(--blue)');
+      setTimeout(() => showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)'), 2000);
+    }
+  } catch(e) {}
+}, 30000);
+const today = () => new Date().toISOString().split('T')[0];
+const fmtDate = d => { if(!d) return '-'; const [y,m,day]=d.split('-'); return `${day}/${m}/${String(y).slice(2)}`; };
+const initials = n => n ? n[0].toUpperCase() : '?';
+const colorFor = n => { let h=0; for(let i=0;i<n.length;i++) h=(h*31+n.charCodeAt(i))&0xffffffff; return COLORS[Math.abs(h)%COLORS.length]; };
+const calcVat = o => { const unitPrice=+(o.price)||0; const qty=+(o.qty)||1; const b=unitPrice*qty; if(!o.useVat) return {base:b,vat:0,total:b,unitPrice}; const v=Math.round(b*0.07); return {base:b,vat:v,total:b+v,unitPrice}; };
+const gSt = (o,k) => (o.steps||{})[k]||null;
+const gPre = (o,k) => (o.preSteps||{})[k]||null;
+const sCls = s => s==='ok'?'step-ok':s==='no'?'step-no':s==='pending'?'step-pending':'';
+const sIcon = s => s==='ok'?'✓':s==='no'?'✗':s==='pending'?'●':'';
+
+function getKanbanCol(o) {
+  // Card goes in the column of the FIRST non-'ok' production step
+  // If all done → last column (finish)
+  const steps = o.steps || {};
+  const prodKeys = KANBAN_COLS.map(c => c.key);
+  for (const k of prodKeys) {
+    if (steps[k] !== 'ok') return k;
+  }
+  return 'finish'; // all done
+}
+
+// ── VIEW SWITCH ──────────────────────────────────────────────────
+function sw(v) {
+  curView = v;
+  document.querySelectorAll('.view-container').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.view-tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.querySelectorAll('.view-tab')[['list','table','kanban','timeline','calendar'].indexOf(v)].classList.add('active');
+  rv();
+}
+function rv() {
+  document.getElementById('cntLbl').textContent = orders.length + ' ออเดอร์';
+  if (curView==='list') renderList();
+  else if (curView==='table') renderTable();
+  else if (curView==='kanban') renderKanban();
+  else if (curView==='timeline') renderTimeline();
+  else if (curView==='calendar') renderCalendar();
+}
+
+// ── LIST VIEW ────────────────────────────────────────────────────
+function renderList() {
+  document.getElementById('cntLbl').textContent = orders.length + ' ออเดอร์';
+  const q = (document.getElementById('searchInput').value||'').toLowerCase();
+  const filtered = orders.filter(o=>!q||o.name.toLowerCase().includes(q)||(o.product||'').toLowerCase().includes(q)||(o.phone||'').includes(q));
+  const list = document.getElementById('orderList');
+  if (!filtered.length) { list.innerHTML='<div class="no-orders">ไม่พบออเดอร์</div>'; return; }
+  list.innerHTML = filtered.map((o,i) => {
+    const col = colorFor(o.name), ov = o.deadline&&o.deadline<today();
+    const ds = PROD_STEPS.filter(s=>gSt(o,s.key)==='ok').length;
+    const pct = Math.round(ds/PROD_STEPS.length*100);
+    const {total} = calcVat(o);
+    return `<div class="order-item ${o.id===selId?'selected':''}" onclick="selOrder('${o.id}')">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:3px">
+        <div class="order-avatar" style="background:${col}22;color:${col}">${initials(o.name)}</div>
+        <span style="font-family:var(--mono);font-size:9px;color:var(--text3)">#${String(i+1).padStart(2,'0')}</span>
+      </div>
+      <div class="order-info">
+        <div class="order-name">${o.name}${ov?'<span style="color:var(--red);font-size:9px;margin-left:3px">⚠</span>':''}</div>
+        <div class="order-product">${o.product||'-'}${o.subproduct?' · '+o.subproduct:''}${o.qty?' ×'+o.qty:''}</div>
+        <div style="display:flex;align-items:center;gap:2px;margin-top:5px;flex-wrap:wrap">
+          ${KANBAN_COLS.map(sc=>{
+            const st=gSt(o,sc.key);
+            const dotCol=st==='ok'?sc.color:st==='no'?'var(--red)':st==='pending'?'var(--yellow)':'var(--border)';
+            return `<div title="${sc.label}" style="width:8px;height:8px;border-radius:2px;background:${dotCol};flex-shrink:0"></div>`;
+          }).join('')}
+          <span style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-left:4px">${ds}/${PROD_STEPS.length}</span>
+        </div>
+      </div>
+      <div class="order-meta">
+        <div class="order-price">${total?'฿'+total.toLocaleString():'-'}${o.useVat?'<span style="font-size:8px;color:var(--accent2)">+V</span>':''}</div>
+        <div class="order-date">${fmtDate(o.date)}</div>
+        ${o.deadline?`<div class="order-date" style="${ov?'color:var(--red)':''}">→${fmtDate(o.deadline)}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function selOrder(id) {
+  selId = id;
+  renderList();
+  renderDP(id, document.getElementById('detailPanelList'));
+}
+
+function renderDP(id, container) {
+  const o = orders.find(x=>x.id===id);
+  if (!o) { container.innerHTML='<div class="detail-empty"><div style="font-size:34px">📋</div><div>เลือกออเดอร์เพื่อดูรายละเอียด</div></div>'; return; }
+  const col = colorFor(o.name), todos = o.todos||[];
+  const {base,vat,total} = calcVat(o);
+  const ov = o.deadline && o.deadline < today();
+
+  container.innerHTML = `
+    <div class="detail-header">
+      <div class="detail-avatar" style="background:${col}22;color:${col}">${initials(o.name)}</div>
+      <div style="flex:1;min-width:0">
+        <div class="detail-id">${o.id}</div>
+        <div class="detail-name">${o.name}</div>
+        ${o.phone?`<div class="detail-phone">${o.phone}</div>`:''}
+        <div style="display:flex;gap:10px;margin-top:4px;flex-wrap:wrap">
+          <span style="font-size:11px;color:var(--text3)">รับ: <b style="color:var(--text)">${fmtDate(o.date)}</b></span>
+          <span style="font-size:11px;color:var(--text3)">ส่ง: <b style="${ov?'color:var(--red)':'color:var(--text)'}">${fmtDate(o.deadline)||'ไม่ระบุ'}</b></span>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+        <button class="btn btn-ghost" style="font-size:11px;padding:4px 8px" onclick="editOrder('${o.id}')">✏️ แก้ไข</button>
+        <button class="btn" style="font-size:11px;padding:4px 8px;background:#22c55e22;color:var(--green);border:1px solid #22c55e44" onclick="sendToPayment('${o.id}')">➜ รอเก็บเงิน</button>
+        <button class="btn" style="font-size:11px;padding:4px 8px;background:#ef444422;color:var(--red);border:1px solid #ef444444" onclick="deleteOrder('${o.id}')">🗑 ลบ</button>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">รายละเอียดออเดอร์</div>
+      <div class="detail-row"><span class="detail-row-label">สินค้าหลัก</span><span class="detail-row-val">${o.product||'-'}</span></div>
+      ${o.subproduct?`<div class="detail-row"><span class="detail-row-label">สินค้าย่อย</span><span class="detail-row-val" style="color:var(--text2)">${o.subproduct}</span></div>`:''}
+      <div class="detail-row"><span class="detail-row-label">จำนวน</span><span class="detail-row-val">${o.qty||'-'} ชิ้น</span></div>
+      <div style="margin-top:7px;padding:9px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+        <div class="detail-row" style="padding:3px 0">
+          <span class="detail-row-label">ราคาต่อชิ้น</span>
+          <span style="font-family:var(--mono);font-weight:600">฿${(+(o.price)||0).toLocaleString()}</span>
+        </div>
+        <div class="detail-row" style="padding:3px 0">
+          <span class="detail-row-label">ราคารวม (×${o.qty||0})</span>
+          <span class="detail-row-val">฿${base.toLocaleString()}</span>
+        </div>
+        <div class="detail-row" style="padding:3px 0">
+          <span style="display:flex;align-items:center;gap:5px"><span class="detail-row-label">VAT 7%</span>
+            <label style="display:flex;align-items:center;gap:3px;cursor:pointer">
+              <input type="checkbox" ${o.useVat?'checked':''} onchange="toggleVat('${o.id}',this.checked)" style="accent-color:var(--accent);width:11px;height:11px;cursor:pointer">
+              <span style="font-size:10px;color:var(--text3)">${o.useVat?'มี':'ไม่มี'}</span>
+            </label>
+          </span>
+          <span style="color:${o.useVat?'var(--accent2)':'var(--text3)'}">${o.useVat?'+฿'+vat.toLocaleString():'-'}</span>
+        </div>
+        <div style="height:1px;background:var(--border);margin:5px 0"></div>
+        <div class="detail-row" style="padding:3px 0"><span style="font-weight:700;font-size:12px">ยอดรวมทั้งหมด</span><span style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent)">฿${total.toLocaleString()}</span></div>
+      </div>
+      ${o.address?`<div class="detail-row" style="margin-top:5px"><span class="detail-row-label">ที่อยู่</span><span class="detail-row-val" style="max-width:155px;text-align:right;font-size:11px">${o.address}</span></div>`:''}
+      ${o.note?`<div style="margin-top:5px;padding:7px;background:var(--surface2);border-radius:6px;font-size:11px;color:var(--text2)">${o.note}</div>`:''}
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">ก่อนการผลิต</div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        ${PRE_STEPS.map(s=>{const st=gPre(o,s.key);return`<div class="step-item ${sCls(st)}" style="padding:8px 10px">
+          <div class="step-label" style="font-size:12px;font-weight:500">${s.label}</div>
+          <div class="step-toggle" onclick="cyclePreStep('${o.id}','${s.key}')">${sIcon(st)}</div>
+        </div>`;}).join('')}
+      </div>
+    </div>
+
+    ${renderStepsHTML(o)}
+
+    <div class="detail-section">
+      <div class="detail-section-title">To-Do</div>
+      <div class="todo-input-row">
+        <input class="todo-input" id="ti_${o.id}" placeholder="เพิ่มงาน..." onkeydown="if(event.key==='Enter')addTodo('${o.id}')">
+        <button class="todo-add-btn" onclick="addTodo('${o.id}')">+</button>
+      </div>
+      <div>${todos.length===0?'<div style="color:var(--text3);font-size:11px;text-align:center;padding:8px 0">ยังไม่มีงาน</div>':
+        todos.map((t,i)=>`<div class="todo-item">
+          <div class="todo-check ${t.done?'checked':''}" onclick="toggleTodo('${o.id}',${i})"></div>
+          <span class="todo-text ${t.done?'done':''}">${t.text}</span>
+          <button class="todo-del" onclick="delTodo('${o.id}',${i})">×</button>
+        </div>`).join('')}</div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">โน้ต</div>
+      <textarea class="notes-area" id="na_${o.id}" placeholder="บันทึกเพิ่มเติม...">${o.privateNote||''}</textarea>
+      <button class="notes-save-btn" onclick="saveNote('${o.id}')">💾 บันทึก</button>
+    </div>`;
+}
+
+function renderStepsHTML(o) {
+  const steps = o.steps||{};
+  const customSteps = o.customSteps||[]; // [{key,label}]
+  const allSteps = [...PROD_STEPS.filter(s=>!s.isOther), ...customSteps];
+  const dn = allSteps.filter(s=>steps[s.key]==='ok').length;
+  const total_s = allSteps.length;
+  const pct = total_s ? Math.round(dn/total_s*100) : 0;
+  return `<div class="detail-section">
+    <div class="detail-section-title">ขั้นตอนการผลิต</div>
+    <div class="steps-progress">
+      <div class="steps-progress-bar"><div class="steps-progress-fill" style="width:${pct}%"></div></div>
+      <div class="steps-progress-text">${dn}/${total_s}</div>
+    </div>
+    <div class="steps-grid">
+      ${PROD_STEPS.filter(s=>!s.isOther).map((s,i)=>{
+        const st=steps[s.key]||null;
+        return `<div class="step-item ${sCls(st)}">
+          <div class="step-num">${i+1}</div>
+          <div class="step-label">${s.label}</div>
+          <div class="step-toggle" onclick="cycleStep('${o.id}','${s.key}')">${sIcon(st)}</div>
+        </div>`;
+      }).join('')}
+      ${customSteps.map((s,ci)=>{
+        const st=steps[s.key]||null;
+        const idx=PROD_STEPS.filter(x=>!x.isOther).length+ci;
+        return `<div class="step-item ${sCls(st)}">
+          <div class="step-num">${idx+1}</div>
+          <input class="step-other-input" value="${s.label}" placeholder="ชื่อขั้นตอน..." oninput="renameCustomStep('${o.id}','${s.key}',this.value)" style="font-size:11px;font-weight:500">
+          <div style="display:flex;gap:3px">
+            <div class="step-toggle" onclick="cycleStep('${o.id}','${s.key}')">${sIcon(st)}</div>
+            <div class="step-toggle" onclick="removeCustomStep('${o.id}','${s.key}')" style="font-size:9px;color:var(--red);border-color:#ef444444" title="ลบ">✕</div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <button onclick="addCustomStep('${o.id}')" style="margin-top:8px;width:100%;padding:6px;background:transparent;border:1px dashed var(--border);border-radius:6px;color:var(--text3);font-size:11px;cursor:pointer;font-family:'Sarabun',sans-serif;transition:all 0.15s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text3)'">+ เพิ่มขั้นตอน</button>
+    <div style="font-size:10px;color:var(--text3);margin-top:5px;text-align:center">ว่าง → ✓ → ✗ → 🟡</div>
+  </div>`;
+}
+
+function addCustomStep(id){
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  if(!o.customSteps)o.customSteps=[];
+  const key='custom_'+Date.now();
+  o.customSteps.push({key,label:'ขั้นตอนใหม่'});
+  save();rfDetail(id);
+}
+function removeCustomStep(id,key){
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  o.customSteps=(o.customSteps||[]).filter(s=>s.key!==key);
+  if(o.steps) delete o.steps[key];
+  save();rfDetail(id);
+}
+function renameCustomStep(id,key,val){
+  const o=orders.find(x=>x.id===id);if(!o)return;
+  const s=(o.customSteps||[]).find(s=>s.key===key);
+  if(s){s.label=val;save();}
+}
+
+// ── TABLE VIEW ───────────────────────────────────────────────────
+function renderTable() {
+  const tbody = document.getElementById('tableBody');
+  if (!orders.length) { tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:28px">ยังไม่มีออเดอร์</td></tr>'; return; }
+  tbody.innerHTML = orders.map((o,i) => {
+    const {total} = calcVat(o);
+    const ds = PROD_STEPS.filter(s=>gSt(o,s.key)==='ok').length;
+    const pct = Math.round(ds/PROD_STEPS.length*100);
+    const ov = o.deadline&&o.deadline<today();
+    const col = colorFor(o.name);
+    const dots = PRE_STEPS.map(s=>{const st=gPre(o,s.key);return`<div class="pre-dot ${st||''}" title="${s.label}"></div>`;}).join('');
+    return `<tr class="${o.id===selId?'sel':''}" onclick="openDO('${o.id}')">
+      <td style="font-family:var(--mono);color:var(--text3)">${String(i+1).padStart(2,'0')}</td>
+      <td><div style="display:flex;align-items:center;gap:7px">
+        <div style="width:26px;height:26px;border-radius:50%;background:${col}22;color:${col};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">${initials(o.name)}</div>
+        <div><div style="font-weight:600;font-size:12px">${o.name}</div><div style="font-size:10px;color:var(--text3)">${o.phone||'-'}</div></div>
+      </div></td>
+      <td style="font-size:12px">${o.product||'-'}</td>
+      <td style="text-align:center;font-family:var(--mono)">${o.qty||'-'}</td>
+      <td style="font-family:var(--mono);color:var(--accent)">${total?'฿'+total.toLocaleString():'-'}${o.useVat?'<span style="font-size:8px;color:var(--accent2)">+V</span>':''}</td>
+      <td><div class="pre-dots">${dots}</div></td>
+      <td><div style="display:flex;align-items:center;gap:2px;flex-wrap:wrap">
+        ${KANBAN_COLS.map(sc=>{const st=gSt(o,sc.key);const dc=st==='ok'?sc.color:st==='no'?'var(--red)':st==='pending'?'var(--yellow)':'var(--border)';return`<div title="${sc.label}" style="width:9px;height:9px;border-radius:2px;background:${dc}"></div>`;}).join('')}
+        <span style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-left:3px">${pct}%</span>
+      </div></td>
+      <td style="font-size:11px;color:var(--text2)">${fmtDate(o.date)}</td>
+      <td style="font-size:11px;color:${ov?'var(--red)':'var(--text2)'}">${fmtDate(o.deadline)}${ov?' ⚠':''}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── KANBAN VIEW ──────────────────────────────────────────────────
+function renderKanban() {
+  const wrap = document.getElementById('kanbanWrap');
+  const grp = {};
+  KANBAN_COLS.forEach(c=>grp[c.key]=[]);
+  orders.forEach(o=>{ const c=getKanbanCol(o); if(grp[c]) grp[c].push(o); });
+  wrap.innerHTML = KANBAN_COLS.map((col, colIdx) => {
+    const cards = grp[col.key]||[];
+    return `<div class="kanban-col" style="--col-color:${col.color}">
+      <div class="kanban-col-header" style="border-top:3px solid ${col.color}">
+        <div class="kch-dot" style="background:${col.color}"></div>
+        <div class="kch-title">${colIdx+1}. ${col.label}</div>
+        <div class="kch-count">${cards.length}</div>
+      </div>
+      <div class="kanban-body">
+        ${cards.length===0?'<div style="color:var(--text3);font-size:11px;text-align:center;padding:18px 0">—</div>':
+          cards.map(o=>{
+            const {total}=calcVat(o), ov=o.deadline&&o.deadline<today();
+            const c=colorFor(o.name);
+            // Step dots: 10 production steps shown as tiny colored squares
+            const stepDots = KANBAN_COLS.map((sc,si)=>{
+              const st=gSt(o,sc.key);
+              const dotCol = st==='ok'?sc.color : st==='no'?'var(--red)' : st==='pending'?'var(--yellow)' : 'var(--border)';
+              const isCurrent = sc.key===col.key;
+              return `<div title="${sc.label}" style="width:${isCurrent?'10px':'7px'};height:${isCurrent?'10px':'7px'};border-radius:2px;background:${dotCol};flex-shrink:0;${isCurrent?'outline:1.5px solid #fff':''}"></div>`;
+            }).join('');
+            return `<div class="kanban-card ${o.id===selId?'sel':''}" onclick="openDO('${o.id}')">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+                <div style="width:24px;height:24px;border-radius:50%;background:${c}22;color:${c};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0">${initials(o.name)}</div>
+                <div style="min-width:0">
+                  <div class="kc-name" style="font-size:12px">${o.name}</div>
+                  <div class="kc-product">${o.product||'-'}${o.subproduct?' · '+o.subproduct:''}${o.qty?' ×'+o.qty:''}</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:2px;flex-wrap:wrap;margin-bottom:7px;padding:5px 6px;background:var(--bg);border-radius:5px">${stepDots}</div>
+              <div class="kc-foot">
+                <div class="kc-price">${total?'฿'+total.toLocaleString():'-'}</div>
+                <div class="kc-dl" style="${ov?'color:var(--red)':''}">${o.deadline?fmtDate(o.deadline):''}</div>
+              </div>
+            </div>`;
+          }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── TIMELINE VIEW ────────────────────────────────────────────────
+function renderTimeline() {
+  const wrap = document.getElementById('timelineWrap');
+  const sorted = [...orders].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  if (!sorted.length) { wrap.innerHTML='<div style="color:var(--text3);text-align:center;padding:36px">ยังไม่มีออเดอร์</div>'; return; }
+  wrap.innerHTML = sorted.map(o=>{
+    const {total}=calcVat(o), ov=o.deadline&&o.deadline<today();
+    const col=colorFor(o.name);
+    const ds=PROD_STEPS.filter(s=>gSt(o,s.key)==='ok').length;
+    const pct=Math.round(ds/PROD_STEPS.length*100);
+    const dots=PRE_STEPS.map(s=>{const st=gPre(o,s.key);return`<div class="pre-dot ${st||''}" title="${s.label}"></div>`;}).join('');
+    return `<div class="tl-item">
+      <div class="tl-dot-wrap"><div class="tl-dot" style="border-color:${col};background:${col}22"></div></div>
+      <div class="tl-content ${o.id===selId?'sel':''}" onclick="openDO('${o.id}')">
+        <div class="tl-dlabel">รับ ${fmtDate(o.date)}</div>
+        <div class="tl-header">
+          <div><div class="tl-name">${o.name}</div><div class="tl-product">${o.product||'-'}${o.subproduct?' · '+o.subproduct:''}${o.qty?' ×'+o.qty:''}</div></div>
+          <div style="text-align:right"><div class="tl-price">${total?'฿'+total.toLocaleString():'-'}</div>${o.useVat?'<div style="font-size:9px;color:var(--accent2)">+VAT</div>':''}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:7px;margin-top:7px;flex-wrap:wrap">
+          ${o.deadline?`<span class="tl-deadline ${ov?'ov':''}">📅 ส่ง ${fmtDate(o.deadline)}${ov?' ⚠':''}</span>`:''}
+          <div class="pre-dots">${dots}</div>
+          <div style="display:flex;align-items:center;gap:2px;margin-left:auto;flex-wrap:wrap">
+            ${KANBAN_COLS.map(sc=>{const st=gSt(o,sc.key);const dc=st==='ok'?sc.color:st==='no'?'var(--red)':st==='pending'?'var(--yellow)':'var(--border)';return`<div title="${sc.label}" style="width:9px;height:9px;border-radius:2px;background:${dc}"></div>`;}).join('')}
+            <span style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-left:4px">${ds}/${PROD_STEPS.length}</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── CALENDAR VIEW ────────────────────────────────────────────────
+function renderCalendar() {
+  const TH_MONTHS=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  document.getElementById('calTitle').textContent = `${TH_MONTHS[calM]} ${calY+543}`;
+  const fd = new Date(calY,calM,1).getDay();
+  const dim = new Date(calY,calM+1,0).getDate();
+  const dip = new Date(calY,calM,0).getDate();
+  const evMap = {};
+  orders.forEach(o=>{
+    if(o.date){if(!evMap[o.date])evMap[o.date]=[];evMap[o.date].push({type:'r',o});}
+    if(o.deadline){if(!evMap[o.deadline])evMap[o.deadline]=[];evMap[o.deadline].push({type:'d',o});}
+  });
+  const todayStr = today();
+  const DAY_LABELS=['อา','จ','อ','พ','พฤ','ศ','ส'];
+  let html = DAY_LABELS.map(d=>`<div class="cal-dh">${d}</div>`).join('');
+  for(let i=fd-1;i>=0;i--) html+=`<div class="cal-cell om"><div class="cal-dn" style="color:var(--text3)">${dip-i}</div></div>`;
+  for(let d=1;d<=dim;d++){
+    const ds=`${calY}-${String(calM+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isT=ds===todayStr, evs=evMap[ds]||[];
+    const eHtml=evs.slice(0,2).map(e=>`<div class="cal-ev ev-${e.type}" onclick="event.stopPropagation();openDO('${e.o.id}')" title="${e.o.name}">${e.type==='r'?'↓':'⚑'} ${e.o.name}</div>`).join('');
+    const more=evs.length>2?`<div class="cal-more">+${evs.length-2}</div>`:'';
+    html+=`<div class="cal-cell ${isT?'tod':''}" ><div class="cal-dn">${d}</div>${eHtml}${more}</div>`;
+  }
+  const rem=42-(fd+dim); for(let d=1;d<=rem;d++) html+=`<div class="cal-cell om"><div class="cal-dn" style="color:var(--text3)">${d}</div></div>`;
+  document.getElementById('calGrid').innerHTML=html;
+}
+const calPrev=()=>{calM--;if(calM<0){calM=11;calY--;}renderCalendar();};
+const calNext=()=>{calM++;if(calM>11){calM=0;calY++;}renderCalendar();};
+const calToday=()=>{calY=new Date().getFullYear();calM=new Date().getMonth();renderCalendar();};
+
+// ── DETAIL OVERLAY ───────────────────────────────────────────────
+function openDO(id) {
+  selId=id;
+  renderDP(id, document.getElementById('detModalContent'));
+  document.getElementById('detOverlay').classList.add('open');
+  rv();
+}
+function closeDO(e) {
+  if(e.target===document.getElementById('detOverlay')) document.getElementById('detOverlay').classList.remove('open');
+}
+
+// ── ACTIONS ──────────────────────────────────────────────────────
+function cycleStep(id,key){const o=orders.find(x=>x.id===id);if(!o)return;if(!o.steps)o.steps={};const c=o.steps[key]||null;o.steps[key]=c===null?'ok':c==='ok'?'no':c==='no'?'pending':null;save();rfDetail(id);}
+function cyclePreStep(id,key){const o=orders.find(x=>x.id===id);if(!o)return;if(!o.preSteps)o.preSteps={};const c=o.preSteps[key]||null;o.preSteps[key]=c===null?'ok':c==='ok'?'no':c==='no'?'pending':null;save();rfDetail(id);rv();}
+function saveOtherStep(id,val){const o=orders.find(x=>x.id===id);if(!o)return;if(!o.steps)o.steps={};o.steps['other_text']=val;save();}
+function toggleVat(id,checked){const o=orders.find(x=>x.id===id);if(!o)return;o.useVat=checked;save();rfDetail(id);rv();}
+
+function rfDetail(id) {
+  if(curView==='list'&&selId===id) renderDP(id,document.getElementById('detailPanelList'));
+  const ov=document.getElementById('detOverlay');
+  if(ov.classList.contains('open')&&selId===id) renderDP(id,document.getElementById('detModalContent'));
+}
+
+function addTodo(id){const inp=document.getElementById('ti_'+id);if(!inp)return;const t=inp.value.trim();if(!t)return;const o=orders.find(x=>x.id===id);if(!o)return;if(!o.todos)o.todos=[];o.todos.push({text:t,done:false});inp.value='';save();rfDetail(id);}
+function toggleTodo(id,i){const o=orders.find(x=>x.id===id);if(o&&o.todos){o.todos[i].done=!o.todos[i].done;save();rfDetail(id);}}
+function delTodo(id,i){const o=orders.find(x=>x.id===id);if(o&&o.todos){o.todos.splice(i,1);save();rfDetail(id);}}
+function saveNote(id){const o=orders.find(x=>x.id===id);if(!o)return;const el=document.getElementById('na_'+id);if(!el)return;o.privateNote=el.value;save();const b=el.nextElementSibling;b.textContent='✅ บันทึกแล้ว';setTimeout(()=>b.textContent='💾 บันทึก',1500);}
+function sendToPayment(id){
+  const o = orders.find(x=>x.id===id);
+  if(!o) return;
+  if(!confirm('ส่ง "'+o.name+'" ไปโปรแกรมรอเก็บเงิน?')) return;
+  // Copy to payment queue storage
+  let payOrders = JSON.parse(localStorage.getItem('jojo_payment') || '[]');
+  // Avoid duplicates
+  if(payOrders.find(x=>x.id===o.id)) { alert('ออเดอร์นี้อยู่ในคิวรอเก็บเงินแล้ว'); return; }
+  const payOrder = {...o, payStage:'done', sentAt: new Date().toISOString()};
+  payOrders.unshift(payOrder);
+  localStorage.setItem('jojo_payment', JSON.stringify(payOrders));
+  // Remove from production
+  orders = orders.filter(x=>x.id!==id);
+  selId = null;
+  document.getElementById('detOverlay').classList.remove('open');
+  save(); rv();
+  if(curView==='list') renderDP(null, document.getElementById('detailPanelList'));
+  alert('✅ ส่งไปคิวรอเก็บเงินแล้ว!');
+}
+function deleteOrder(id){if(!confirm('ลบออเดอร์นี้?'))return;orders=orders.filter(x=>x.id!==id);selId=null;document.getElementById('detOverlay').classList.remove('open');save();rv();if(curView==='list')renderDP(null,document.getElementById('detailPanelList'));}
+
+// ── MODAL ────────────────────────────────────────────────────────
+function updatePriceCalc(){
+  const qty=+(document.getElementById('f_qty').value)||0;
+  const price=+(document.getElementById('f_price').value)||0;
+  const preview=document.getElementById('priceCalcPreview');
+  const totalEl=document.getElementById('priceCalcTotal');
+  const detailEl=document.getElementById('priceCalcDetail');
+  if(qty>0&&price>0){
+    preview.style.display='block';
+    totalEl.textContent='฿'+(qty*price).toLocaleString();
+    detailEl.textContent=`(${qty} × ฿${price.toLocaleString()})`;
+  } else {
+    preview.style.display='none';
+  }
+}
+function openModal(){editId=null;document.getElementById('modalTitle').textContent='เพิ่มออเดอร์ใหม่';['f_name','f_product','f_subproduct','f_qty','f_price','f_address','f_note'].forEach(id=>document.getElementById(id).value='');document.getElementById('f_vat').checked=false;document.getElementById('f_date').value=today();document.getElementById('f_deadline').value='';document.getElementById('priceCalcPreview').style.display='none';document.getElementById('modalOverlay').classList.add('open');}
+function editOrder(id){const o=orders.find(x=>x.id===id);if(!o)return;editId=id;document.getElementById('modalTitle').textContent='แก้ไขออเดอร์';document.getElementById('f_name').value=o.name||'';document.getElementById('f_product').value=o.product||'';document.getElementById('f_subproduct').value=o.subproduct||'';document.getElementById('f_qty').value=o.qty||'';document.getElementById('f_price').value=o.price||'';document.getElementById('f_date').value=o.date||'';document.getElementById('f_deadline').value=o.deadline||'';document.getElementById('f_address').value=o.address||'';document.getElementById('f_note').value=o.note||'';document.getElementById('f_vat').checked=!!o.useVat;updatePriceCalc();document.getElementById('modalOverlay').classList.add('open');}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('open');}
+function saveOrder(){const name=document.getElementById('f_name').value.trim();const product=document.getElementById('f_product').value.trim();if(!name){alert('กรุณากรอกชื่อลูกค้า');return;}if(!product){alert('กรุณากรอกชื่อสินค้า');return;}const data={name,product,subproduct:document.getElementById('f_subproduct').value.trim(),qty:document.getElementById('f_qty').value,price:document.getElementById('f_price').value,date:document.getElementById('f_date').value,deadline:document.getElementById('f_deadline').value,address:document.getElementById('f_address').value.trim(),note:document.getElementById('f_note').value.trim(),useVat:document.getElementById('f_vat').checked};if(editId){const o=orders.find(x=>x.id===editId);Object.assign(o,data);selId=editId;}else{const no={id:'ORD-'+Date.now(),todos:[],...data};orders.unshift(no);selId=no.id;}save();closeModal();rv();if(curView==='list')renderDP(selId,document.getElementById('detailPanelList'));}
+document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===document.getElementById('modalOverlay'))closeModal();});
+
+// ── SEED ─────────────────────────────────────────────────────────
+function seed(){if(orders.length>0)return;const t=today();orders=[
+  {id:'ORD-001',name:'สมชาย ใจดี',product:'เสื้อยืดสกรีนลาย',subproduct:'สีขาวคอกลม',qty:5,price:300,date:t,deadline:'2026-03-05',todos:[{text:'ส่งแบบให้ลูกค้า',done:false}],preSteps:{quotation:'ok'}},
+  {id:'ORD-002',name:'มาลี สวยงาม',product:'ชุดยูนิฟอร์มบริษัท',subproduct:'ยูนิฟอร์มพนักงาน',qty:20,price:600,date:t,deadline:'2026-03-10',useVat:true,todos:[{text:'วัดไซส์',done:true}],preSteps:{quotation:'ok',invoice:'ok'},steps:{bill:'ok',fabric:'ok'}},
+  {id:'ORD-003',name:'วิชัย รักงาน',product:'กางเกงยีนส์',subproduct:'สีน้ำเงิน',qty:3,price:700,date:t,deadline:'2026-02-28',todos:[],preSteps:{quotation:'ok',invoice:'ok',deposit:'ok'},steps:{bill:'ok',fabric:'ok',pattern:'ok',cut:'ok'}},
+  {id:'ORD-004',name:'นิดา แจ่มใส',product:'เสื้อโปโล',qty:10,price:350,date:t,deadline:'2026-02-24',todos:[],preSteps:{quotation:'ok',invoice:'ok',deposit:'ok'},steps:{bill:'ok',fabric:'ok',pattern:'ok',mark:'ok',cut:'ok',design:'ok',print:'ok',sew:'ok',finish:'ok'}},
+  {id:'ORD-005',name:'ประสิทธิ์ มั่นคง',product:'เดรสลำลอง',subproduct:'ลายดอกไม้',qty:2,price:900,date:t,deadline:'2026-03-15',todos:[{text:'รับเงินเรียบร้อย',done:true}],preSteps:{quotation:'ok',invoice:'pending'}},
+];save();}
+
+// Load from Google Sheets first — seed only if sheet is empty
+loadFromSheet().then(() => {
+  if (orders.length === 0) seed();
+  rv();
+});
+</script>
+</body>
+</html>
