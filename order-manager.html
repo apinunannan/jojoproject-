@@ -36,7 +36,7 @@ body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--t
 .view-container.active { display: block; }
 
 /* LIST VIEW */
-.list-layout { display: grid; grid-template-columns: 1fr 340px; height: calc(100vh - 54px); }
+.list-layout { display: grid; grid-template-columns: 1fr 420px; height: calc(100vh - 54px); }
 .order-panel { border-right: 1px solid var(--border); overflow-y: auto; }
 .order-toolbar { display: flex; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); z-index: 10; }
 .search-input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 7px 11px; color: var(--text); font-family: 'Sarabun', sans-serif; font-size: 13px; outline: none; }
@@ -200,6 +200,9 @@ body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--t
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
 .modal-actions { display: flex; gap: 7px; justify-content: flex-end; margin-top: 16px; }
 
+.sort-chip { padding:4px 10px; border-radius:20px; border:1px solid var(--border); background:transparent; color:var(--text2); font-family:'Sarabun',sans-serif; font-size:11px; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+.sort-chip:hover { border-color:var(--text2); color:var(--text); }
+.sort-chip.active { background:var(--accent); color:#111; border-color:var(--accent); font-weight:600; }
 .attach-zone { border:2px dashed var(--border); border-radius:8px; padding:14px; text-align:center; cursor:pointer; transition:all 0.15s; color:var(--text3); font-size:12px; }
 .attach-zone:hover, .attach-zone.drag-over { border-color:var(--accent); color:var(--accent); background:#f0c04008; }
 .attach-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:8px; }
@@ -246,6 +249,7 @@ body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--t
     <button class="view-tab" onclick="sw('calendar')"><span class="ti">◫</span> Calendar</button>
   </div>
   <div class="header-right">
+    <button onclick="openPrintModal()" class="btn btn-ghost" style="font-size:12px">🖨 ปริ้น</button>
     <button class="btn btn-primary" onclick="openModal()">+ เพิ่มออเดอร์</button>
   </div>
 </div>
@@ -267,6 +271,15 @@ body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--t
 
 <!-- TABLE -->
 <div class="view-container" id="view-table">
+  <div style="display:flex;align-items:center;gap:8px;padding:10px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+    <span style="font-size:11px;color:var(--text3)">เรียงตาม:</span>
+    <button class="sort-chip active" id="tsort-date" onclick="setTableSort('date')">วันรับ</button>
+    <button class="sort-chip" id="tsort-deadline" onclick="setTableSort('deadline')">วันส่ง</button>
+    <button class="sort-chip" id="tsort-total" onclick="setTableSort('total')">ยอดเงิน</button>
+    <button class="sort-chip" id="tsort-name" onclick="setTableSort('name')">ชื่อ A-Z</button>
+    <button class="sort-chip" id="tsort-pct" onclick="setTableSort('pct')">ความคืบหน้า</button>
+    <span id="tsort-dir" style="font-size:11px;color:var(--text2);margin-left:4px;cursor:pointer" onclick="toggleTableDir()">↓ มากไปน้อย</span>
+  </div>
   <div class="table-view-wrap">
     <table class="data-table">
       <thead><tr>
@@ -286,6 +299,14 @@ body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--t
 
 <!-- TIMELINE -->
 <div class="view-container" id="view-timeline">
+  <div style="display:flex;align-items:center;gap:8px;padding:10px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+    <span style="font-size:11px;color:var(--text3)">เรียงตาม:</span>
+    <button class="sort-chip active" id="tlsort-date" onclick="setTimelineSort('date')">วันรับ</button>
+    <button class="sort-chip" id="tlsort-deadline" onclick="setTimelineSort('deadline')">วันส่ง</button>
+    <button class="sort-chip" id="tlsort-total" onclick="setTimelineSort('total')">ยอดเงิน</button>
+    <button class="sort-chip" id="tlsort-name" onclick="setTimelineSort('name')">ชื่อ A-Z</button>
+    <span id="tlsort-dir" style="font-size:11px;color:var(--text2);margin-left:4px;cursor:pointer" onclick="toggleTimelineDir()">↓ มากไปน้อย</span>
+  </div>
   <div class="timeline-wrap" id="timelineWrap"></div>
 </div>
 
@@ -699,7 +720,8 @@ function renameCustomStep(id,key,val){
 function renderTable() {
   const tbody = document.getElementById('tableBody');
   if (!orders.length) { tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--text3);padding:28px">ยังไม่มีออเดอร์</td></tr>'; return; }
-  tbody.innerHTML = orders.map((o,i) => {
+  const sorted = getSortedOrders(tableSortField, tableSortAsc);
+  tbody.innerHTML = sorted.map((o,i) => {
     const {total} = calcVat(o);
     const ds = PROD_STEPS.filter(s=>gSt(o,s.key)==='ok').length;
     const pct = Math.round(ds/PROD_STEPS.length*100);
@@ -775,7 +797,7 @@ function renderKanban() {
 // ── TIMELINE VIEW ────────────────────────────────────────────────
 function renderTimeline() {
   const wrap = document.getElementById('timelineWrap');
-  const sorted = [...orders].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const sorted = getSortedOrders(tlSortField, tlSortAsc);
   if (!sorted.length) { wrap.innerHTML='<div style="color:var(--text3);text-align:center;padding:36px">ยังไม่มีออเดอร์</div>'; return; }
   wrap.innerHTML = sorted.map(o=>{
     const {total}=calcVat(o), ov=o.deadline&&o.deadline<today();
@@ -917,6 +939,41 @@ loadFromSheet().then(() => {
   if (orders.length === 0) seed();
   rv();
 });
+
+// TABLE SORT
+let tableSortField = 'date', tableSortAsc = false;
+function setTableSort(field) {
+  if(tableSortField===field) { tableSortAsc=!tableSortAsc; }
+  else { tableSortField=field; tableSortAsc=field==='name'; }
+  document.querySelectorAll('.sort-chip[id^="tsort-"]').forEach(el=>el.classList.remove('active'));
+  const el=document.getElementById('tsort-'+field); if(el) el.classList.add('active');
+  document.getElementById('tsort-dir').textContent = tableSortAsc?'↑ น้อยไปมาก':'↓ มากไปน้อย';
+  renderTable();
+}
+function toggleTableDir() { tableSortAsc=!tableSortAsc; document.getElementById('tsort-dir').textContent=tableSortAsc?'↑ น้อยไปมาก':'↓ มากไปน้อย'; renderTable(); }
+function getSortedOrders(field, asc) {
+  return [...orders].sort((a,b)=>{
+    let av, bv;
+    if(field==='total') { av=calcVat(a).total; bv=calcVat(b).total; }
+    else if(field==='pct') { av=PROD_STEPS.filter(s=>gSt(a,s.key)==='ok').length; bv=PROD_STEPS.filter(s=>gSt(b,s.key)==='ok').length; }
+    else if(field==='name') { av=a.name||''; bv=b.name||''; return asc?av.localeCompare(bv,'th'):bv.localeCompare(av,'th'); }
+    else { av=a[field]||''; bv=b[field]||''; }
+    if(typeof av==='number') return asc?av-bv:bv-av;
+    return asc?av.localeCompare(bv):bv.localeCompare(av);
+  });
+}
+
+// TIMELINE SORT
+let tlSortField = 'date', tlSortAsc = false;
+function setTimelineSort(field) {
+  if(tlSortField===field) { tlSortAsc=!tlSortAsc; }
+  else { tlSortField=field; tlSortAsc=field==='name'; }
+  document.querySelectorAll('.sort-chip[id^="tlsort-"]').forEach(el=>el.classList.remove('active'));
+  const el=document.getElementById('tlsort-'+field); if(el) el.classList.add('active');
+  document.getElementById('tlsort-dir').textContent = tlSortAsc?'↑ น้อยไปมาก':'↓ มากไปน้อย';
+  renderTimeline();
+}
+function toggleTimelineDir() { tlSortAsc=!tlSortAsc; document.getElementById('tlsort-dir').textContent=tlSortAsc?'↑ น้อยไปมาก':'↓ มากไปน้อย'; renderTimeline(); }
 
 // ATTACHMENTS
 function handleAttachFiles(id, files) {
