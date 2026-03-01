@@ -83,7 +83,8 @@ body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--t
   <div class="logo">The <span>jojo</span> project</div>
   <div class="logo-sub">💰 รอเก็บเงิน</div>
   <span id="syncStatus" style="font-size:11px;color:var(--text2);font-family:var(--mono);margin-left:4px"></span>
-  <div class="nav-links">
+  <button onclick="openAddModal()" class="btn" style="padding:6px 12px;border-radius:6px;border:none;background:var(--accent);color:#111;font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;font-weight:600;margin-left:auto">+ เพิ่มออเดอร์</button>
+  <div class="nav-links" style="margin-left:8px">
     <a class="nav-btn" href="order-manager.html">🏭 ผลิต</a>
     <a class="nav-btn active" href="payment-queue.html">💰 รอเก็บเงิน</a>
     <a class="nav-btn" href="archive.html">📦 คลัง</a>
@@ -265,6 +266,8 @@ function archiveOrder(id) {
   selId = null;
   document.getElementById('detOverlay').classList.remove('open');
   save(); render();
+  // Sync archive to Google Sheets
+  syncArchive(archive);
 }
 
 // DRAG AND DROP
@@ -348,7 +351,101 @@ function closeDO(e) {
 // Poll for updates from order-manager
 // sync handled by setInterval above
 
+function openAddModal() {
+  const d = new Date().toISOString().split('T')[0];
+  document.getElementById('af_name').value = '';
+  document.getElementById('af_product').value = '';
+  document.getElementById('af_qty').value = '';
+  document.getElementById('af_price').value = '';
+  document.getElementById('af_date').value = d;
+  document.getElementById('af_deadline').value = '';
+  document.getElementById('af_vat').checked = false;
+  document.getElementById('af_note').value = '';
+  document.getElementById('addOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('af_name').focus(), 100);
+}
+function closeAddModal() { document.getElementById('addOverlay').classList.remove('open'); }
+function saveAddOrder() {
+  const name = document.getElementById('af_name').value.trim();
+  if(!name) { alert('กรุณากรอกชื่อลูกค้า'); return; }
+  const o = {
+    id: 'PAY-' + Date.now(),
+    name,
+    product: document.getElementById('af_product').value.trim(),
+    subproduct: '',
+    qty: document.getElementById('af_qty').value,
+    price: document.getElementById('af_price').value,
+    date: document.getElementById('af_date').value,
+    deadline: document.getElementById('af_deadline').value,
+    useVat: document.getElementById('af_vat').checked,
+    note: document.getElementById('af_note').value.trim(),
+    payStage: 'done',
+    sentAt: new Date().toISOString(),
+    todos: []
+  };
+  orders.unshift(o);
+  save(); render();
+  closeAddModal();
+}
+
+// Sync archive to Google Sheets
+async function syncArchive(archiveData) {
+  try {
+    await fetch(GAS_URL, {method:'POST', body: JSON.stringify({store:'jojo_archive', data:archiveData})});
+  } catch(e) { console.error('archive sync error', e); }
+}
+
 loadFromSheet();
 </script>
+<!-- ADD MODAL -->
+<div class="det-overlay" id="addOverlay" onclick="if(event.target===this)closeAddModal()">
+  <div class="det-modal" style="padding:0">
+    <div class="det-header" style="justify-content:space-between">
+      <div style="font-size:15px;font-weight:700">+ เพิ่มออเดอร์ใหม่</div>
+      <button onclick="closeAddModal()" style="background:none;border:none;color:var(--text2);font-size:17px;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">ชื่อลูกค้า *</label>
+          <input id="af_name" placeholder="ชื่อลูกค้า" style="width:100%;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">สินค้า</label>
+          <input id="af_product" placeholder="ชื่อสินค้า" style="width:100%;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">จำนวน</label>
+          <input id="af_qty" type="number" placeholder="0" style="width:100%;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">ราคาต่อชิ้น</label>
+          <input id="af_price" type="number" placeholder="0" style="width:100%;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">วันรับออเดอร์</label>
+          <input id="af_date" type="date" style="width:100%;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">กำหนดส่ง</label>
+          <input id="af_deadline" type="date" style="width:100%;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none">
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input id="af_vat" type="checkbox" style="accent-color:var(--accent)">
+        <label for="af_vat" style="font-size:13px;cursor:pointer">มี VAT 7%</label>
+      </div>
+      <div>
+        <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">หมายเหตุ</label>
+        <input id="af_note" placeholder="หมายเหตุ (ถ้ามี)" style="width:100%;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button onclick="closeAddModal()" style="flex:1;padding:9px;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--text2);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer">ยกเลิก</button>
+        <button onclick="saveAddOrder()" style="flex:2;padding:9px;background:var(--accent);border:none;border-radius:7px;color:#111;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer">+ เพิ่มออเดอร์</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
