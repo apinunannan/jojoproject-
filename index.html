@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Bill</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Sarabun',sans-serif;background:#f8fafc;min-height:100vh}
+  #app{max-width:640px;margin:0 auto;padding-bottom:40px}
+
+  /* Header */
+  .header{background:#1e293b;color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10}
+  .header-title{font-size:17px;font-weight:700}
+  .header-sub{font-size:11px;color:#94a3b8}
+  .header-name{font-size:12px;color:#93c5fd}
+
+  /* Buttons */
+  .btn-primary{background:#3b82f6;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer}
+  .btn-primary:hover{background:#2563eb}
+  .btn-secondary{background:transparent;color:#475569;border:1px solid #e2e8f0;border-radius:8px;padding:7px 12px;font-family:inherit;font-size:13px;cursor:pointer}
+  .btn-secondary:hover{background:#f8fafc}
+  .btn-back{background:none;border:none;color:#94a3b8;font-family:inherit;font-size:22px;cursor:pointer;padding:0 4px;line-height:1}
+  .btn-danger{color:#ef4444;border-color:#fecaca}
+  .btn-add{background:#eff6ff;color:#3b82f6;border:none;border-radius:8px;padding:5px 12px;font-family:inherit;font-size:12px;cursor:pointer;font-weight:600}
+
+  /* Toast */
+  .toast{position:fixed;top:66px;left:50%;transform:translateX(-50%);background:#10b981;color:#fff;padding:9px 22px;border-radius:24px;font-size:13px;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,.2);pointer-events:none;opacity:0;transition:opacity .3s}
+  .toast.show{opacity:1}
+
+  /* Toolbar */
+  .toolbar{padding:12px 16px 8px}
+  .search-wrap{display:flex;align-items:center;background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:0 14px}
+  .search-icon{font-size:14px;margin-right:6px;color:#94a3b8}
+  .search-input{flex:1;border:none;outline:none;font-family:inherit;font-size:14px;padding:11px 8px;background:transparent}
+  .search-clear{cursor:pointer;color:#94a3b8;font-size:16px;background:none;border:none;font-family:inherit}
+
+  /* List */
+  .list{display:flex;flex-direction:column;gap:8px;padding:0 16px}
+  .list-count{padding:4px 0 6px;font-size:12px;color:#94a3b8}
+  .card{background:#fff;border-radius:12px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.04);cursor:pointer;border:1px solid #f1f5f9;transition:box-shadow .15s}
+  .card:hover{box-shadow:0 4px 12px rgba(0,0,0,.08)}
+  .card-inner{display:flex;gap:12px;align-items:center}
+  .card-thumb{width:62px;height:62px;object-fit:cover;border-radius:8px;flex-shrink:0}
+  .card-thumb-placeholder{width:62px;height:62px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
+  .card-body{flex:1;min-width:0}
+  .card-id{font-size:11px;color:#94a3b8}
+  .card-name{font-size:16px;font-weight:700;color:#1e293b;margin:2px 0}
+  .card-job{font-size:12px;color:#3b82f6;font-weight:600;margin-bottom:1px}
+  .card-meta{display:flex;flex-wrap:wrap;gap:2px 10px;font-size:12px;color:#64748b}
+  .card-fabric{font-size:12px;color:#94a3b8;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .card-arrow{color:#cbd5e1;font-size:20px;flex-shrink:0}
+
+  /* Empty */
+  .empty{text-align:center;padding:60px 20px;display:flex;flex-direction:column;align-items:center;gap:12px;color:#94a3b8}
+  .empty-icon{font-size:48px}
+
+  /* Form */
+  .form-body{padding:16px}
+  .section{background:#fff;border-radius:12px;padding:16px;margin-bottom:10px;border:1px solid #f1f5f9}
+  .section-title{font-weight:700;color:#1e293b;font-size:14px}
+  .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .field{display:flex;flex-direction:column;gap:4px}
+  .label{font-size:12px;color:#64748b;font-weight:600}
+  .input{border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px;font-family:inherit;font-size:14px;outline:none;color:#1e293b;background:#fff;width:100%}
+  .input:focus{border-color:#93c5fd}
+  textarea.input{resize:none}
+
+  /* Images */
+  .img-upload-box{border:2px dashed #e2e8f0;border-radius:10px;padding:30px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;background:#f8fafc}
+  .img-upload-box:hover{border-color:#93c5fd;background:#eff6ff}
+  .img-upload-icon{font-size:36px}
+  .img-upload-text{font-size:13px;color:#94a3b8}
+  .img-grid{display:grid;gap:8px}
+  .img-wrap{position:relative}
+  .img-preview{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block}
+  .img-remove{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;font-family:inherit}
+
+  /* Size table */
+  .size-table{width:100%;border-collapse:collapse;font-size:13px}
+  .size-table th{padding:5px 8px;font-weight:600;color:#64748b;font-size:11px;background:#f1f5f9}
+  .size-table th:first-child{text-align:left;border-radius:6px 0 0 6px}
+  .size-table th:last-child{border-radius:0 6px 6px 0;width:24px}
+  .size-table th.center{text-align:center}
+  .size-table td{padding:4px 6px;border-bottom:1px solid #f1f5f9}
+  .size-table td.center{text-align:center}
+  .size-name-input{border:1px solid #e2e8f0;border-radius:6px;padding:4px 6px;font-size:12px;font-weight:700;width:64px;outline:none;font-family:inherit;background:#fff}
+  .size-qty-input{border:1px solid #e2e8f0;border-radius:6px;padding:4px 6px;font-size:13px;font-weight:700;width:64px;text-align:center;outline:none;font-family:inherit;background:#fff}
+  .size-remove{background:none;border:none;color:#cbd5e1;cursor:pointer;font-size:12px;padding:0}
+  .tfoot-total td{padding:6px 8px;background:#eff6ff;font-weight:700;color:#1d4ed8}
+  .tfoot-grand td{padding:5px 8px;background:#dbeafe;text-align:center;font-weight:800;color:#1e40af;font-size:13px}
+
+  /* Detail */
+  .detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .detail-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .detail-label{font-size:11px;color:#94a3b8;margin-bottom:2px}
+  .detail-val{font-weight:700;color:#1e293b;font-size:15px}
+  .detail-val.blue{color:#3b82f6}
+  .detail-sep{margin-top:10px;padding-top:10px;border-top:1px solid #f1f5f9}
+  .pre-wrap{white-space:pre-wrap;line-height:1.7;font-size:14px;color:#334155}
+  .pre-wrap.amber{color:#92400e}
+  .pre-wrap.sm{font-size:13px}
+
+  .detail-size-table{width:100%;border-collapse:collapse;font-size:13px}
+  .detail-size-table th{padding:5px 8px;font-weight:600;color:#64748b;font-size:11px;background:#f1f5f9}
+  .detail-size-table th:first-child{text-align:left}
+  .detail-size-table th.center{text-align:center}
+  .detail-size-table td{padding:4px 8px;border-bottom:1px solid #f1f5f9}
+  .detail-size-table td.center{text-align:center;font-weight:800;color:#1d4ed8}
+  .detail-size-table td.muted{text-align:center;color:#64748b}
+
+  /* Print */
+  @media print{
+    .no-print{display:none!important}
+    body{background:white}
+    .section{box-shadow:none;border:1px solid #e2e8f0}
+  }
+
+  /* Responsive */
+  @media(max-width:480px){
+    .row2{grid-template-columns:1fr}
+    .detail-grid{grid-template-columns:1fr 1fr}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────────
+const DEFAULT_SIZES = ["0","1","2","3","4","5","6","7","9(S)","10(M)","2XL"];
+const STORAGE_KEY = "order_bill_v1";
+
+function loadOrders(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]"); }catch{ return []; }
+}
+function saveOrders(orders){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+}
+function newOrder(){
+  return {
+    id:"ORD-"+Date.now().toString().slice(-6),
+    customerName:"", jobName:"",
+    orderDate:new Date().toISOString().split("T")[0], dueDate:"",
+    fabricText:"", pattern:"", jobDetail:"", assignee:"",
+    sizeNames:[...DEFAULT_SIZES], sizeQty:{}, sizeExtra:{},
+    notes:"", images:[]
+  };
+}
+function formatDate(d){
+  if(!d)return"-";
+  const [y,m,day]=d.split("-");
+  const M=["","ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+  return `${parseInt(day)} ${M[parseInt(m)]} ${parseInt(y)+543}`;
+}
+function totalQty(obj){ return Object.values(obj||{}).reduce((s,v)=>s+(parseInt(v)||0),0); }
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let state = {
+  view:"list", // list | form | detail
+  orders: loadOrders(),
+  current: null,
+  search: "",
+  toastTimer: null
+};
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function showToast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("show");
+  clearTimeout(state.toastTimer);
+  state.toastTimer=setTimeout(()=>t.classList.remove("show"),2200);
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function render(){
+  const app=document.getElementById("app");
+  if(state.view==="list") app.innerHTML=renderList();
+  else if(state.view==="form") app.innerHTML=renderForm();
+  else if(state.view==="detail") app.innerHTML=renderDetail();
+  bindEvents();
+}
+
+// ── LIST VIEW ─────────────────────────────────────────────────────────────────
+function renderList(){
+  const q=state.search.toLowerCase();
+  const filtered=state.orders.filter(o=>
+    !q||o.customerName.toLowerCase().includes(q)||o.id.toLowerCase().includes(q)
+  );
+  let cards="";
+  if(filtered.length===0){
+    cards=`<div class="empty">
+      <div class="empty-icon">${state.search?"🔍":"📋"}</div>
+      <div>${state.search?"ไม่พบออเดอร์ที่ค้นหา":"ยังไม่มีออเดอร์"}</div>
+      ${!state.search?`<button class="btn-primary" onclick="openNew()">เปิดบิลแรก</button>`:""}
+    </div>`;
+  } else {
+    cards=`<div class="list">
+      <div class="list-count">ทั้งหมด ${filtered.length} ออเดอร์</div>
+      ${filtered.map(o=>{
+        const total=totalQty(o.sizeQty);
+        const thumb=o.images&&o.images.length>0
+          ?`<img src="${o.images[0]}" class="card-thumb" alt="">`
+          :`<div class="card-thumb-placeholder">👖</div>`;
+        return `<div class="card" onclick="openDetail('${o.id}')">
+          <div class="card-inner">
+            ${thumb}
+            <div class="card-body">
+              <div class="card-id">${o.id}</div>
+              <div class="card-name">${o.customerName||"ไม่ระบุชื่อ"}</div>
+              ${o.jobName?`<div class="card-job">${o.jobName}</div>`:""}
+              <div class="card-meta">
+                ${o.orderDate?`<span>📅 ${formatDate(o.orderDate)}</span>`:""}
+                ${o.dueDate?`<span>🚚 ${formatDate(o.dueDate)}</span>`:""}
+                ${total>0?`<span>👖 ${total} ตัว</span>`:""}
+              </div>
+              ${o.fabricText?`<div class="card-fabric">${o.fabricText.split("\n")[0]}</div>`:""}
+            </div>
+            <div class="card-arrow">›</div>
+          </div>
+        </div>`;
+      }).join("")}
+    </div>`;
+  }
+  return `
+    <div class="header">
+      <div class="header-title">🧾 Order Bill</div>
+      <button class="btn-primary" onclick="openNew()">+ เปิดบิลใหม่</button>
+    </div>
+    <div class="toolbar">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="search-input" placeholder="ค้นหาชื่อลูกค้า หรือเลขออเดอร์..." value="${escHtml(state.search)}" oninput="onSearch(this.value)">
+        ${state.search?`<button class="search-clear" onclick="clearSearch()">✕</button>`:""}
+      </div>
+    </div>
+    ${cards}`;
+}
+
+// ── FORM VIEW ─────────────────────────────────────────────────────────────────
+function renderForm(){
+  const o=state.current;
+  const isNew=!state.orders.find(x=>x.id===o.id);
+  const imgGrid=o.images&&o.images.length>0?
+    `<div class="img-grid" style="grid-template-columns:repeat(${Math.min(o.images.length+(o.images.length<3?1:0),3)},1fr)">
+      ${o.images.map((img,i)=>`
+        <div class="img-wrap">
+          <img src="${img}" class="img-preview" alt="">
+          <button class="img-remove" onclick="removeImage(${i})">✕</button>
+        </div>`).join("")}
+      ${o.images.length<3?`<div class="img-upload-box" onclick="document.getElementById('img-file').click()" style="padding:16px">
+        <div style="font-size:24px">📷</div>
+        <div style="font-size:11px;color:#94a3b8">+ เพิ่มรูป</div>
+      </div>`:""}
+    </div>`
+    :`<div class="img-upload-box" onclick="document.getElementById('img-file').click()">
+      <div class="img-upload-icon">📷</div>
+      <div class="img-upload-text">แตะเพื่อเพิ่มรูป (สูงสุด 3 รูป)</div>
+    </div>`;
+
+  // Size rows
+  const sizeRows=o.sizeNames.map((name,i)=>`
+    <tr>
+      <td><input class="size-name-input" value="${escHtml(name)}" oninput="setSizeName(${i},this.value)" placeholder="เช่น 0"></td>
+      <td class="center"><input class="size-qty-input" type="number" min="0" value="${o.sizeQty[name]||""}" oninput="setSizeQty('${escHtml(name)}',this.value,${i})" placeholder="0"></td>
+      <td class="center"><input class="size-qty-input" type="number" min="0" value="${(o.sizeExtra||{})[name]||""}" oninput="setSizeExtra('${escHtml(name)}',this.value)" placeholder="0"></td>
+      <td class="center"><button class="size-remove" onclick="removeSize(${i})">✕</button></td>
+    </tr>`).join("");
+  const total=totalQty(o.sizeQty);
+  const totalExtra=totalQty(o.sizeExtra);
+  const grandTotal=total+totalExtra;
+
+  return `
+    <div class="header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn-back" onclick="goList()">←</button>
+        <div class="header-title">${isNew?"เปิดบิลใหม่":"แก้ไขออเดอร์"}</div>
+      </div>
+      <button class="btn-primary" onclick="saveForm()">บันทึก ✓</button>
+    </div>
+    <div class="form-body">
+
+      <div class="section">
+        <div class="section-title" style="margin-bottom:12px">ข้อมูลลูกค้า</div>
+        <div class="row2">
+          <div class="field">
+            <label class="label">ชื่อลูกค้า *</label>
+            <input class="input" id="f-customerName" value="${escHtml(o.customerName)}" placeholder="เช่น คุณสิร">
+          </div>
+          <div class="field">
+            <label class="label">ชื่องาน</label>
+            <input class="input" id="f-jobName" value="${escHtml(o.jobName||"")}" placeholder="เช่น กางเกงวอร์มรุ่น A">
+          </div>
+        </div>
+        <div class="row2" style="margin-top:10px">
+          <div class="field">
+            <label class="label">วันที่สั่ง</label>
+            <input class="input" type="date" id="f-orderDate" value="${o.orderDate||""}">
+          </div>
+          <div class="field">
+            <label class="label">กำหนดส่งงาน</label>
+            <input class="input" type="date" id="f-dueDate" value="${o.dueDate||""}">
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">รูปภาพสินค้า</div>
+          ${o.images&&o.images.length>0&&o.images.length<3?`<button class="btn-add" onclick="document.getElementById('img-file').click()">+ เพิ่มรูป</button>`:""}
+        </div>
+        <input type="file" id="img-file" accept="image/*" style="display:none" onchange="addImage(this)">
+        ${imgGrid}
+      </div>
+
+      <div class="section">
+        <div class="field">
+          <label class="label">รายละเอียดงาน</label>
+          <textarea class="input" id="f-jobDetail" rows="3" placeholder="เช่น&#10;- เราตัด&#10;- เราเย็บ&#10;- ลายปัก...">${escHtml(o.jobDetail||"")}</textarea>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="row2">
+          <div class="field">
+            <label class="label">ผ้า / สี</label>
+            <textarea class="input" id="f-fabricText" rows="4" placeholder="สีกรม&#10;สีชมพูเข้ม 1 ม้วน&#10;สีขาว 1 ม้วน">${escHtml(o.fabricText||"")}</textarea>
+          </div>
+          <div class="field">
+            <label class="label">แพทเทิร์น</label>
+            <input class="input" id="f-pattern" value="${escHtml(o.pattern||"")}" placeholder="เช่น แพทเทิร์น A">
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <div class="section-title">จำนวนแต่ละไซส์</div>
+          <button class="btn-add" onclick="addSize()">+ เพิ่มไซส์</button>
+        </div>
+        <table class="size-table">
+          <thead><tr>
+            <th>Size</th>
+            <th class="center">จำนวน (ตัว)</th>
+            <th class="center">เพิ่มเติม</th>
+            <th></th>
+          </tr></thead>
+          <tbody id="size-tbody">${sizeRows}</tbody>
+          <tfoot>
+            <tr class="tfoot-total">
+              <td style="padding:6px 8px;font-size:13px">ยอดรวม</td>
+              <td class="center" style="font-size:15px">${total||"-"}</td>
+              <td class="center" style="font-size:15px">${totalExtra||"-"}</td>
+              <td></td>
+            </tr>
+            ${grandTotal>0?`<tr class="tfoot-grand"><td colspan="4">รวมทั้งหมด: ${grandTotal} ตัว</td></tr>`:""}
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="section">
+        <div class="row2">
+          <div class="field">
+            <label class="label">หมายเหตุ</label>
+            <textarea class="input" id="f-notes" rows="4" placeholder="หมายเหตุเพิ่มเติม...">${escHtml(o.notes||"")}</textarea>
+          </div>
+          <div class="field">
+            <label class="label">ผู้รับผิดชอบงาน</label>
+            <textarea class="input" id="f-assignee" rows="4" placeholder="เช่น&#10;ช่างA&#10;ช่างB">${escHtml(o.assignee||"")}</textarea>
+          </div>
+        </div>
+      </div>
+
+    </div>`;
+}
+
+// ── DETAIL VIEW ───────────────────────────────────────────────────────────────
+function renderDetail(){
+  const o=state.current;
+  const total=totalQty(o.sizeQty);
+  const sizeEntries=(o.sizeNames||[]).map(n=>[n,o.sizeQty?.[n]||""]).filter(([,v])=>parseInt(v)>0);
+  const extraTotal=(o.sizeNames||[]).reduce((s,n)=>s+(parseInt((o.sizeExtra||{})[n])||0),0);
+
+  const imgs=o.images&&o.images.length>0
+    ?`<div class="img-grid" style="grid-template-columns:repeat(${Math.min(o.images.length,3)},1fr);gap:8px;margin-bottom:12px">
+        ${o.images.map(img=>`<img src="${img}" class="img-preview" alt="">`).join("")}
+      </div>`:""
+
+  const sizeRows=sizeEntries.map(([name,qty])=>`
+    <tr>
+      <td style="padding:4px 8px;font-weight:700;color:#334155">${name}</td>
+      <td class="center">${qty}</td>
+      <td class="muted">${(o.sizeExtra||{})[name]||"-"}</td>
+    </tr>`).join("");
+
+  return `
+    <style>@media print{.no-print{display:none!important}}</style>
+    <div class="header no-print">
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="btn-back" onclick="goList()">←</button>
+        <div>
+          <div class="header-sub">${o.id}</div>
+          <div class="header-title">${escHtml(o.customerName||"ไม่ระบุชื่อ")}</div>
+          ${o.jobName?`<div class="header-name">${escHtml(o.jobName)}</div>`:""}
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-secondary" onclick="openEdit('${o.id}')">✏️ แก้ไข</button>
+        <button class="btn-secondary btn-danger" onclick="deleteOrder('${o.id}')">🗑</button>
+        <button class="btn-secondary" onclick="window.print()">🖨️ ปริ้น</button>
+      </div>
+    </div>
+    <div class="form-body">
+
+      ${imgs}
+
+      <div class="section">
+        <div class="detail-grid">
+          <div><div class="detail-label">วันที่สั่ง</div><div class="detail-val">${formatDate(o.orderDate)}</div></div>
+          <div><div class="detail-label">กำหนดส่ง</div><div class="detail-val">${formatDate(o.dueDate)}</div></div>
+          <div><div class="detail-label">รวมทั้งหมด</div><div class="detail-val">${total>0?total+" ตัว":"-"}</div></div>
+        </div>
+        ${o.jobName?`<div class="detail-sep"><div class="detail-label">ชื่องาน</div><div class="detail-val blue">${escHtml(o.jobName)}</div></div>`:""}
+      </div>
+
+      ${o.jobDetail?`<div class="section">
+        <div class="section-title" style="margin-bottom:10px">รายละเอียดงาน</div>
+        <div class="pre-wrap">${escHtml(o.jobDetail)}</div>
+      </div>`:""}
+
+      ${o.fabricText||o.pattern?`<div class="section">
+        <div class="detail-2col">
+          ${o.fabricText?`<div><div class="detail-label">ผ้า / สี</div><div class="pre-wrap" style="margin-top:4px">${escHtml(o.fabricText)}</div></div>`:""}
+          ${o.pattern?`<div><div class="detail-label">แพทเทิร์น</div><div style="color:#334155;font-size:14px;margin-top:4px">${escHtml(o.pattern)}</div></div>`:""}
+        </div>
+      </div>`:""}
+
+      ${sizeEntries.length>0?`<div class="section">
+        <div class="section-header">
+          <div class="section-title">จำนวนแต่ละไซส์</div>
+          <div style="font-size:12px;color:#3b82f6;font-weight:600">รวม ${total} ตัว</div>
+        </div>
+        <table class="detail-size-table">
+          <thead><tr>
+            <th>Size</th>
+            <th class="center">จำนวน</th>
+            <th class="center">เพิ่มเติม</th>
+          </tr></thead>
+          <tbody>${sizeRows}</tbody>
+          <tfoot>
+            <tr class="tfoot-total">
+              <td style="padding:6px 8px">ยอดรวม</td>
+              <td class="center" style="padding:6px 8px;font-size:15px">${total}</td>
+              <td class="center" style="padding:6px 8px;font-size:15px">${extraTotal||"-"}</td>
+            </tr>
+            ${total+extraTotal>0?`<tr class="tfoot-grand"><td colspan="3">รวมทั้งหมด: ${total+extraTotal} ตัว</td></tr>`:""}
+          </tfoot>
+        </table>
+      </div>`:""}
+
+      ${o.notes||o.assignee?`<div class="section">
+        <div class="detail-2col">
+          ${o.notes?`<div><div class="detail-label">หมายเหตุ</div><div class="pre-wrap amber sm" style="margin-top:4px">${escHtml(o.notes)}</div></div>`:""}
+          ${o.assignee?`<div><div class="detail-label">ผู้รับผิดชอบงาน</div><div class="pre-wrap sm" style="margin-top:4px">👤 ${escHtml(o.assignee)}</div></div>`:""}
+        </div>
+      </div>`:""}
+
+    </div>`;
+}
+
+// ── Event Handlers ────────────────────────────────────────────────────────────
+function bindEvents(){}
+
+function escHtml(s){
+  return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function goList(){ state.view="list"; render(); }
+function openNew(){ state.current=newOrder(); state.view="form"; render(); }
+function openDetail(id){ state.current=state.orders.find(o=>o.id===id); state.view="detail"; render(); }
+function openEdit(id){ state.current={...state.orders.find(o=>o.id===id)}; state.view="form"; render(); }
+
+function onSearch(v){ state.search=v; render(); document.getElementById("search-input")?.focus(); }
+function clearSearch(){ state.search=""; render(); }
+
+function collectForm(){
+  const o=state.current;
+  o.customerName=document.getElementById("f-customerName").value;
+  o.jobName=document.getElementById("f-jobName").value;
+  o.orderDate=document.getElementById("f-orderDate").value;
+  o.dueDate=document.getElementById("f-dueDate").value;
+  o.jobDetail=document.getElementById("f-jobDetail").value;
+  o.fabricText=document.getElementById("f-fabricText").value;
+  o.pattern=document.getElementById("f-pattern").value;
+  o.notes=document.getElementById("f-notes").value;
+  o.assignee=document.getElementById("f-assignee").value;
+}
+
+function saveForm(){
+  collectForm();
+  const o=state.current;
+  if(!o.customerName.trim()){ alert("กรุณากรอกชื่อลูกค้า"); return; }
+  const idx=state.orders.findIndex(x=>x.id===o.id);
+  if(idx>=0) state.orders[idx]=o;
+  else state.orders.unshift(o);
+  saveOrders(state.orders);
+  showToast("บันทึกแล้ว ✓");
+  state.view="list"; render();
+}
+
+function deleteOrder(id){
+  if(!confirm("ลบออเดอร์นี้?")) return;
+  state.orders=state.orders.filter(o=>o.id!==id);
+  saveOrders(state.orders);
+  showToast("ลบแล้ว");
+  state.view="list"; render();
+}
+
+function setSizeName(i,v){
+  collectForm();
+  const oldName=state.current.sizeNames[i];
+  state.current.sizeNames[i]=v;
+  // migrate qty/extra to new name
+  if(state.current.sizeQty[oldName]!==undefined){
+    state.current.sizeQty[v]=state.current.sizeQty[oldName];
+    delete state.current.sizeQty[oldName];
+  }
+  if((state.current.sizeExtra||{})[oldName]!==undefined){
+    state.current.sizeExtra[v]=state.current.sizeExtra[oldName];
+    delete state.current.sizeExtra[oldName];
+  }
+  render();
+}
+function setSizeQty(name,v,i){
+  collectForm();
+  const curName=state.current.sizeNames[i];
+  state.current.sizeQty[curName]=v;
+  // update tfoot live without full re-render
+  updateSizeTotals();
+}
+function setSizeExtra(name,v){
+  collectForm();
+  if(!state.current.sizeExtra) state.current.sizeExtra={};
+  state.current.sizeExtra[name]=v;
+  updateSizeTotals();
+}
+function updateSizeTotals(){
+  const total=totalQty(state.current.sizeQty);
+  const extra=totalQty(state.current.sizeExtra);
+  const grand=total+extra;
+  const tfoot=document.querySelector(".size-table tfoot");
+  if(tfoot) tfoot.innerHTML=`
+    <tr class="tfoot-total">
+      <td style="padding:6px 8px;font-size:13px">ยอดรวม</td>
+      <td class="center" style="font-size:15px">${total||"-"}</td>
+      <td class="center" style="font-size:15px">${extra||"-"}</td>
+      <td></td>
+    </tr>
+    ${grand>0?`<tr class="tfoot-grand"><td colspan="4">รวมทั้งหมด: ${grand} ตัว</td></tr>`:""}`;
+}
+function addSize(){
+  collectForm();
+  state.current.sizeNames.push("");
+  render();
+}
+function removeSize(i){
+  collectForm();
+  const name=state.current.sizeNames[i];
+  state.current.sizeNames.splice(i,1);
+  delete state.current.sizeQty[name];
+  if(state.current.sizeExtra) delete state.current.sizeExtra[name];
+  render();
+}
+
+function addImage(input){
+  const file=input.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    collectForm();
+    if(!state.current.images) state.current.images=[];
+    if(state.current.images.length<3) state.current.images.push(ev.target.result);
+    input.value="";
+    render();
+  };
+  reader.readAsDataURL(file);
+}
+function removeImage(i){
+  collectForm();
+  state.current.images.splice(i,1);
+  render();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.body.insertAdjacentHTML("beforeend",`<div id="toast" class="toast"></div>`);
+render();
+</script>
+</body>
+</html>
