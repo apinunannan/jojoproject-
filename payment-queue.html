@@ -245,8 +245,6 @@ function renderKanban() {
 }
 
 function moveStage(id, stage) {
-  const cached = localStorage.getItem('jojo_payment');
-  if (cached) orders = JSON.parse(cached);
   const o = orders.find(x => x.id === id);
   if (!o) return;
   o.payStage = stage;
@@ -256,11 +254,8 @@ function moveStage(id, stage) {
 }
 
 function archiveOrder(id) {
-  // Reload from localStorage in case orders array is stale
-  const cached = localStorage.getItem('jojo_payment');
-  if (cached) orders = JSON.parse(cached);
   const o = orders.find(x => x.id === id);
-  if (!o) return;
+  if (!o) { alert('ไม่พบออเดอร์ กรุณา refresh หน้าใหม่'); return; }
   if (!confirm('ย้าย "' + o.name + '" ไปคลังข้อมูล?')) return;
   let archive = JSON.parse(localStorage.getItem('jojo_archive') || '[]');
   if (!archive.find(x => x.id === o.id)) {
