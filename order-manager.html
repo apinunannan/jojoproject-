@@ -894,6 +894,10 @@ function sendToPayment(id){
   const payOrder = {...o, payStage:'done', sentAt: new Date().toISOString()};
   payOrders.unshift(payOrder);
   localStorage.setItem('jojo_payment', JSON.stringify(payOrders));
+  // Sync payment to Google Sheets immediately
+  fetch(GAS_URL, {method:'POST', body: JSON.stringify({store:'jojo_payment', data:payOrders})})
+    .then(()=>console.log('payment synced'))
+    .catch(e=>console.error('payment sync error',e));
   // Remove from production
   orders = orders.filter(x=>x.id!==id);
   selId = null;
