@@ -129,10 +129,11 @@
     .detail-size-table td{padding:4px 6px}
     .detail-size-table td.center{font-size:14px;font-weight:800}
     .detail-2col{gap:8px}
-    .print-header{display:block!important}
+    #print-header{display:block!important}
+    .detail-size-table td.muted{color:#334155!important;font-weight:700}
     @page{size:A4 portrait;margin:10mm}
   }
-  .print-header{display:none}
+  
 
   /* Responsive */
   @media(max-width:480px){
@@ -396,7 +397,7 @@ function renderForm(){
 function renderDetail(){
   const o=state.current;
   const total=totalQty(o.sizeQty);
-  const sizeEntries=(o.sizeNames||[]).map(n=>[n,o.sizeQty?.[n]||""]).filter(([,v])=>parseInt(v)>0);
+  const sizeEntries=(o.sizeNames||[]).map(n=>[n,o.sizeQty?.[n]||""]).filter(([n,v])=>parseInt(v)>0||parseInt((o.sizeExtra||{})[n])>0);
   const extraTotal=(o.sizeNames||[]).reduce((s,n)=>s+(parseInt((o.sizeExtra||{})[n])||0),0);
 
   const imgs=o.images&&o.images.length>0
@@ -412,7 +413,7 @@ function renderDetail(){
     </tr>`).join("");
 
   return `
-    <div class="print-header" style="padding:8px 12px 6px;border-bottom:2px solid #1e293b;margin-bottom:6px">
+    <div id="print-header" style="display:none;padding:8px 12px 6px;border-bottom:2px solid #1e293b;margin-bottom:6px">
       <div style="font-size:10px;color:#94a3b8">${o.id}</div>
       <div style="font-size:20px;font-weight:800;color:#1e293b">${escHtml(o.customerName||'ไม่ระบุชื่อ')}</div>
       ${o.jobName?`<div style="font-size:13px;color:#3b82f6;font-weight:600">${escHtml(o.jobName)}</div>`:''}
