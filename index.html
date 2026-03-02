@@ -129,6 +129,7 @@
     .detail-size-table td,.detail-size-table th{padding:3px 6px;font-size:11px}
     .detail-2col{gap:8px}
     @page{size:A4 portrait;margin:12mm 12mm 12mm 12mm}
+    .print-only-header{display:block!important}
   }
 
   /* Responsive */
@@ -410,6 +411,13 @@ function renderDetail(){
 
   return `
     <style>@media print{.no-print{display:none!important}}</style>
+    <div class="print-only-header" style="display:none">
+      <div style="padding:8px 12px;border-bottom:2px solid #1e293b;margin-bottom:8px">
+        <div style="font-size:10px;color:#94a3b8">${o.id}</div>
+        <div style="font-size:18px;font-weight:800;color:#1e293b">${escHtml(o.customerName||'ไม่ระบุชื่อ')}</div>
+        ${o.jobName?`<div style="font-size:13px;color:#3b82f6;font-weight:600">${escHtml(o.jobName)}</div>`:''}
+      </div>
+    </div>
     <div class="header no-print">
       <div style="display:flex;align-items:center;gap:10px">
         <button class="btn-back" onclick="goList()">←</button>
