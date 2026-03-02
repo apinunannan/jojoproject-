@@ -413,13 +413,6 @@ function renderDetail(){
     </tr>`).join("");
 
   return `
-    <div id="print-header" style="display:none;padding:8px 12px 8px;border-bottom:2px solid #1e293b;margin-bottom:6px">
-      <div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap">
-        <div style="font-size:20px;font-weight:800;color:#1e293b">${escHtml(o.customerName||'ไม่ระบุชื่อ')}</div>
-        ${o.jobName?`<div style="font-size:14px;color:#3b82f6;font-weight:600">${escHtml(o.jobName)}</div>`:''}
-      </div>
-      <div style="font-size:10px;color:#94a3b8;margin-top:2px">${o.id}</div>
-    </div>
     <div class="header no-print">
       <div style="display:flex;align-items:center;gap:10px">
         <button class="btn-back" onclick="goList()">←</button>
@@ -445,7 +438,10 @@ function renderDetail(){
           <div><div class="detail-label">กำหนดส่ง</div><div class="detail-val">${formatDate(o.dueDate)}</div></div>
           <div><div class="detail-label">รวมทั้งหมด</div><div class="detail-val">${total>0?total+" ตัว":"-"}</div></div>
         </div>
-        ${o.jobName?`<div class="detail-sep"><div class="detail-label">ชื่องาน</div><div class="detail-val blue">${escHtml(o.jobName)}</div></div>`:""}
+        <div class="detail-sep" style="display:flex;gap:20px;flex-wrap:wrap;align-items:baseline">
+          <div><div class="detail-label">ชื่อลูกค้า</div><div class="detail-val">${escHtml(o.customerName||'-')}</div></div>
+          ${o.jobName?`<div><div class="detail-label">ชื่องาน</div><div class="detail-val blue">${escHtml(o.jobName)}</div></div>`:''}
+        </div>
       </div>
 
       ${o.jobDetail?`<div class="section">
