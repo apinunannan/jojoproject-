@@ -86,7 +86,7 @@
   .size-table th.center{text-align:center}
   .size-table td{padding:4px 6px;border-bottom:1px solid #f1f5f9}
   .size-table td.center{text-align:center}
-  .size-name-input{border:1px solid #e2e8f0;border-radius:6px;padding:4px 6px;font-size:12px;font-weight:700;width:80px;outline:none;font-family:inherit;background:#fff}
+  .size-name-input{border:1px solid #e2e8f0;border-radius:6px;padding:4px 6px;font-size:12px;font-weight:700;width:64px;outline:none;font-family:inherit;background:#fff}
   .size-qty-input{border:1px solid #e2e8f0;border-radius:6px;padding:4px 6px;font-size:13px;font-weight:700;width:64px;text-align:center;outline:none;font-family:inherit;background:#fff}
   .size-remove{background:none;border:none;color:#cbd5e1;cursor:pointer;font-size:12px;padding:0}
   .tfoot-total td{padding:6px 8px;background:#eff6ff;font-weight:700;color:#1d4ed8}
@@ -126,14 +126,13 @@
     .pre-wrap{font-size:11px;line-height:1.5}
     .detail-size-table{font-size:12px;width:100%}
     .detail-size-table th{padding:4px 6px;font-size:11px}
-    .detail-size-table td{padding:4px 6px}
-    .detail-size-table td.center{font-size:14px;font-weight:800}
+    .detail-size-table td{padding:4px 6px;color:#000!important;font-weight:700!important}
+    .detail-size-table td.muted{color:#000!important;font-weight:800!important;text-align:center!important}
+    .detail-size-table td.center{font-size:14px;font-weight:800!important;color:#000!important}
     .detail-2col{gap:8px}
     #print-header{display:block!important}
-    .detail-size-table td.muted{color:#000!important;font-weight:800!important;text-align:center!important}
     @page{size:A4 portrait;margin:10mm}
   }
-  
 
   /* Responsive */
   @media(max-width:480px){
@@ -280,9 +279,9 @@ function renderForm(){
   // Size rows
   const sizeRows=o.sizeNames.map((name,i)=>`
     <tr>
-      <td><input class="size-name-input" id="sn-${i}" value="${escHtml(name)}" onchange="setSizeName(${i},this.value)" placeholder="เช่น 0"></td>
-      <td class="center"><input class="size-qty-input" id="sq-${i}" type="number" min="0" value="${o.sizeQty[name]||""}" onchange="setSizeQty('${escHtml(name)}',this.value,${i})" placeholder="0"></td>
-      <td class="center"><input class="size-qty-input" id="se-${i}" type="number" min="0" value="${(o.sizeExtra||{})[name]||""}" onchange="setSizeExtra('${escHtml(name)}',this.value)" placeholder="0"></td>
+      <td><input class="size-name-input" value="${escHtml(name)}" onchange="setSizeName(${i},this.value)" placeholder="เช่น 0"></td>
+      <td class="center"><input class="size-qty-input" type="number" min="0" value="${o.sizeQty[name]||""}" onchange="setSizeQty('${escHtml(name)}',this.value,${i})" placeholder="0"></td>
+      <td class="center"><input class="size-qty-input" type="number" min="0" value="${(o.sizeExtra||{})[name]||""}" onchange="setSizeExtra('${escHtml(name)}',this.value)" placeholder="0"></td>
       <td class="center"><button class="size-remove" onclick="removeSize(${i})">✕</button></td>
     </tr>`).join("");
   const total=totalQty(o.sizeQty);
@@ -414,7 +413,13 @@ function renderDetail(){
     </tr>`).join("");
 
   return `
-
+    <div id="print-header" style="display:none;padding:8px 12px 8px;border-bottom:2px solid #1e293b;margin-bottom:6px">
+      <div style="display:flex;align-items:baseline;gap:16px;flex-wrap:wrap">
+        <div style="font-size:20px;font-weight:800;color:#1e293b">${escHtml(o.customerName||'ไม่ระบุชื่อ')}</div>
+        ${o.jobName?`<div style="font-size:14px;color:#3b82f6;font-weight:600">${escHtml(o.jobName)}</div>`:''}
+      </div>
+      <div style="font-size:10px;color:#94a3b8;margin-top:2px">${o.id}</div>
+    </div>
     <div class="header no-print">
       <div style="display:flex;align-items:center;gap:10px">
         <button class="btn-back" onclick="goList()">←</button>
@@ -540,6 +545,7 @@ function setSizeName(i,v){
   collectForm();
   const oldName=state.current.sizeNames[i];
   state.current.sizeNames[i]=v;
+  // migrate qty/extra to new name
   if(state.current.sizeQty[oldName]!==undefined){
     state.current.sizeQty[v]=state.current.sizeQty[oldName];
     delete state.current.sizeQty[oldName];
@@ -548,7 +554,6 @@ function setSizeName(i,v){
     state.current.sizeExtra[v]=state.current.sizeExtra[oldName];
     delete state.current.sizeExtra[oldName];
   }
-  // ไม่ render() เพื่อไม่ให้ focus หาย
   saveOrders(state.orders);
 }
 function setSizeQty(name,v,i){
