@@ -398,7 +398,8 @@ function renderDetail(){
   const o=state.current;
   const total=totalQty(o.sizeQty);
   const sizeEntries=(o.sizeNames||[]).map(n=>[n,o.sizeQty?.[n]||""]).filter(([n,v])=>parseInt(v)>0||parseInt((o.sizeExtra||{})[n])>0);
-  const extraTotal=(o.sizeNames||[]).reduce((s,n)=>s+(parseInt((o.sizeExtra||{})[n])||0),0);
+  const extraTotal=sizeEntries.reduce((s,[n])=>s+(parseInt((o.sizeExtra||{})[n])||0),0);
+  const grandTotal=total+extraTotal;
 
   const imgs=o.images&&o.images.length>0
     ?`<div class="img-grid" style="grid-template-columns:repeat(${Math.min(o.images.length,3)},1fr);gap:8px;margin-bottom:12px">
@@ -414,9 +415,9 @@ function renderDetail(){
 
   return `
     <div id="print-header" style="display:none;padding:8px 12px 6px;border-bottom:2px solid #1e293b;margin-bottom:6px">
-      <div style="font-size:10px;color:#94a3b8">${o.id}</div>
       <div style="font-size:20px;font-weight:800;color:#1e293b">${escHtml(o.customerName||'ไม่ระบุชื่อ')}</div>
       ${o.jobName?`<div style="font-size:13px;color:#3b82f6;font-weight:600">${escHtml(o.jobName)}</div>`:''}
+      <div style="font-size:10px;color:#94a3b8;margin-top:2px">${o.id}</div>
     </div>
     <div class="header no-print">
       <div style="display:flex;align-items:center;gap:10px">
@@ -476,7 +477,7 @@ function renderDetail(){
               <td class="center" style="padding:6px 8px;font-size:15px">${total}</td>
               <td class="center" style="padding:6px 8px;font-size:15px">${extraTotal||"-"}</td>
             </tr>
-            ${total+extraTotal>0?`<tr class="tfoot-grand"><td colspan="3">รวมทั้งหมด: ${total+extraTotal} ตัว</td></tr>`:""}
+            ${grandTotal>0?`<tr class="tfoot-grand"><td colspan="3">รวมทั้งหมด: ${grandTotal} ตัว</td></tr>`:""}
           </tfoot>
         </table>
       </div>`:""}
