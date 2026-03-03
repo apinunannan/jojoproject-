@@ -236,6 +236,7 @@ function renderKanban() {
                 ${prevStage ? `<button class="move-btn" onclick="event.stopPropagation();moveStage('${o.id}','${prevStage.key}')">← ${prevStage.label.replace(/^[^\s]+\s/,'')}</button>` : ''}
                 ${nextStage ? `<button class="move-btn next" onclick="event.stopPropagation();moveStage('${o.id}','${nextStage.key}')">${nextStage.label.replace(/^[^\s]+\s/,'')} →</button>` : ''}
                 ${st.key === 'paid' ? `<button class="move-btn archive" onclick="event.stopPropagation();archiveOrder('${o.id}')">📦 ย้ายไปคลัง</button>` : ''}
+                <button class="move-btn" onclick="event.stopPropagation();deleteOrder('${o.id}')" style="background:#ef444422;color:var(--red);border-color:#ef444444">🗑 ลบ</button>
               </div>
             </div>`;
           }).join('')}
@@ -338,7 +339,8 @@ function openDetail(id) {
     ${o.note ? `<div class="det-section"><div class="det-section-title">หมายเหตุ</div><div style="font-size:12px;color:var(--text2)">${o.note}</div></div>` : ''}
 
     <div class="det-section" style="border-bottom:none">
-      <button onclick="archiveOrder('${o.id}')" style="width:100%;padding:8px;background:#22c55e22;border:1px solid #22c55e44;border-radius:7px;color:var(--green);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;font-weight:600">📦 ย้ายไปคลังข้อมูล</button>
+      <button onclick="archiveOrder('${o.id}')" style="width:100%;padding:8px;background:#22c55e22;border:1px solid #22c55e44;border-radius:7px;color:var(--green);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;font-weight:600;margin-bottom:6px">📦 ย้ายไปคลังข้อมูล</button>
+      <button onclick="deleteOrder('${o.id}')" style="width:100%;padding:8px;background:#ef444422;border:1px solid #ef444444;border-radius:7px;color:var(--red);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;font-weight:600">🗑 ลบออกจากคิว</button>
     </div>
   `;
   document.getElementById('detOverlay').classList.add('open');
@@ -350,6 +352,16 @@ function closeDO(e) {
 
 // Poll for updates from order-manager
 // sync handled by setInterval above
+
+function deleteOrder(id) {
+  const cached = localStorage.getItem('jojo_payment');
+  if (cached) orders = JSON.parse(cached);
+  const o = orders.find(x => x.id === id);
+  if (!o || !confirm('ลบ "' + o.name + '" ออกจากคิว?')) return;
+  orders = orders.filter(x => x.id !== id);
+  document.getElementById('detOverlay').classList.remove('open');
+  save(); render();
+}
 
 function openAddModal() {
   const d = new Date().toISOString().split('T')[0];
