@@ -367,6 +367,7 @@ function openAddModal() {
   const d = new Date().toISOString().split('T')[0];
   document.getElementById('af_name').value = '';
   document.getElementById('af_product').value = '';
+  document.getElementById('af_subproduct').value = '';
   document.getElementById('af_qty').value = '';
   document.getElementById('af_price').value = '';
   document.getElementById('af_date').value = d;
@@ -384,7 +385,7 @@ function saveAddOrder() {
     id: 'PAY-' + Date.now(),
     name,
     product: document.getElementById('af_product').value.trim(),
-    subproduct: '',
+    subproduct: document.getElementById('af_subproduct').value.trim(),
     qty: document.getElementById('af_qty').value,
     price: document.getElementById('af_price').value,
     date: document.getElementById('af_date').value,
@@ -425,6 +426,10 @@ loadFromSheet();
         <div>
           <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">สินค้า</label>
           <input id="af_product" placeholder="ชื่อสินค้า" style="width:100%;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">สินค้าย่อย</label>
+          <input id="af_subproduct" placeholder="สี, รุ่น, ลาย..." style="width:100%;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none">
         </div>
         <div>
           <label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">จำนวน</label>
