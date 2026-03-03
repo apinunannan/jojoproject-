@@ -108,7 +108,8 @@ body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--t
   </select>
   <button class="sort-btn" id="sortBtn" onclick="toggleSort()">⇅ ล่าสุด</button>
   <span style="font-size:12px;color:var(--text2);margin-left:auto" id="countLabel"></span>
-  <button onclick="openProductSummary()" style="padding:7px 12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer">📊 แยกประเภท</button>
+  <button onclick="openProductSummary('product')" style="padding:7px 12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer">📊 แยกตามสินค้า</button>
+  <button onclick="openProductSummary('customer')" style="padding:7px 12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer">👤 แยกตามลูกค้า</button>
   <button onclick="openPrintModal()" style="padding:7px 12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer">🖨 ปริ้น</button>
   <button onclick="openAddModal()" style="padding:7px 14px;border-radius:7px;border:none;background:var(--accent);color:#111;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer">+ เพิ่มออเดอร์</button>
 </div>
@@ -158,9 +159,11 @@ body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--t
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">วันที่รับออเดอร์</label><input class="a-inp" id="a_date" type="date"></div>
+        <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">กำหนดส่ง</label><input class="a-inp" id="a_deadline" type="date"></div>
         <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">วันที่จ่ายเงิน *</label><input class="a-inp" id="a_paiddate" type="date"></div>
       </div>
-      <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">หมายเหตุ</label><textarea class="a-inp" id="a_note" placeholder="รายละเอียดเพิ่มเติม..." style="resize:none;min-height:50px"></textarea></div>
+      <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">หมายเหตุ</label><textarea class="a-inp" id="a_note" placeholder="รายละเอียดเพิ่มเติม..." style="resize:none;min-height:50px"></textarea>
+      <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">ธนาคาร</label><input class="a-inp" id="a_bank" placeholder="กสิกร, SCB..."></div></div>
       <label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px">
         <input type="checkbox" id="a_vat" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer">
         <span style="font-size:13px">มี VAT 7%</span>
@@ -423,10 +426,11 @@ function deleteFromArchive(id) {
 // auto-refresh handled by setInterval above
 
 function openAddModal(){
-  ['a_name','a_product','a_subproduct','a_qty','a_price','a_note'].forEach(id=>document.getElementById(id).value='');
+  ['a_name','a_product','a_subproduct','a_qty','a_price','a_note','a_bank'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('a_vat').checked=false;
   document.getElementById('a_date').value=today();
   document.getElementById('a_paiddate').value=today();
+  document.getElementById('a_deadline').value='';
   document.getElementById('addCalcPreview').style.display='none';
   document.getElementById('addOverlay').classList.add('open');
 }
@@ -456,6 +460,8 @@ function saveNewOrder(){
     qty: document.getElementById('a_qty').value,
     price: document.getElementById('a_price').value,
     date: document.getElementById('a_date').value,
+    deadline: document.getElementById('a_deadline').value,
+    bank: document.getElementById('a_bank').value.trim(),
     note: document.getElementById('a_note').value.trim(),
     useVat: document.getElementById('a_vat').checked,
     payStage: 'paid',
@@ -470,59 +476,61 @@ function saveNewOrder(){
 }
 
 
-function openProductSummary() {
+function openProductSummary(mode) {
   const filtered = getFiltered();
   const grp = {};
   filtered.forEach(o => {
-    const key = o.product || 'ไม่ระบุ';
-    if (!grp[key]) grp[key] = { qty: 0, base: 0, vat: 0, total: 0, count: 0 };
+    const key = mode==='customer' ? (o.name||'ไม่ระบุ') : (o.product||'ไม่ระบุ');
+    if (!grp[key]) grp[key] = { qty:0, baseVat:0, vat:0, baseNoVat:0, total:0, count:0 };
     const u=+(o.price)||0, q=+(o.qty)||1, base=u*q, vat=o.useVat?Math.round(base*0.07):0;
     grp[key].qty += q;
-    grp[key].base += base;
-    grp[key].vat += vat;
+    if(o.useVat){ grp[key].baseVat += base; grp[key].vat += vat; }
+    else { grp[key].baseNoVat += base; }
     grp[key].total += base+vat;
     grp[key].count++;
   });
   const rows = Object.entries(grp).sort((a,b)=>b[1].total-a[1].total);
-  const grandBase = rows.reduce((s,[,v])=>s+v.base,0);
-  const grandVat = rows.reduce((s,[,v])=>s+v.vat,0);
-  const grandTotal = rows.reduce((s,[,v])=>s+v.total,0);
-  const grandQty = rows.reduce((s,[,v])=>s+v.qty,0);
-
+  const gQty = rows.reduce((s,[,v])=>s+v.qty,0);
+  const gBaseVat = rows.reduce((s,[,v])=>s+v.baseVat,0);
+  const gVat = rows.reduce((s,[,v])=>s+v.vat,0);
+  const gNoVat = rows.reduce((s,[,v])=>s+v.baseNoVat,0);
+  const gTotal = rows.reduce((s,[,v])=>s+v.total,0);
+  const label = mode==='customer'?'ลูกค้า':'สินค้า';
   document.getElementById('summaryContent').innerHTML = `
-    <table style="width:100%;border-collapse:collapse;font-size:12px">
-      <thead>
-        <tr style="border-bottom:2px solid var(--border)">
-          <th style="text-align:left;padding:7px 6px;color:var(--text3);font-size:10px;text-transform:uppercase">ประเภทสินค้า</th>
-          <th style="text-align:center;padding:7px 6px;color:var(--text3);font-size:10px">จำนวน</th>
-          <th style="text-align:center;padding:7px 6px;color:var(--text3);font-size:10px">ออเดอร์</th>
-          <th style="text-align:right;padding:7px 6px;color:var(--text3);font-size:10px">ก่อน VAT</th>
-          <th style="text-align:right;padding:7px 6px;color:var(--accent2);font-size:10px">VAT</th>
-          <th style="text-align:right;padding:7px 6px;color:var(--text3);font-size:10px">รวม</th>
-        </tr>
-      </thead>
+    <div style="margin-bottom:10px;font-size:12px;color:var(--text2)">แสดงตาม<strong style="color:var(--text)">${label}</strong> · ${filtered.length} ออเดอร์</div>
+    <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:560px">
+      <thead><tr style="border-bottom:2px solid var(--border)">
+        <th style="text-align:left;padding:7px 6px;color:var(--text3);font-size:10px">${label.toUpperCase()}</th>
+        <th style="text-align:center;padding:7px 6px;color:var(--text3);font-size:10px">ออเดอร์</th>
+        <th style="text-align:center;padding:7px 6px;color:var(--text3);font-size:10px">จำนวน</th>
+        <th style="text-align:right;padding:7px 6px;color:var(--text3);font-size:10px">ไม่มี VAT</th>
+        <th style="text-align:right;padding:7px 6px;color:var(--text3);font-size:10px">ก่อน VAT</th>
+        <th style="text-align:right;padding:7px 6px;color:var(--accent2);font-size:10px">VAT 7%</th>
+        <th style="text-align:right;padding:7px 6px;color:var(--accent);font-size:10px">รวม</th>
+      </tr></thead>
       <tbody>
         ${rows.map(([name,v])=>`
         <tr style="border-bottom:1px solid var(--border)">
           <td style="padding:8px 6px;font-weight:600">${name}</td>
-          <td style="padding:8px 6px;text-align:center;font-family:var(--mono)">${v.qty.toLocaleString()} ชิ้น</td>
           <td style="padding:8px 6px;text-align:center;font-family:var(--mono);color:var(--text2)">${v.count}</td>
-          <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--text2)">฿${v.base.toLocaleString()}</td>
+          <td style="padding:8px 6px;text-align:center;font-family:var(--mono)">${v.qty.toLocaleString()} ชิ้น</td>
+          <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--text2)">${v.baseNoVat?'฿'+v.baseNoVat.toLocaleString():'-'}</td>
+          <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--text2)">${v.baseVat?'฿'+v.baseVat.toLocaleString():'-'}</td>
           <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--accent2)">${v.vat?'+฿'+v.vat.toLocaleString():'-'}</td>
           <td style="padding:8px 6px;text-align:right;font-family:var(--mono);color:var(--accent);font-weight:700">฿${v.total.toLocaleString()}</td>
         </tr>`).join('')}
       </tbody>
-      <tfoot>
-        <tr style="border-top:2px solid var(--border);background:var(--surface2)">
-          <td style="padding:9px 6px;font-weight:700">รวมทั้งหมด</td>
-          <td style="padding:9px 6px;text-align:center;font-family:var(--mono);font-weight:700">${grandQty.toLocaleString()} ชิ้น</td>
-          <td style="padding:9px 6px;text-align:center;font-family:var(--mono);color:var(--text2)">${filtered.length}</td>
-          <td style="padding:9px 6px;text-align:right;font-family:var(--mono)">฿${grandBase.toLocaleString()}</td>
-          <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:var(--accent2)">${grandVat?'+฿'+grandVat.toLocaleString():'-'}</td>
-          <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:var(--accent);font-weight:700;font-size:14px">฿${grandTotal.toLocaleString()}</td>
-        </tr>
-      </tfoot>
-    </table>`;
+      <tfoot><tr style="border-top:2px solid var(--border);background:var(--surface2)">
+        <td style="padding:9px 6px;font-weight:700">รวม</td>
+        <td style="padding:9px 6px;text-align:center;font-family:var(--mono);color:var(--text2)">${filtered.length}</td>
+        <td style="padding:9px 6px;text-align:center;font-family:var(--mono);font-weight:700">${gQty.toLocaleString()} ชิ้น</td>
+        <td style="padding:9px 6px;text-align:right;font-family:var(--mono)">${gNoVat?'฿'+gNoVat.toLocaleString():'-'}</td>
+        <td style="padding:9px 6px;text-align:right;font-family:var(--mono)">${gBaseVat?'฿'+gBaseVat.toLocaleString():'-'}</td>
+        <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:var(--accent2)">${gVat?'+฿'+gVat.toLocaleString():'-'}</td>
+        <td style="padding:9px 6px;text-align:right;font-family:var(--mono);color:var(--accent);font-weight:700;font-size:14px">฿${gTotal.toLocaleString()}</td>
+      </tr></tfoot>
+    </table></div>`;
   document.getElementById('summaryOverlay').classList.add('open');
 }
 function closeSummary() { document.getElementById('summaryOverlay').classList.remove('open'); }
