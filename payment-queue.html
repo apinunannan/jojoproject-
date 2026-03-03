@@ -303,7 +303,10 @@ function openDetail(id) {
           <span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${stage?.color||'#888'}22;color:${stage?.color||'#888'};border:1px solid ${stage?.color||'#888'}44">${stage?.label||'-'}</span>
         </div>
       </div>
-      <button onclick="document.getElementById('detOverlay').classList.remove('open')" style="background:none;border:none;color:var(--text2);font-size:17px;cursor:pointer;padding:4px">✕</button>
+      <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+        <button onclick="document.getElementById('detOverlay').classList.remove('open')" style="background:none;border:none;color:var(--text2);font-size:17px;cursor:pointer;padding:4px">✕</button>
+        <button onclick="openEditModal('${o.id}')" style="padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:11px;cursor:pointer;font-family:'Sarabun',sans-serif">✏️ แก้ไข</button>
+      </div>
     </div>
 
     <div class="det-section">
@@ -408,6 +411,40 @@ async function syncArchive(archiveData) {
   } catch(e) { console.error('archive sync error', e); }
 }
 
+let editId = null;
+function openEditModal(id) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  editId = id;
+  document.getElementById('ef_name').value = o.name || '';
+  document.getElementById('ef_product').value = o.product || '';
+  document.getElementById('ef_subproduct').value = o.subproduct || '';
+  document.getElementById('ef_qty').value = o.qty || '';
+  document.getElementById('ef_price').value = o.price || '';
+  document.getElementById('ef_deadline').value = o.deadline || '';
+  document.getElementById('ef_vat').checked = o.useVat || false;
+  document.getElementById('ef_note').value = o.note || '';
+  document.getElementById('editOverlay').classList.add('open');
+}
+function closeEditModal() { document.getElementById('editOverlay').classList.remove('open'); }
+function saveEditOrder() {
+  const o = orders.find(x => x.id === editId);
+  if (!o) return;
+  const name = document.getElementById('ef_name').value.trim();
+  if (!name) { alert('กรุณากรอกชื่อลูกค้า'); return; }
+  o.name = name;
+  o.product = document.getElementById('ef_product').value.trim();
+  o.subproduct = document.getElementById('ef_subproduct').value.trim();
+  o.qty = document.getElementById('ef_qty').value;
+  o.price = document.getElementById('ef_price').value;
+  o.deadline = document.getElementById('ef_deadline').value;
+  o.useVat = document.getElementById('ef_vat').checked;
+  o.note = document.getElementById('ef_note').value.trim();
+  save(); render();
+  closeEditModal();
+  openDetail(editId);
+}
+
 loadFromSheet();
 </script>
 <!-- ADD MODAL -->
@@ -459,6 +496,42 @@ loadFromSheet();
       <div style="display:flex;gap:8px;margin-top:4px">
         <button onclick="closeAddModal()" style="flex:1;padding:9px;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--text2);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer">ยกเลิก</button>
         <button onclick="saveAddOrder()" style="flex:2;padding:9px;background:var(--accent);border:none;border-radius:7px;color:#111;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer">+ เพิ่มออเดอร์</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="det-overlay" id="editOverlay" onclick="if(event.target===this)closeEditModal()">
+  <div class="det-modal" style="padding:0">
+    <div class="det-header" style="justify-content:space-between">
+      <div style="font-size:15px;font-weight:700">✏️ แก้ไขออเดอร์</div>
+      <button onclick="closeEditModal()" style="background:none;border:none;color:var(--text2);font-size:17px;cursor:pointer">✕</button>
+    </div>
+    <div style="padding:16px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">ชื่อลูกค้า *</label>
+          <input id="ef_name" style="width:100%;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none"></div>
+        <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">สินค้า</label>
+          <input id="ef_product" style="width:100%;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none"></div>
+        <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">สินค้าย่อย</label>
+          <input id="ef_subproduct" placeholder="สี, รุ่น, ลาย..." style="width:100%;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none"></div>
+        <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">จำนวน</label>
+          <input id="ef_qty" type="number" style="width:100%;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none"></div>
+        <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">ราคาต่อชิ้น</label>
+          <input id="ef_price" type="number" style="width:100%;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none"></div>
+        <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">กำหนดส่ง</label>
+          <input id="ef_deadline" type="date" style="width:100%;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <input id="ef_vat" type="checkbox" style="accent-color:var(--accent)">
+        <label for="ef_vat" style="font-size:13px;cursor:pointer">มี VAT 7%</label>
+      </div>
+      <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">หมายเหตุ</label>
+        <input id="ef_note" style="width:100%;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none"></div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button onclick="closeEditModal()" style="flex:1;padding:9px;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--text2);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer">ยกเลิก</button>
+        <button onclick="saveEditOrder()" style="flex:2;padding:9px;background:var(--accent);border:none;border-radius:7px;color:#111;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer">💾 บันทึก</button>
       </div>
     </div>
   </div>
