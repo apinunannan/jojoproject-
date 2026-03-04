@@ -267,10 +267,14 @@ body{background:var(--bg);color:var(--text);font-family:'Sarabun',sans-serif;min
     <div class="form-grid">
       <div>
         <div class="panel">
-          <div class="phd"><div class="phd-ic g">📋</div><h2>ชื่องาน / ออเดอร์</h2></div>
+          <div class="phd"><div class="phd-ic g">📋</div><h2>ข้อมูลออเดอร์</h2></div>
           <div class="pbd">
-            <div class="fld"><label>ชื่องาน / โปรเจกต์</label>
-              <div class="iw"><input type="text" id="f-job" placeholder="เช่น เสื้อโปโล Season 2025"/></div></div>
+            <div class="fld"><label>ลูกค้า</label>
+              <div class="iw"><input type="text" id="f-customer" placeholder="ชื่อลูกค้า"/></div></div>
+            <div class="fld"><label>ชื่อสินค้า</label>
+              <div class="iw"><input type="text" id="f-job" placeholder="เช่น เสื้อโปโล"/></div></div>
+            <div class="fld"><label>สินค้าย่อย</label>
+              <div class="iw"><input type="text" id="f-subproduct" placeholder="สี, รุ่น, ลาย..."/></div></div>
             <div class="fld"><label>วันที่</label>
               <div class="iw"><input type="date" id="f-date"/></div></div>
             <div class="frow">
@@ -458,7 +462,7 @@ function renderDash(){
   if(!list.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div>'+(q?'ไม่พบงาน':'ยังไม่มีงาน — กด <strong>"＋ งานใหม่"</strong>')+'</div></div>';return}
   el.innerHTML=[].concat(list).reverse().map(function(j){
     var ds=j.date?new Date(j.date).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}):'';
-    return '<div class="jcard" onclick="showDetail(\''+j.id+'\')"><div><div class="jname">'+(j.jobName||'(ไม่มีชื่อ)')+'</div><div class="jmeta">'+(j.fabricName?'<span class="jtag y">'+j.fabricName+'</span>':'')+(ds?'<span class="jtag m">📅 '+ds+'</span>':'')+(j.qty?'<span class="jtag g">'+Math.floor(+j.qty).toLocaleString('th')+' ตัว</span>':'')+'</div></div><div class="jcard-r"><div class="jnums"><div><div class="jnum-val y">'+f2(j.totalYards||0)+'</div><div class="jnum-lbl">หลา</div></div><div><div class="jnum-val g">'+(j.totalKg>0?f2(j.totalKg):'—')+'</div><div class="jnum-lbl">กก.</div></div><div><div class="jnum-val o">'+f2(j.totalRolls||0)+'</div><div class="jnum-lbl">ม้วน</div></div></div><div class="jact" onclick="event.stopPropagation()"><button class="jact-btn" onclick="editJob(\''+j.id+'\')">✏️ แก้ไข</button><button class="jact-btn del" onclick="deleteJob(\''+j.id+'\')">🗑</button></div></div></div>';
+    return '<div class="jcard" onclick="showDetail(\''+j.id+'\')"><div><div class="jname">'+(j.customer?j.customer+' · ':'')+( j.jobName||'(ไม่มีชื่อ)')+(j.subproduct?' · '+j.subproduct:'')+'</div><div class="jmeta">'+(j.fabricName?'<span class="jtag y">'+j.fabricName+'</span>':'')+(ds?'<span class="jtag m">📅 '+ds+'</span>':'')+(j.qty?'<span class="jtag g">'+Math.floor(+j.qty).toLocaleString('th')+' ตัว</span>':'')+'</div></div><div class="jcard-r"><div class="jnums"><div><div class="jnum-val y">'+f2(j.totalYards||0)+'</div><div class="jnum-lbl">หลา</div></div><div><div class="jnum-val g">'+(j.totalKg>0?f2(j.totalKg):'—')+'</div><div class="jnum-lbl">กก.</div></div><div><div class="jnum-val o">'+f2(j.totalRolls||0)+'</div><div class="jnum-lbl">ม้วน</div></div></div><div class="jact" onclick="event.stopPropagation()"><button class="jact-btn" onclick="editJob(\''+j.id+'\')">✏️ แก้ไข</button><button class="jact-btn del" onclick="deleteJob(\''+j.id+'\')">🗑</button></div></div></div>';
   }).join('');
 }
 
@@ -667,7 +671,7 @@ function saveJob(){
   lays.filter(function(l){return l.yards>0}).forEach(function(l){ty+=l.yards;tu+=l.sizes.reduce(function(s,v){return s+v},0)});
   var ypu=tu>0?ty/tu:0,yo=ypu*totalQty,ro=usable>0?yo/usable:0;
   var tRolls=usable>0?ty/usable:0;
-  var job={id:editingId||Date.now().toString(),jobName,date,qty,extraQty,totalQty,fabricName,fabricWidth,widthUnit,rollLen,buf,rollsAvail,lays,szLabels:szL,
+  var customer=document.getElementById("f-customer").value.trim();var subproduct=document.getElementById("f-subproduct").value.trim();var job={id:editingId||Date.now().toString(),jobName,customer,subproduct,date,qty,extraQty,totalQty,fabricName,fabricWidth,widthUnit,rollLen,buf,rollsAvail,lays,szLabels:szL,
     totalYards:yo,totalRolls:ro,yardsLay:ty,rollsLay:tRolls,yardsPerUnit:ypu,totalUnits:tu,savedAt:new Date().toISOString()};
   if(editingId){var idx=jobs.findIndex(function(j){return j.id===editingId});if(idx>=0)jobs[idx]=job}
   else jobs.push(job);
@@ -677,7 +681,7 @@ function saveJob(){
 function editJob(id){
   var j=jobs.find(function(x){return x.id===id});if(!j)return;
   editingId=id;
-  document.getElementById('f-job').value=j.jobName||'';
+  document.getElementById('f-customer').value=j.customer||'';document.getElementById('f-job').value=j.jobName||'';document.getElementById('f-subproduct').value=j.subproduct||'';
   document.getElementById('f-date').value=j.date||'';
   document.getElementById('f-qty').value=j.qty||'';
   document.getElementById('f-extra').value=j.extraQty||'';
@@ -767,7 +771,7 @@ function f3(n){return(isNaN(n)||!isFinite(n))?'—':n.toFixed(3)}
 function fi(n){return isNaN(n)?'—':Math.floor(n).toLocaleString('th')}
 
 function resetForm(){
-  ['f-job','f-fab'].forEach(function(id){document.getElementById(id).value=''});
+  ['f-job','f-fab','f-customer','f-subproduct'].forEach(function(id){document.getElementById(id).value=''});
   ['f-width','f-roll','f-buf','f-rolls-avail','f-qty','f-extra'].forEach(function(id){document.getElementById(id).value=''});
   document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
   sizeLabels=['S'];NUM_SIZES=1;
