@@ -254,20 +254,27 @@ function moveStage(id, stage) {
   if (selId === id) openDetail(id);
 }
 
-function archiveOrder(id) {
+async function archiveOrder(id) {
   const o = orders.find(x => x.id === id);
   if (!o) { alert('ไม่พบออเดอร์ กรุณา refresh หน้าใหม่'); return; }
   if (!confirm('ย้าย "' + o.name + '" ไปคลังข้อมูล?')) return;
-  let archive = JSON.parse(localStorage.getItem('jojo_archive') || '[]');
+  // โหลด archive จาก Sheets ก่อนเพื่อไม่ให้ทับข้อมูลเก่า
+  let archive = [];
+  try {
+    const res = await fetch(GAS_URL + '?store=jojo_archive&t=' + Date.now());
+    const data = await res.json();
+    archive = Array.isArray(data) ? data : [];
+  } catch(e) {
+    archive = JSON.parse(localStorage.getItem('jojo_archive') || '[]');
+  }
   if (!archive.find(x => x.id === o.id)) {
     archive.unshift({ ...o, archivedAt: new Date().toISOString() });
-    localStorage.setItem('jojo_archive', JSON.stringify(archive));
   }
+  localStorage.setItem('jojo_archive', JSON.stringify(archive));
   orders = orders.filter(x => x.id !== id);
   selId = null;
   document.getElementById('detOverlay').classList.remove('open');
   save(); render();
-  // Sync archive to Google Sheets
   syncArchive(archive);
 }
 
