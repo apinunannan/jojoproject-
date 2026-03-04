@@ -479,6 +479,7 @@ function buildLayHeader(){
       +'<input class="sz-lbl-inp" type="text" value="'+(sizeLabels[i]||'')+'" placeholder="ไซส์" '
       +'oninput="sizeLabels['+i+']=this.value;" title="คลิกเพื่อแก้ชื่อไซส์" /></div></th>';
   }
+  th+='<th class="sz-add-th" onclick="addSize()" title="เพิ่มไซส์">+</th>';
   th+='<th class="tot-th" style="min-width:56px"><div class="th-inner" style="color:var(--accent)">รวม</div></th>';
   th+='<th style="width:26px;border:none;background:none"></th>';
   th+='</tr>';
@@ -488,7 +489,7 @@ function buildLayHeader(){
 function buildLayFoot(){
   var tf='<tr><td class="lbl" colspan="6">รวมทั้งหมด</td>';
   for(var i=0;i<NUM_SIZES;i++) tf+='<td id="ft-'+i+'">—</td>';
-  tf+='<td style="border:none;background:none"></td>';
+  
   tf+='<td class="grand" id="ft-tot">—</td><td style="border:none;background:none"></td></tr>';
   document.getElementById('layTfoot').innerHTML=tf;
 }
@@ -496,18 +497,25 @@ function buildLayFoot(){
 function updateFoot(){
   var szT=new Array(NUM_SIZES).fill(0),grand=0;
   document.querySelectorAll('#layTbody tr').forEach(function(tr){
-    var inp=tr.querySelectorAll('input');
-    for(var i=0;i<NUM_SIZES;i++) szT[i]+=(parseFloat(inp[5+i].value)||0);
-    grand+=(parseFloat(inp[5+NUM_SIZES].value)||0);
+    var szTds=tr.querySelectorAll('td.sz');
+    for(var i=0;i<szTds.length;i++){
+      var inp=szTds[i].querySelector('input');
+      if(inp) szT[i]+=(parseFloat(inp.value)||0);
+    }
+    var totInp=tr.querySelector('td.row-tot input');
+    if(totInp) grand+=(parseFloat(totInp.value)||0);
   });
   for(var i=0;i<NUM_SIZES;i++){var el=document.getElementById('ft-'+i);if(el)el.textContent=szT[i]>0?fi(szT[i]):'—'}
   var ft=document.getElementById('ft-tot');if(ft)ft.textContent=grand>0?fi(grand):'—';
 }
 
 function updateRowTotal(tr){
+  var szTds=tr.querySelectorAll('td.sz');
   var inp=tr.querySelectorAll('input');
-  var s=0;for(var i=0;i<NUM_SIZES;i++)s+=(parseFloat(inp[5+i].value)||0);
-  inp[5+NUM_SIZES].value=s>0?s:'';
+  var sheets=parseFloat(inp[4].value)||1;
+  var s=0;for(var i=0;i<szTds.length;i++){var si=szTds[i].querySelector('input');if(si)s+=(parseFloat(si.value)||0);}
+  var tot=s*sheets;
+  var totInp=tr.querySelector('td.row-tot input');if(totInp)totInp.value=tot>0?tot:'';
   updateFoot();liveCalc();
 }
 
@@ -526,7 +534,7 @@ function addLayRow(data){
   }
   var rowSum=data&&data.sizes?data.sizes.reduce(function(s,v){return s+(v||0)},0):0;
   h+='<td style="border:none;background:none"></td>';
-  h+='<td class="sz-add-data" onclick="addSize()"></td>';
+  
   h+='<td class="row-tot"><input type="number" readonly value="'+(rowSum||'')+'"/></td>';
   h+='<td class="rm"><button class="rm-btn" onclick="removeLayRow('+id+')" title="ลบ">✕</button></td>';
   tr.innerHTML=h;
