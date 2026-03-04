@@ -124,7 +124,7 @@ body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--t
       <th onclick="sortBy('total')">ยอดก่อน VAT</th>
       <th>VAT 7%</th>
       <th onclick="sortBy('total')">ยอดรวม ↕</th>
-      <th onclick="sortBy('date')">วันรับ</th>
+      <th onclick="sortBy('deadline')">วันส่ง</th>
       <th onclick="sortBy('archivedAt')">วันจ่าย</th>
     </tr></thead>
     <tbody id="tableBody"></tbody>
@@ -158,12 +158,12 @@ body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--t
         <span id="addCalcDetail" style="color:var(--text3);margin-left:6px"></span>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">วันที่รับออเดอร์</label><input class="a-inp" id="a_date" type="date"></div>
         <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">กำหนดส่ง</label><input class="a-inp" id="a_deadline" type="date"></div>
         <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">วันที่จ่ายเงิน *</label><input class="a-inp" id="a_paiddate" type="date"></div>
       </div>
       <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">หมายเหตุ</label><textarea class="a-inp" id="a_note" placeholder="รายละเอียดเพิ่มเติม..." style="resize:none;min-height:50px"></textarea>
-      <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">ธนาคาร</label><input class="a-inp" id="a_bank" placeholder="กสิกร, SCB..."></div></div>
+      <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">หัก ณ ที่จ่าย (บาท)</label><input class="a-inp" id="a_wht" type="number" placeholder="0"></div>
+        <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">ธนาคาร</label><input class="a-inp" id="a_bank" placeholder="กสิกร, SCB..."></div></div>
       <label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px">
         <input type="checkbox" id="a_vat" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer">
         <span style="font-size:13px">มี VAT 7%</span>
@@ -344,7 +344,7 @@ function renderTable() {
       <td style="font-family:var(--mono);color:var(--text2)">฿${base.toLocaleString()}</td>
       <td style="font-family:var(--mono);color:var(--accent2)">${vat ? '+฿'+vat.toLocaleString() : '<span style="color:var(--text3)">-</span>'}</td>
       <td style="font-family:var(--mono);color:var(--accent);font-weight:600">฿${total.toLocaleString()}</td>
-      <td style="color:var(--text2)">${fmtDate(o.date)}</td>
+      <td style="color:var(--text2)">${fmtDate(o.deadline)||'-'}</td>
       <td style="color:var(--green)">${fmtDateTime(o.archivedAt)}</td>
     </tr>`;
   }).join('');
@@ -389,7 +389,7 @@ function openDetail(id) {
       <div style="margin-top:7px;padding:9px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
         <div class="det-row"><span style="color:var(--text2)">ราคาต่อชิ้น</span><span style="font-family:var(--mono);font-weight:600">฿${unitPrice.toLocaleString()}</span></div>
         <div class="det-row"><span style="color:var(--text2)">ราคารวม (×${qty})</span><span>฿${base.toLocaleString()}</span></div>
-        ${o.useVat?`<div class="det-row"><span style="color:var(--text2)">VAT 7%</span><span style="color:var(--accent2)">+฿${vat.toLocaleString()}</span></div>`:''}
+        ${o.useVat?`<div class="det-row"><span style="color:var(--text2)">VAT 7%</span><span style="color:var(--accent2)">+฿${vat.toLocaleString()}</span></div>`:''}${o.wht?`<div class="det-row"><span style="color:var(--text2)">หัก ณ ที่จ่าย</span><span style="color:var(--red)">-฿${(+(o.wht)).toLocaleString()}</span></div>`:''}
         <div style="height:1px;background:var(--border);margin:5px 0"></div>
         <div class="det-row"><span style="font-weight:700">ยอดรวมทั้งหมด</span><span style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent)">฿${total.toLocaleString()}</span></div>
       </div>
@@ -426,9 +426,8 @@ function deleteFromArchive(id) {
 // auto-refresh handled by setInterval above
 
 function openAddModal(){
-  ['a_name','a_product','a_subproduct','a_qty','a_price','a_note','a_bank'].forEach(id=>document.getElementById(id).value='');
+  ['a_name','a_product','a_subproduct','a_qty','a_price','a_note','a_bank','a_wht'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('a_vat').checked=false;
-  document.getElementById('a_date').value=today();
   document.getElementById('a_paiddate').value=today();
   document.getElementById('a_deadline').value='';
   document.getElementById('addCalcPreview').style.display='none';
@@ -459,9 +458,9 @@ function saveNewOrder(){
     subproduct: document.getElementById('a_subproduct').value.trim(),
     qty: document.getElementById('a_qty').value,
     price: document.getElementById('a_price').value,
-    date: document.getElementById('a_date').value,
-    deadline: document.getElementById('a_deadline').value,
+deadline: document.getElementById('a_deadline').value,
     bank: document.getElementById('a_bank').value.trim(),
+    wht: document.getElementById('a_wht').value ? +(document.getElementById('a_wht').value) : 0,
     note: document.getElementById('a_note').value.trim(),
     useVat: document.getElementById('a_vat').checked,
     payStage: 'paid',
