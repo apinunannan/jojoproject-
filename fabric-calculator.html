@@ -217,6 +217,12 @@ body{background:var(--bg);color:var(--text);font-family:'Sarabun',sans-serif;min
 .lay-table th.sz-add-col:hover{background:rgba(79,209,165,0.15);border-color:var(--accent2)}
 .lay-table td.sz-add-data{width:34px;min-width:34px;background:rgba(79,209,165,0.03);border:1px dashed rgba(79,209,165,0.15);cursor:pointer;transition:all 0.15s}
 .lay-table td.sz-add-data:hover{background:rgba(79,209,165,0.1)}
+
+.t-inp{width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none;transition:border-color .15s}
+.t-inp:focus{border-color:var(--accent2)}
+.t-badge{display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.t1b{background:rgba(251,191,36,.15);color:#fbbf24}
+.t2b{background:rgba(52,211,153,.15);color:#34d399}
 </style>
 </head>
 <body>
@@ -230,6 +236,7 @@ body{background:var(--bg);color:var(--text);font-family:'Sarabun',sans-serif;min
     <button class="nav-btn active" id="nav-dash" onclick="showPage('dash')">หน้าหลัก</button>
     <button class="nav-btn" id="nav-form" onclick="showPage('form')">บันทึกงาน</button>
     <button class="nav-btn" id="nav-calc" onclick="showPage('calc')">คำนวณผ้า</button>
+    <button class="nav-btn" id="nav-tracker" onclick="showPage('tracker')">🧵 ผลผลิต</button>
   </nav>
   <div style="margin-left:auto">
     <button class="btn-primary" onclick="newJob()">＋ งานใหม่</button>
@@ -269,6 +276,11 @@ body{background:var(--bg);color:var(--text);font-family:'Sarabun',sans-serif;min
         <div class="panel">
           <div class="phd"><div class="phd-ic g">📋</div><h2>ข้อมูลออเดอร์</h2></div>
           <div class="pbd">
+            <div class="fld"><label>📦 เลือกจาก Order Manager</label>
+              <select id="f-order-sel" onchange="fillFromOrder(this.value)" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none">
+                <option value="">-- เลือกออเดอร์ หรือพิมพ์เองด้านล่าง --</option>
+              </select>
+            </div>
             <div class="fld"><label>ลูกค้า</label>
               <div class="iw"><input type="text" id="f-customer" placeholder="ชื่อลูกค้า"/></div></div>
             <div class="fld"><label>ชื่อสินค้า</label>
@@ -408,6 +420,80 @@ body{background:var(--bg);color:var(--text);font-family:'Sarabun',sans-serif;min
   </div>
 </div>
 
+
+<!-- ═══ TRACKER ═══ -->
+<div class="page" id="page-tracker">
+  <div class="dash-wrap">
+
+    <!-- summary cards -->
+    <div id="t-summary" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px"></div>
+
+    <!-- toolbar -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      <div class="search-box" style="flex:1;min-width:160px">
+        <span style="color:var(--text-muted)">🔍</span>
+        <input id="t-search" type="text" placeholder="ค้นหาลูกค้า, สินค้า..." oninput="tSearch=this.value;renderTracker()">
+      </div>
+      <select id="t-team-sel" onchange="tTeam=this.value;renderTracker()" style="padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px">
+        <option value="all">ทุกทีม</option>
+        <option value="ทีม 1">ทีม 1</option>
+        <option value="ทีม 2">ทีม 2</option>
+      </select>
+      <button class="btn-primary" onclick="openTrackerAdd()" style="padding:8px 16px;border-radius:8px;border:none;background:var(--accent);color:#111;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer">+ บันทึก</button>
+    </div>
+
+    <!-- tabs -->
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button id="tt-daily" class="chip active" onclick="tTab='daily';renderTracker()">รายวัน</button>
+      <button id="tt-weekly" class="chip" onclick="tTab='weekly';renderTracker()">รายสัปดาห์</button>
+      <button id="tt-monthly" class="chip" onclick="tTab='monthly';renderTracker()">รายเดือน</button>
+    </div>
+
+    <div id="t-body"></div>
+  </div>
+</div>
+
+<!-- TRACKER MODAL -->
+<div class="overlay" id="t-modal" onclick="if(event.target===this)closeTrackerModal()">
+  <div class="modal">
+    <div class="modal-hd">
+      <h3 id="t-modal-title">➕ บันทึกการผลิต</h3>
+      <button class="modal-close" onclick="closeTrackerModal()">✕</button>
+    </div>
+    <div class="modal-bd" style="display:flex;flex-direction:column;gap:12px;padding:16px">
+      <div class="fld">
+        <label>📦 เลือกจากออเดอร์</label>
+        <select id="t-job-sel" onchange="tFillFromJob(this.value)" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px">
+          <option value="">-- เลือกออเดอร์ หรือพิมพ์เองด้านล่าง --</option>
+        </select>
+      </div>
+      <div style="border-top:1px solid var(--border)"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fld"><label>วันที่</label><div class="iw"><input class="t-inp" type="date" id="t-date"></div></div>
+        <div class="fld"><label>ทีม</label>
+          <select class="t-inp" id="t-team" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px">
+            <option value="ทีม 1">ทีม 1</option>
+            <option value="ทีม 2">ทีม 2</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fld"><label>ลูกค้า</label><div class="iw"><input class="t-inp" id="t-customer" placeholder="ชื่อลูกค้า"></div></div>
+        <div class="fld"><label>สินค้า</label><div class="iw"><input class="t-inp" id="t-product" placeholder="เช่น เสื้อโปโล"></div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fld"><label>สินค้าย่อย</label><div class="iw"><input class="t-inp" id="t-sub" placeholder="สี, รุ่น..."></div></div>
+        <div class="fld"><label>จำนวน (ตัว) *</label><div class="iw"><input class="t-inp" type="number" id="t-qty" placeholder="0" min="0"></div></div>
+      </div>
+      <div class="fld"><label>หมายเหตุ</label><div class="iw"><input class="t-inp" id="t-note" placeholder="หมายเหตุ..."></div></div>
+      <div style="display:flex;gap:8px;padding-top:4px">
+        <button onclick="closeTrackerModal()" style="flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-muted);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer">ยกเลิก</button>
+        <button onclick="saveTrackerRecord()" style="flex:2;padding:9px;border-radius:8px;border:none;background:var(--accent);color:#111;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer">💾 บันทึก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL -->
 <div class="overlay" id="modal" onclick="if(event.target===this)closeModal()">
   <div class="modal">
@@ -418,19 +504,39 @@ body{background:var(--bg);color:var(--text);font-family:'Sarabun',sans-serif;min
 </div>
 
 <script>
+const GAS_URL='https://script.google.com/macros/s/AKfycbzwUjqW8HS-dQ80PIjxfBJ14t56wu_gCnwtLv2juQ9CzA6bMd2eN86mbEOVyH-GMeAHWQ/exec';
+const FABRIC_STORE='jojo_fabric';
+const TRACKER_STORE='jojo_tracker';
+var trackerRecords=[];
+var tEditId=null,tTab='daily',tSearch='',tTeam='all';
 var jobs=JSON.parse(localStorage.getItem('fabricJobs')||'[]');
 var editingId=null,curFilter='all',layRowCount=0;
 var NUM_SIZES=1;
 var sizeLabels=['S'];
 
-function saveData(){localStorage.setItem('fabricJobs',JSON.stringify(jobs))}
+function saveData(){
+  localStorage.setItem('fabricJobs',JSON.stringify(jobs));
+  syncToSheet();
+}
+async function syncToSheet(){
+  try{await fetch(GAS_URL,{method:'POST',body:JSON.stringify({store:FABRIC_STORE,data:jobs})});}catch(e){}
+}
+async function loadFromSheet(){
+  try{
+    const r=await fetch(GAS_URL+'?store='+FABRIC_STORE+'&t='+Date.now());
+    const d=await r.json();
+    if(Array.isArray(d)&&d.length){jobs=d;localStorage.setItem('fabricJobs',JSON.stringify(jobs));}
+  }catch(e){}
+  await loadTrackerData();
+  renderDash();
+}
 
 function showPage(p){
   document.querySelectorAll('.page').forEach(function(x){x.classList.remove('active')});
   document.querySelectorAll('.nav-btn').forEach(function(x){x.classList.remove('active')});
   document.getElementById('page-'+p).classList.add('active');
   document.getElementById('nav-'+p).classList.add('active');
-  if(p==='dash')renderDash();
+  if(p==='dash')renderDash();if(p==='tracker'){loadTrackerData().then(renderTracker);}
 }
 function newJob(){editingId=null;resetForm();showPage('form')}
 
@@ -464,6 +570,200 @@ function renderDash(){
     var ds=j.date?new Date(j.date).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}):'';
     return '<div class="jcard" onclick="showDetail(\''+j.id+'\')"><div><div class="jname">'+(j.customer?j.customer+' · ':'')+( j.jobName||'(ไม่มีชื่อ)')+(j.subproduct?' · '+j.subproduct:'')+'</div><div class="jmeta">'+(j.fabricName?'<span class="jtag y">'+j.fabricName+'</span>':'')+(ds?'<span class="jtag m">📅 '+ds+'</span>':'')+(j.qty?'<span class="jtag g">'+Math.floor(+j.qty).toLocaleString('th')+' ตัว</span>':'')+'</div></div><div class="jcard-r"><div class="jnums"><div><div class="jnum-val y">'+f2(j.totalYards||0)+'</div><div class="jnum-lbl">หลา</div></div><div><div class="jnum-val g">'+(j.totalKg>0?f2(j.totalKg):'—')+'</div><div class="jnum-lbl">กก.</div></div><div><div class="jnum-val o">'+f2(j.totalRolls||0)+'</div><div class="jnum-lbl">ม้วน</div></div></div><div class="jact" onclick="event.stopPropagation()"><button class="jact-btn" onclick="editJob(\''+j.id+'\')">✏️ แก้ไข</button><button class="jact-btn del" onclick="deleteJob(\''+j.id+'\')">🗑</button></div></div></div>';
   }).join('');
+}
+
+
+// ─── TRACKER ───
+function tToday(){return new Date().toISOString().split('T')[0];}
+function tFmtDate(d){if(!d)return'-';const [y,m,day]=d.split('-');const M=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];return parseInt(day)+' '+M[parseInt(m)]+' '+(parseInt(y)+543);}
+function tGetWeekKey(d){const dt=new Date(d);const day=dt.getDay();const mon=new Date(dt);mon.setDate(dt.getDate()-(day===0?6:day-1));return mon.toISOString().split('T')[0];}
+function tFmtWeek(k){const sun=new Date(k);sun.setDate(sun.getDate()+6);return tFmtDate(k)+' – '+tFmtDate(sun.toISOString().split('T')[0]);}
+function tGetMonthKey(d){return d?d.slice(0,7):'';}
+function tFmtMonth(k){if(!k)return'-';const [y,m]=k.split('-');const M=['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];return M[parseInt(m)]+' '+(parseInt(y)+543);}
+
+async function loadTrackerData(){
+  try{
+    const r=await fetch(GAS_URL+'?store='+TRACKER_STORE+'&t='+Date.now());
+    const d=await r.json();
+    trackerRecords=Array.isArray(d)?d:[];
+    localStorage.setItem(TRACKER_STORE,JSON.stringify(trackerRecords));
+  }catch(e){
+    const c=localStorage.getItem(TRACKER_STORE);
+    trackerRecords=c?JSON.parse(c):[];
+  }
+}
+async function syncTrackerData(){
+  try{await fetch(GAS_URL,{method:'POST',body:JSON.stringify({store:TRACKER_STORE,data:trackerRecords})});}catch(e){}
+}
+function saveTrackerData(){localStorage.setItem(TRACKER_STORE,JSON.stringify(trackerRecords));syncTrackerData();}
+
+function tGetFiltered(){
+  return trackerRecords.filter(function(r){
+    var q=tSearch.toLowerCase();
+    var mQ=!q||(r.customer||'').toLowerCase().includes(q)||(r.product||'').toLowerCase().includes(q)||(r.sub||'').toLowerCase().includes(q);
+    var mT=tTeam==='all'||r.team===tTeam;
+    return mQ&&mT;
+  }).sort(function(a,b){return b.date>a.date?1:b.date<a.date?-1:0;});
+}
+
+function renderTracker(){
+  // tabs highlight
+  ['daily','weekly','monthly'].forEach(function(t){
+    var el=document.getElementById('tt-'+t);
+    if(el){el.classList.toggle('active',t===tTab);}
+  });
+
+  // summary
+  var t1=trackerRecords.filter(function(r){return r.team==='ทีม 1';}).reduce(function(s,r){return s+(+(r.qty)||0);},0);
+  var t2=trackerRecords.filter(function(r){return r.team==='ทีม 2';}).reduce(function(s,r){return s+(+(r.qty)||0);},0);
+  var todayQty=trackerRecords.filter(function(r){return r.date===tToday();}).reduce(function(s,r){return s+(+(r.qty)||0);},0);
+  document.getElementById('t-summary').innerHTML=
+    '<div class="stat b"><div class="stat-lbl">วันนี้</div><div class="stat-val b">'+todayQty.toLocaleString()+'</div><div class="stat-unit">ตัว</div></div>'
+   +'<div class="stat y"><div class="stat-lbl">ทีม 1 รวม</div><div class="stat-val y">'+t1.toLocaleString()+'</div><div class="stat-unit">ตัว</div></div>'
+   +'<div class="stat g"><div class="stat-lbl">ทีม 2 รวม</div><div class="stat-val g">'+t2.toLocaleString()+'</div><div class="stat-unit">ตัว</div></div>'
+   +'<div class="stat o"><div class="stat-lbl">รวมทั้งหมด</div><div class="stat-val o">'+(t1+t2).toLocaleString()+'</div><div class="stat-unit">ตัว</div></div>';
+
+  var filtered=tGetFiltered();
+  var body=document.getElementById('t-body');
+  if(!filtered.length){body.innerHTML='<div style="text-align:center;padding:60px;color:var(--text-muted)">ยังไม่มีข้อมูล กด "+ บันทึก" เพื่อเพิ่มครับ</div>';return;}
+
+  if(tTab==='daily'){
+    var byDate={};
+    filtered.forEach(function(r){if(!byDate[r.date])byDate[r.date]=[];byDate[r.date].push(r);});
+    var dates=Object.keys(byDate).sort().reverse();
+    var html='';
+    dates.forEach(function(date){
+      var rows=byDate[date];
+      var d1=rows.filter(function(r){return r.team==='ทีม 1';}).reduce(function(s,r){return s+(+(r.qty)||0);},0);
+      var d2=rows.filter(function(r){return r.team==='ทีม 2';}).reduce(function(s,r){return s+(+(r.qty)||0);},0);
+      html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 4px 4px">'
+           +'<div style="font-size:13px;font-weight:700;color:var(--text-muted)">'+tFmtDate(date)+'</div>'
+           +'<div style="font-size:12px;color:var(--text-muted)">'
+           +(d1>0?'<span style="color:#fbbf24">ทีม1: '+d1.toLocaleString()+'</span> ':'')
+           +(d2>0?'<span style="color:#34d399">ทีม2: '+d2.toLocaleString()+'</span> ':'')
+           +'<strong style="color:var(--text);font-family:var(--mono)">'+(d1+d2).toLocaleString()+' ตัว</strong></div></div>';
+      html+='<table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px">'
+           +'<thead><tr style="border-bottom:1px solid var(--border2)">'
+           +'<th style="padding:6px 8px;text-align:left;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase">ทีม</th>'
+           +'<th style="padding:6px 8px;text-align:left;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase">ลูกค้า</th>'
+           +'<th style="padding:6px 8px;text-align:left;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase">สินค้า</th>'
+           +'<th style="padding:6px 8px;text-align:left;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase">สินค้าย่อย</th>'
+           +'<th style="padding:6px 8px;text-align:center;font-size:10px;color:var(--text-muted);font-weight:600;text-transform:uppercase">จำนวน</th>'
+           +'<th></th>'
+           +'</tr></thead><tbody>';
+      rows.forEach(function(r){
+        html+='<tr style="border-bottom:1px solid var(--border)">'
+             +'<td style="padding:8px"><span class="t-badge '+(r.team==='ทีม 1'?'t1b':'t2b')+'">'+r.team+'</span></td>'
+             +'<td style="padding:8px;font-weight:600">'+( r.customer||'-')+'</td>'
+             +'<td style="padding:8px">'+( r.product||'-')+'</td>'
+             +'<td style="padding:8px;color:var(--text-muted)">'+( r.sub||'-')+'</td>'
+             +'<td style="padding:8px;text-align:center;font-family:var(--mono);font-weight:700;font-size:14px">'+(+(r.qty)||0).toLocaleString()+'</td>'
+             +'<td style="padding:8px;white-space:nowrap">'
+             +'<button onclick="openTrackerEdit(''+r.id+'')" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:13px;padding:3px 6px;border-radius:5px">✏️</button>'
+             +'<button onclick="deleteTrackerRecord(''+r.id+'')" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:13px;padding:3px 6px;border-radius:5px">🗑</button>'
+             +'</td></tr>';
+      });
+      html+='</tbody></table>';
+    });
+    body.innerHTML=html;
+  } else {
+    var grouped={};
+    filtered.forEach(function(r){
+      var k=tTab==='weekly'?tGetWeekKey(r.date):tGetMonthKey(r.date);
+      if(!grouped[k])grouped[k]={t1:0,t2:0};
+      if(r.team==='ทีม 1')grouped[k].t1+=+(r.qty)||0;
+      else grouped[k].t2+=+(r.qty)||0;
+    });
+    var keys=Object.keys(grouped).sort().reverse();
+    var html='<div style="display:flex;flex-direction:column;gap:8px">';
+    keys.forEach(function(k){
+      var g=grouped[k];
+      var label=tTab==='weekly'?('📅 '+tFmtWeek(k)):('📆 '+tFmtMonth(k));
+      html+='<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">'
+           +'<div style="font-size:13px;font-weight:700">'+label+'</div>'
+           +'<div style="display:flex;gap:16px">'
+           +'<div style="font-size:12px;color:var(--text-muted)">ทีม 1 <strong style="font-family:var(--mono);color:#fbbf24">'+g.t1.toLocaleString()+'</strong></div>'
+           +'<div style="font-size:12px;color:var(--text-muted)">ทีม 2 <strong style="font-family:var(--mono);color:#34d399">'+g.t2.toLocaleString()+'</strong></div>'
+           +'</div>'
+           +'<div style="font-family:var(--mono);font-size:18px;font-weight:800;color:var(--accent)">'+(g.t1+g.t2).toLocaleString()+' ตัว</div>'
+           +'</div>';
+    });
+    body.innerHTML=html+'</div>';
+  }
+}
+
+function tPopulateJobDropdown(){
+  var sel=document.getElementById('t-job-sel');if(!sel)return;
+  sel.innerHTML='<option value="">-- เลือกออเดอร์ หรือพิมพ์เองด้านล่าง --</option>';
+  jobs.forEach(function(j){
+    var label=[j.customer,j.jobName,j.subproduct].filter(Boolean).join(' · ');
+    var opt=document.createElement('option');
+    opt.value=j.id;opt.textContent=label||'(ไม่มีชื่อ)';
+    sel.appendChild(opt);
+  });
+}
+
+function tFillFromJob(id){
+  if(!id)return;
+  var j=jobs.find(function(x){return x.id===id;});if(!j)return;
+  document.getElementById('t-customer').value=j.customer||'';
+  document.getElementById('t-product').value=j.jobName||'';
+  document.getElementById('t-sub').value=j.subproduct||'';
+}
+
+function openTrackerAdd(){
+  tEditId=null;
+  document.getElementById('t-modal-title').textContent='➕ บันทึกการผลิต';
+  document.getElementById('t-date').value=tToday();
+  document.getElementById('t-team').value='ทีม 1';
+  ['t-customer','t-product','t-sub','t-note'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('t-qty').value='';
+  document.getElementById('t-job-sel').value='';
+  tPopulateJobDropdown();
+  document.getElementById('t-modal').classList.add('open');
+}
+
+function openTrackerEdit(id){
+  var r=trackerRecords.find(function(x){return x.id===id;});if(!r)return;
+  tEditId=id;
+  document.getElementById('t-modal-title').textContent='✏️ แก้ไข';
+  document.getElementById('t-date').value=r.date||tToday();
+  document.getElementById('t-team').value=r.team||'ทีม 1';
+  document.getElementById('t-customer').value=r.customer||'';
+  document.getElementById('t-product').value=r.product||'';
+  document.getElementById('t-sub').value=r.sub||'';
+  document.getElementById('t-qty').value=r.qty||'';
+  document.getElementById('t-note').value=r.note||'';
+  document.getElementById('t-job-sel').value='';
+  tPopulateJobDropdown();
+  document.getElementById('t-modal').classList.add('open');
+}
+
+function closeTrackerModal(){document.getElementById('t-modal').classList.remove('open');}
+
+function saveTrackerRecord(){
+  var qty=+(document.getElementById('t-qty').value)||0;
+  if(!qty){alert('กรุณากรอกจำนวนครับ');return;}
+  var rec={
+    id:tEditId||Date.now().toString(),
+    date:document.getElementById('t-date').value,
+    team:document.getElementById('t-team').value,
+    customer:document.getElementById('t-customer').value.trim(),
+    product:document.getElementById('t-product').value.trim(),
+    sub:document.getElementById('t-sub').value.trim(),
+    qty:qty,
+    note:document.getElementById('t-note').value.trim(),
+  };
+  if(tEditId){trackerRecords=trackerRecords.map(function(r){return r.id===tEditId?rec:r;});}
+  else{trackerRecords.unshift(rec);}
+  saveTrackerData();closeTrackerModal();renderTracker();
+}
+
+function deleteTrackerRecord(id){
+  var r=trackerRecords.find(function(x){return x.id===id;});
+  if(!r||!confirm('ลบรายการนี้?'))return;
+  trackerRecords=trackerRecords.filter(function(x){return x.id!==id;});
+  saveTrackerData();renderTracker();
 }
 
 // ─── LAY TABLE ───
@@ -615,22 +915,29 @@ function liveCalc(){
     renderPreview();return;
   }
   var usable=rollLen-buf;
-  var ty=0,totalSizes=new Array(NUM_SIZES).fill(0);
-  lays.forEach(function(l){ty+=l.yards;l.sizes.forEach(function(s,i){totalSizes[i]+=s})});
+  var ty=0,tkg=0,totalSizes=new Array(NUM_SIZES).fill(0),tPieces=0;
+  lays.forEach(function(l){
+    ty+=l.yards;
+    tkg+=(parseFloat(l.weight)||0);
+    var sheets=parseFloat(l.sheets)||1;
+    l.sizes.forEach(function(s,i){totalSizes[i]+=s});
+    tPieces+=l.sizes.reduce(function(s,v){return s+v},0)*sheets;
+  });
   var tu=totalSizes.reduce(function(s,v){return s+v},0);
   var tRolls=usable>0?ty/usable:0;
   var ypu=tu>0?ty/tu:0,yo=ypu*totalQty,ro=usable>0?yo/usable:0;
-  var enoughStr=totalQty>0?(tu>=totalQty?'<span style="color:var(--accent2)">✅ ครบ ('+fi(tu)+' ≥ '+fi(totalQty)+' ตัว)</span>':'<span style="color:var(--danger)">⚠️ ขาด '+fi(totalQty-tu)+' ตัว</span>'):'';
+  var enoughStr=totalQty>0?(tPieces>=totalQty?'<span style="color:var(--accent2)">✅ ครบ</span>':'<span style="color:var(--danger)">⚠️ ขาด '+fi(totalQty-tPieces)+' ตัว</span>'):'';
   var szTags=sizeLabels.map(function(lbl,i){return totalSizes[i]>0?'<span style="background:var(--surface3);padding:2px 7px;border-radius:4px;font-size:0.7rem;font-family:\'IBM Plex Mono\',monospace;margin:2px">'+(lbl||'ไซส์'+(i+1))+': <strong style="color:var(--text)">'+fi(totalSizes[i])+'</strong></span>':''}).join('');
-  var rollsSuffix=rollsAvail>0?' | มีอยู่ '+f2(rollsAvail)+' ม้วน ('+(rollsAvail>=ro?'✅ เพียงพอ':'⚠️ ขาดอีก '+f2(ro-rollsAvail)+' ม้วน')+')':'';
+  var rollsSuffix=rollsAvail>0?' | มีอยู่ '+f2(rollsAvail)+' ม้วน ('+(rollsAvail>=tRolls?'✅ เพียงพอ':'⚠️ ขาดอีก '+f2(tRolls-rollsAvail)+' ม้วน')+')':'';
   var extraStr=extraQty>0?' <span style="color:var(--text-muted);font-size:0.76rem">(ออเดอร์ '+fi(qty)+' + เผื่อ '+fi(extraQty)+')</span>':'';
-  document.getElementById('laySumBox').innerHTML='<div class="sumbox-ttl">สรุปผลหลัง Lay Plan</div>'
-    +'<div class="sumrow"><span class="sumrow-lbl">ม้วนรวม (Lay Plan)</span><span class="sumrow-val o">'+f2(tRolls)+' ม้วน</span></div>'
-    +'<div class="sumrow"><span class="sumrow-lbl">หลารวม (Lay Plan)</span><span class="sumrow-val y">'+f2(ty)+' หลา</span></div>'
-    +'<div class="sumrow"><span class="sumrow-lbl">ชิ้นรวมทุกไซส์</span><span class="sumrow-val">'+fi(tu)+' ตัว '+enoughStr+'</span></div>'
+  document.getElementById('laySumBox').innerHTML='<div class="sumbox-ttl">สรุปผลการปูผ้า</div>'
+    +'<div class="sumrow"><span class="sumrow-lbl">1. ม้วนรวม</span><span class="sumrow-val o">'+f2(tRolls)+' ม้วน'+rollsSuffix+'</span></div>'
+    +'<div class="sumrow"><span class="sumrow-lbl">2. หลารวม</span><span class="sumrow-val y">'+f2(ty)+' หลา</span></div>'
+    +'<div class="sumrow"><span class="sumrow-lbl">3. กิโลรวม</span><span class="sumrow-val g">'+(tkg>0?f2(tkg)+' กก.':'—')+'</span></div>'
+    +'<div class="sumrow"><span class="sumrow-lbl">4. จำนวนรวม (แผ่น × ไซส์)</span><span class="sumrow-val">'+fi(tPieces)+' ตัว '+enoughStr+'</span></div>'
     +(szTags?'<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:2px">'+szTags+'</div>':'')
-    +(totalQty>0?'<div class="sumrow" style="margin-top:5px"><span class="sumrow-lbl" style="font-weight:600">📦 รวม '+fi(totalQty)+' ตัว'+extraStr+' — หลา</span><span class="sumrow-val y big">'+f2(yo)+' หลา</span></div>'
-      +'<div class="sumrow"><span class="sumrow-lbl" style="font-weight:600">📦 รวม '+fi(totalQty)+' ตัว — ม้วน</span><span class="sumrow-val o">'+f2(ro)+' ม้วน (≈'+Math.ceil(ro)+' ม้วน)'+rollsSuffix+'</span></div>':'');
+    +(totalQty>0?'<div class="sumrow" style="margin-top:5px;border-top:1px solid var(--border);padding-top:6px"><span class="sumrow-lbl" style="font-weight:600">📦 รวม '+fi(totalQty)+' ตัว'+extraStr+' — หลา</span><span class="sumrow-val y big">'+f2(yo)+' หลา</span></div>'
+      +'<div class="sumrow"><span class="sumrow-lbl" style="font-weight:600">📦 รวม '+fi(totalQty)+' ตัว — ม้วน</span><span class="sumrow-val o">'+f2(ro)+' ม้วน (≈'+Math.ceil(ro)+' ม้วน)</span></div>':'');
   renderPreview();
 }
 
@@ -783,7 +1090,7 @@ function f3(n){return(isNaN(n)||!isFinite(n))?'—':n.toFixed(3)}
 function fi(n){return isNaN(n)?'—':Math.floor(n).toLocaleString('th')}
 
 function resetForm(){
-  ['f-job','f-fab','f-customer','f-subproduct'].forEach(function(id){document.getElementById(id).value=''});
+  ['f-job','f-fab','f-customer','f-subproduct'].forEach(function(id){document.getElementById(id).value=''});var osel=document.getElementById('f-order-sel');if(osel){osel.value='';populateOrderDropdown();};
   ['f-width','f-roll','f-buf','f-rolls-avail','f-qty','f-extra'].forEach(function(id){document.getElementById(id).value=''});
   document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
   sizeLabels=['S'];NUM_SIZES=1;
@@ -898,8 +1205,48 @@ function printJobById(id){
   setTimeout(function(){window.print();},150);
 }
 
+// ─── ORDER MANAGER INTEGRATION ───
+var paymentOrders = [];
+
+async function loadPaymentOrders(){
+  try{
+    const r = await fetch(GAS_URL + '?store=jojo_payment&t=' + Date.now());
+    const d = await r.json();
+    paymentOrders = Array.isArray(d) ? d : [];
+  } catch(e) {
+    const c = localStorage.getItem('jojo_payment');
+    paymentOrders = c ? JSON.parse(c) : [];
+  }
+  populateOrderDropdown();
+}
+
+function populateOrderDropdown(){
+  const sel = document.getElementById('f-order-sel');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">-- เลือกออเดอร์ หรือพิมพ์เองด้านล่าง --</option>';
+  paymentOrders.forEach(function(o){
+    const label = [o.name, o.product, o.subproduct].filter(Boolean).join(' · ');
+    const opt = document.createElement('option');
+    opt.value = o.id;
+    opt.textContent = label || '(ไม่มีชื่อ)';
+    sel.appendChild(opt);
+  });
+}
+
+function fillFromOrder(id){
+  if(!id) return;
+  const o = paymentOrders.find(function(x){ return x.id === id; });
+  if(!o) return;
+  document.getElementById('f-customer').value = o.name || '';
+  document.getElementById('f-job').value = o.product || '';
+  document.getElementById('f-subproduct').value = o.subproduct || '';
+  liveCalc();
+}
+
 document.addEventListener('DOMContentLoaded',function(){
-  resetForm();renderDash();
+  loadPaymentOrders();
+  resetForm();
+  loadFromSheet();
   document.getElementById('page-form').addEventListener('input',function(){liveCalc()});
 });
 </script>
