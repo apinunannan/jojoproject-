@@ -538,7 +538,7 @@ function showPage(p){
   document.getElementById('nav-'+p).classList.add('active');
   if(p==='dash')renderDash();if(p==='tracker'){loadTrackerData().then(renderTracker);}
 }
-function newJob(){editingId=null;resetForm();showPage('form')}
+function newJob(){editingId=null;resetForm();showPage('form');populateOrderDropdown();var osel=document.getElementById('f-order-sel');if(osel)osel.value='';}
 
 function setFilter(f,btn){
   curFilter=f;
@@ -1090,7 +1090,7 @@ function f3(n){return(isNaN(n)||!isFinite(n))?'—':n.toFixed(3)}
 function fi(n){return isNaN(n)?'—':Math.floor(n).toLocaleString('th')}
 
 function resetForm(){
-  ['f-job','f-fab','f-customer','f-subproduct'].forEach(function(id){document.getElementById(id).value=''});var osel=document.getElementById('f-order-sel');if(osel){osel.value='';populateOrderDropdown();};
+  ['f-job','f-fab','f-customer','f-subproduct'].forEach(function(id){document.getElementById(id).value=''});
   ['f-width','f-roll','f-buf','f-rolls-avail','f-qty','f-extra'].forEach(function(id){document.getElementById(id).value=''});
   document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
   sizeLabels=['S'];NUM_SIZES=1;
@@ -1244,9 +1244,9 @@ function fillFromOrder(id){
 }
 
 document.addEventListener('DOMContentLoaded',function(){
-  loadPaymentOrders();
   resetForm();
   loadFromSheet();
+  loadPaymentOrders();
   document.getElementById('page-form').addEventListener('input',function(){liveCalc()});
 });
 </script>
