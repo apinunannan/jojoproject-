@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบคำนวณผ้า</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c0c0c;--surface:#161616;--surface2:#1f1f1f;--surface3:#272727;
+  --border:#2a2a2a;--border2:#383838;
+  --accent:#e8c547;--accent2:#4fd1a5;--accent3:#f07b4f;--accent4:#7b8cde;
+  --text:#e4e4e4;--text-muted:#777;--danger:#e85c5c;
+}
+body{background:var(--bg);color:var(--text);font-family:'Sarabun',sans-serif;min-height:100vh}
+.app-header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;position:sticky;top:0;z-index:300}
+.logo{display:flex;align-items:center;gap:9px;text-decoration:none;margin-right:28px;cursor:pointer}
+.logo-box{width:30px;height:30px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.logo-text{font-size:0.92rem;font-weight:700;color:var(--text)}
+.nav{display:flex;gap:2px;flex:1}
+.nav-btn{padding:5px 14px;border:none;background:none;color:var(--text-muted);font-family:'Sarabun',sans-serif;font-size:0.83rem;font-weight:500;cursor:pointer;border-radius:6px;transition:all 0.15s}
+.nav-btn:hover{background:var(--surface2);color:var(--text)}
+.nav-btn.active{background:rgba(232,197,71,0.12);color:var(--accent);font-weight:600}
+.btn-primary{padding:6px 15px;background:var(--accent);border:none;border-radius:7px;color:#000;font-family:'Sarabun',sans-serif;font-size:0.8rem;font-weight:700;cursor:pointer;transition:all 0.15s}
+.btn-primary:hover{background:#f0d060;transform:translateY(-1px)}
+.page{display:none}.page.active{display:block;animation:fadeUp 0.18s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+/* DASHBOARD */
+.dash-wrap{max-width:1080px;margin:0 auto;padding:24px 18px}
+.dash-top{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.dash-top h2{font-size:1.2rem;font-weight:700;flex:1}
+.search-box{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:7px 12px;width:260px;transition:border-color 0.2s}
+.search-box:focus-within{border-color:var(--accent2)}
+.search-box input{background:none;border:none;outline:none;color:var(--text);font-family:'Sarabun',sans-serif;font-size:0.86rem;width:100%}
+.filter-row{display:flex;gap:7px;margin-bottom:18px}
+.chip{padding:4px 11px;border:1px solid var(--border);border-radius:18px;background:none;color:var(--text-muted);font-size:0.76rem;font-family:'Sarabun',sans-serif;cursor:pointer;transition:all 0.15s}
+.chip.active{border-color:var(--accent);color:var(--accent);background:rgba(232,197,71,0.08)}
+.stat-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:13px 15px}
+.stat.y{border-color:rgba(232,197,71,0.28);background:rgba(232,197,71,0.04)}
+.stat.g{border-color:rgba(79,209,165,0.28);background:rgba(79,209,165,0.04)}
+.stat.o{border-color:rgba(240,123,79,0.28);background:rgba(240,123,79,0.04)}
+.stat.b{border-color:rgba(123,140,222,0.28);background:rgba(123,140,222,0.04)}
+.stat-lbl{font-size:0.66rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-muted);margin-bottom:5px}
+.stat-val{font-family:'IBM Plex Mono',monospace;font-size:1.5rem;font-weight:500;line-height:1}
+.stat-val.y{color:var(--accent)}.stat-val.g{color:var(--accent2)}.stat-val.o{color:var(--accent3)}.stat-val.b{color:var(--accent4)}
+.stat-unit{font-size:0.68rem;color:var(--text-muted);margin-top:3px;font-family:'IBM Plex Mono',monospace}
+.job-list{display:flex;flex-direction:column;gap:8px}
+.jcard{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:10px;cursor:pointer;transition:all 0.15s}
+.jcard:hover{border-color:var(--border2);background:var(--surface2)}
+.jname{font-size:0.95rem;font-weight:600}
+.jmeta{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.jtag{font-size:0.7rem;font-family:'IBM Plex Mono',monospace;padding:2px 7px;border-radius:4px}
+.jtag.y{background:rgba(232,197,71,0.1);color:var(--accent)}.jtag.m{background:rgba(119,119,119,0.1);color:var(--text-muted)}.jtag.g{background:rgba(79,209,165,0.1);color:var(--accent2)}
+.jcard-r{display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:6px}
+.jnums{display:flex;gap:14px}
+.jnum-val{font-family:'IBM Plex Mono',monospace;font-size:1rem;font-weight:500;text-align:right}
+.jnum-val.y{color:var(--accent)}.jnum-val.g{color:var(--accent2)}.jnum-val.o{color:var(--accent3)}
+.jnum-lbl{font-size:0.62rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted)}
+.jact{display:flex;gap:5px}
+.jact-btn{padding:4px 9px;border:1px solid var(--border);background:none;color:var(--text-muted);border-radius:5px;font-size:0.72rem;font-family:'Sarabun',sans-serif;cursor:pointer;transition:all 0.15s}
+.jact-btn:hover{border-color:var(--border2);color:var(--text)}.jact-btn.del:hover{border-color:var(--danger);color:var(--danger)}
+.empty-state{text-align:center;padding:70px 20px;color:var(--text-muted);border:1px dashed var(--border);border-radius:14px}
+.empty-icon{font-size:2.5rem;margin-bottom:10px;opacity:0.2}
+
+/* FORM PAGE */
+.form-wrap{max-width:1200px;margin:0 auto;padding:22px 18px}
+.form-grid{display:grid;grid-template-columns:360px 1fr;gap:18px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:13px;overflow:hidden;margin-bottom:12px}
+.panel:last-child{margin-bottom:0}
+.phd{padding:11px 16px;border-bottom:1px solid var(--border);background:var(--surface2);display:flex;align-items:center;gap:9px}
+.phd-ic{width:23px;height:23px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px}
+.phd-ic.y{background:rgba(232,197,71,0.15)}.phd-ic.g{background:rgba(79,209,165,0.15)}.phd-ic.o{background:rgba(240,123,79,0.15)}.phd-ic.b{background:rgba(123,140,222,0.15)}
+.phd h2{font-size:0.86rem;font-weight:600}
+.pbd{padding:14px 16px}
+.fld{margin-bottom:11px}.fld:last-child{margin-bottom:0}
+.fld label{display:block;font-size:0.68rem;color:var(--text-muted);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em}
+.iw{display:flex;align-items:stretch;background:var(--bg);border:1px solid var(--border);border-radius:7px;overflow:hidden;transition:border-color 0.2s}
+.iw:focus-within{border-color:var(--accent)}
+.iw input,.iw select{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:0.86rem;padding:7px 10px}
+.iw input[type="text"]{font-family:'Sarabun',sans-serif}.iw input[type="date"]{color-scheme:dark}
+.iw select option{background:#161616}
+.iw-unit{padding:0 10px;font-size:0.68rem;color:var(--text-muted);font-family:'IBM Plex Mono',monospace;border-left:1px solid var(--border);display:flex;align-items:center;white-space:nowrap}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.frow3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.sec{font-size:0.66rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);font-weight:700;margin-bottom:9px;display:flex;align-items:center;gap:7px}
+.sec::after{content:'';flex:1;height:1px;background:var(--border)}
+.hr{height:1px;background:var(--border);margin:12px 0}
+
+/* LAY PLAN TABLE */
+.lay-plan-outer{overflow-x:auto;margin:0 -4px;padding:0 4px}
+.lay-table{border-collapse:collapse;min-width:700px;font-size:0.78rem;width:100%}
+.lay-table th{background:var(--surface2);border:1px solid var(--border);padding:0;height:30px;font-size:0.63rem;text-transform:uppercase;letter-spacing:0.04em;color:var(--text-muted);font-weight:600;white-space:nowrap;position:relative}
+.th-inner{display:flex;align-items:center;justify-content:center;height:100%;padding:0 5px;gap:3px}
+.th-edit{background:none;border:none;color:transparent;cursor:pointer;font-size:0.65rem;padding:0;line-height:1;transition:color 0.15s}
+.lay-table th:hover .th-edit{color:var(--text-muted)}
+.th-edit:hover{color:var(--accent) !important}
+.lay-table td{border:1px solid var(--border);padding:0;height:32px}
+.lay-table td input{width:100%;height:100%;background:transparent;border:none;outline:none;color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:0.78rem;padding:0 5px;text-align:center;transition:background 0.15s}
+.lay-table td input:focus{background:rgba(232,197,71,0.05)}
+.lay-table td input[type="text"]{font-family:'Sarabun',sans-serif;text-align:left;padding:0 7px}
+.lay-table td.sz input{min-width:46px}
+.lay-table td.rm{border:none;background:none;width:26px}
+.lay-table tr:hover td:not(.rm){background:rgba(255,255,255,0.012)}
+.lay-table tfoot td{background:var(--surface2);border:1px solid var(--border);font-family:'IBM Plex Mono',monospace;font-size:0.78rem;font-weight:600;padding:5px 7px;text-align:center;color:var(--accent)}
+.lay-table tfoot td.lbl{font-family:'Sarabun',sans-serif;text-align:left;color:var(--text-muted);font-weight:400;font-size:0.76rem}
+.lay-table td.row-tot input{color:var(--accent);font-weight:700;pointer-events:none;background:rgba(232,197,71,0.04) !important}
+.lay-table th.sz-th{min-width:50px}
+.lay-table th.tot-th{background:rgba(232,197,71,0.06);border-color:rgba(232,197,71,0.2)}
+.lay-table tfoot td.grand{color:var(--accent2);background:rgba(79,209,165,0.05)}
+.rm-btn{background:none;border:none;color:var(--danger);cursor:pointer;opacity:0.3;font-size:0.82rem;width:22px;height:22px;border-radius:4px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;margin:auto}
+.rm-btn:hover{opacity:1;background:rgba(232,92,92,0.1)}
+.btn-add-row{margin-top:6px;width:100%;padding:7px;background:none;border:1px dashed var(--border);border-radius:7px;color:var(--text-muted);font-size:0.78rem;font-family:'Sarabun',sans-serif;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:5px}
+.btn-add-row:hover{border-color:var(--accent2);color:var(--accent2);background:rgba(79,209,165,0.04)}
+
+/* SUMMARY BOX */
+.sumbox{background:var(--surface2);border:1px solid var(--border2);border-radius:9px;padding:12px 14px;margin-top:12px}
+.sumbox-ttl{font-size:0.64rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--accent);font-weight:700;margin-bottom:10px}
+.sumrow{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border)}
+.sumrow:last-child{border-bottom:none;padding-top:6px}
+.sumrow-lbl{font-size:0.78rem;color:var(--text-muted)}
+.sumrow-val{font-family:'IBM Plex Mono',monospace;font-size:0.86rem;font-weight:600}
+.sumrow-val.y{color:var(--accent)}.sumrow-val.g{color:var(--accent2)}.sumrow-val.o{color:var(--accent3)}
+.sumrow-val.big{font-size:1rem}
+.btn-save{width:100%;padding:11px;background:var(--accent);border:none;border-radius:8px;color:#000;font-family:'Sarabun',sans-serif;font-size:0.92rem;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:5px}
+.btn-save:hover{background:#f0d060;transform:translateY(-1px)}
+.btn-cancel{width:100%;padding:9px;background:none;border:1px solid var(--border);border-radius:8px;color:var(--text-muted);font-family:'Sarabun',sans-serif;font-size:0.84rem;cursor:pointer;transition:all 0.15s;margin-top:5px}
+.btn-cancel:hover{border-color:var(--border2);color:var(--text)}
+
+/* CALC PAGE */
+.calc-wrap{max-width:640px;margin:0 auto;padding:24px 18px}
+.calc-card{background:var(--surface);border:1px solid var(--border);border-radius:13px;overflow:hidden;margin-bottom:12px}
+.calc-hd{padding:11px 16px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:0.86rem;font-weight:600}
+.calc-bd{padding:16px}
+.calc-res{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-top:10px}
+.crrow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)}
+.crrow:last-child{border-bottom:none}
+.cr-lbl{font-size:0.8rem;color:var(--text-muted)}.cr-val{font-family:'IBM Plex Mono',monospace;font-size:0.94rem;font-weight:500}
+.cr-val.y{color:var(--accent)}.cr-val.g{color:var(--accent2)}.cr-val.o{color:var(--accent3)}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);z-index:500;display:none;align-items:center;justify-content:center;padding:16px}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:14px;width:100%;max-width:680px;max-height:88vh;overflow-y:auto}
+.modal-hd{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:10}
+.modal-hd h3{font-size:0.95rem;font-weight:600}
+.modal-close{background:none;border:none;color:var(--text-muted);font-size:1.1rem;cursor:pointer;padding:3px 7px;border-radius:5px;transition:all 0.15s}
+.modal-close:hover{background:var(--surface2);color:var(--text)}
+.modal-bd{padding:18px}
+
+/* SHARED */
+.alert{padding:9px 12px;border-radius:7px;font-size:0.8rem;margin-bottom:10px;display:flex;gap:6px}
+.alert-success{background:rgba(79,209,165,0.09);border:1px solid rgba(79,209,165,0.22);color:var(--accent2)}
+.alert-warn{background:rgba(240,123,79,0.09);border:1px solid rgba(240,123,79,0.22);color:var(--accent3)}
+.dtbl{width:100%;border-collapse:collapse;font-size:0.78rem}
+.dtbl th{text-align:left;padding:6px 9px;font-size:0.62rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);background:var(--surface2);border-bottom:1px solid var(--border);font-weight:500}
+.dtbl td{padding:7px 9px;border-bottom:1px solid rgba(42,42,42,0.6);font-family:'IBM Plex Mono',monospace;font-size:0.76rem}
+.dtbl td.nm{font-family:'Sarabun',sans-serif;font-size:0.82rem}
+.dtbl tfoot td{border-top:1px solid var(--border2);font-weight:700;color:var(--accent);border-bottom:none}
+.badge{display:inline-block;padding:2px 7px;border-radius:4px;font-size:0.7rem;font-family:'IBM Plex Mono',monospace}
+.badge-y{background:rgba(232,197,71,0.12);color:var(--accent)}.badge-g{background:rgba(79,209,165,0.12);color:var(--accent2)}
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.sg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.sc.y{border-color:rgba(232,197,71,0.28);background:rgba(232,197,71,0.04)}
+.sc.g{border-color:rgba(79,209,165,0.28);background:rgba(79,209,165,0.04)}
+.sc.o{border-color:rgba(240,123,79,0.28);background:rgba(240,123,79,0.04)}
+.sl{font-size:0.63rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-muted);margin-bottom:5px}
+.sv{font-family:'IBM Plex Mono',monospace;font-size:1.25rem;font-weight:500;line-height:1}
+.sv.y{color:var(--accent)}.sv.g{color:var(--accent2)}.sv.o{color:var(--accent3)}
+.su{font-size:0.66rem;color:var(--text-muted);margin-top:3px;font-family:'IBM Plex Mono',monospace}
+@media(max-width:800px){.form-grid{grid-template-columns:1fr}.stat-bar{grid-template-columns:1fr 1fr}}
+
+/* ── PRINT STYLES ── */
+.btn-print{width:100%;padding:10px;background:#2a2a2a;border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:0.88rem;font-weight:600;cursor:pointer;transition:all 0.15s;margin-top:5px;display:flex;align-items:center;justify-content:center;gap:7px}
+.btn-print:hover{background:var(--surface3);border-color:var(--accent);color:var(--accent)}
+#printArea{display:none}
+@media print{
+  body *{visibility:hidden}
+  #printArea,#printArea *{visibility:visible}
+  #printArea{display:block!important;position:fixed;inset:0;background:#fff;color:#000;font-family:'Sarabun',sans-serif;padding:20px;z-index:9999}
+  .print-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:16px}
+  .print-logo{font-size:1.1rem;font-weight:700}
+  .print-meta{font-size:0.78rem;color:#555;text-align:right;line-height:1.7}
+  .print-job{font-size:1.3rem;font-weight:700;margin-bottom:4px}
+  .print-sub{font-size:0.8rem;color:#555;margin-bottom:14px}
+  .print-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+  .print-stat{border:1px solid #ddd;border-radius:6px;padding:8px 12px}
+  .print-stat-lbl{font-size:0.65rem;text-transform:uppercase;letter-spacing:0.06em;color:#888;margin-bottom:3px}
+  .print-stat-val{font-size:1.3rem;font-weight:700;font-family:'IBM Plex Mono',monospace}
+  .print-stat-unit{font-size:0.7rem;color:#888}
+  .print-section{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:700;color:#888;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid #eee}
+  .print-table{width:100%;border-collapse:collapse;font-size:0.78rem;margin-bottom:16px}
+  .print-table th{background:#f5f5f5;padding:6px 8px;text-align:center;border:1px solid #ddd;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.05em;font-weight:600;color:#555}
+  .print-table th:first-child{text-align:left}
+  .print-table td{padding:6px 8px;border:1px solid #eee;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:0.76rem}
+  .print-table td:first-child{font-family:'Sarabun',sans-serif;text-align:left;font-size:0.82rem}
+  .print-table tfoot td{background:#f9f9f9;font-weight:700;border-top:2px solid #ddd}
+  .print-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+  .print-sumrow{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #eee;font-size:0.82rem}
+  .print-sumrow:last-child{border-bottom:none;font-weight:700}
+  .print-sumrow-val{font-family:'IBM Plex Mono',monospace;font-weight:600}
+  .print-footer{margin-top:20px;font-size:0.7rem;color:#aaa;text-align:center;border-top:1px solid #eee;padding-top:8px}
+}
+
+.sz-add-th{min-width:28px;width:28px;background:rgba(79,209,165,0.06);border:1px dashed rgba(79,209,165,0.3)!important;cursor:pointer;color:var(--accent2);font-size:0.85rem;font-weight:700;text-align:center;transition:all 0.15s}
+.sz-add-th:hover{background:rgba(79,209,165,0.15);color:#fff}
+.sz-rm-btn{background:none;border:none;cursor:pointer;color:var(--danger);opacity:0.3;font-size:0.6rem;padding:0 1px;line-height:1;transition:all 0.15s;vertical-align:middle}
+.sz-rm-btn:hover{opacity:1}
+.th-inner-sz{display:flex;align-items:center;justify-content:center;gap:2px;padding:2px 3px}
+.sz-lbl-inp{background:transparent;border:none;outline:none;color:var(--accent4);font-family:'IBM Plex Mono',monospace;font-size:0.72rem;font-weight:700;text-align:center;width:100%;min-width:44px;cursor:text;letter-spacing:0.04em;text-transform:uppercase}
+.sz-lbl-inp::placeholder{color:var(--text-dim);text-transform:none;font-weight:400}
+.sz-lbl-inp:focus{color:var(--text);background:rgba(123,140,222,0.1);border-radius:3px}
+
+.lay-table th.sz-add-col{width:34px;min-width:34px;background:rgba(79,209,165,0.06);border:1px dashed rgba(79,209,165,0.3);cursor:pointer;transition:all 0.15s}
+.lay-table th.sz-add-col:hover{background:rgba(79,209,165,0.15);border-color:var(--accent2)}
+.lay-table td.sz-add-data{width:34px;min-width:34px;background:rgba(79,209,165,0.03);border:1px dashed rgba(79,209,165,0.15);cursor:pointer;transition:all 0.15s}
+.lay-table td.sz-add-data:hover{background:rgba(79,209,165,0.1)}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="logo" onclick="showPage('dash')">
+    <div class="logo-box">✂️</div>
+    <span class="logo-text">ระบบคำนวณผ้า</span>
+  </div>
+  <nav class="nav">
+    <button class="nav-btn active" id="nav-dash" onclick="showPage('dash')">หน้าหลัก</button>
+    <button class="nav-btn" id="nav-form" onclick="showPage('form')">บันทึกงาน</button>
+    <button class="nav-btn" id="nav-calc" onclick="showPage('calc')">คำนวณผ้า</button>
+  </nav>
+  <div style="margin-left:auto">
+    <button class="btn-primary" onclick="newJob()">＋ งานใหม่</button>
+  </div>
+</header>
+
+<!-- ═══ DASHBOARD ═══ -->
+<div class="page active" id="page-dash">
+  <div class="dash-wrap">
+    <div class="dash-top">
+      <h2>รายการงานทั้งหมด</h2>
+      <div class="search-box">
+        <span style="color:var(--text-muted)">🔍</span>
+        <input id="searchInput" type="text" placeholder="ค้นหาชื่องาน, ผ้า, ออเดอร์..." oninput="renderDash()">
+      </div>
+    </div>
+    <div class="filter-row">
+      <button class="chip active" onclick="setFilter('all',this)">ทั้งหมด</button>
+      <button class="chip" onclick="setFilter('month',this)">เดือนนี้</button>
+      <button class="chip" onclick="setFilter('week',this)">สัปดาห์นี้</button>
+    </div>
+    <div class="stat-bar">
+      <div class="stat b"><div class="stat-lbl">งานทั้งหมด</div><div class="stat-val b" id="s-jobs">0</div><div class="stat-unit">งาน</div></div>
+      <div class="stat y"><div class="stat-lbl">หลารวม</div><div class="stat-val y" id="s-yards">0.00</div><div class="stat-unit">หลา</div></div>
+      <div class="stat g"><div class="stat-lbl">กิโลรวม</div><div class="stat-val g" id="s-kg">—</div><div class="stat-unit">กก.</div></div>
+      <div class="stat o"><div class="stat-lbl">ม้วนรวม</div><div class="stat-val o" id="s-rolls">0.00</div><div class="stat-unit">ม้วน</div></div>
+    </div>
+    <div class="job-list" id="jobList"></div>
+  </div>
+</div>
+
+<!-- ═══ FORM ═══ -->
+<div class="page" id="page-form">
+  <div class="form-wrap">
+    <div class="form-grid">
+      <div>
+        <div class="panel">
+          <div class="phd"><div class="phd-ic g">📋</div><h2>ชื่องาน / ออเดอร์</h2></div>
+          <div class="pbd">
+            <div class="fld"><label>ชื่องาน / โปรเจกต์</label>
+              <div class="iw"><input type="text" id="f-job" placeholder="เช่น เสื้อโปโล Season 2025"/></div></div>
+            <div class="fld"><label>วันที่</label>
+              <div class="iw"><input type="date" id="f-date"/></div></div>
+            <div class="frow">
+              <div class="fld"><label>จำนวนออเดอร์</label>
+                <div class="iw"><input type="number" id="f-qty" placeholder="500" min="1" oninput="liveCalc()"/>
+                  <div class="iw-unit">ตัว</div></div></div>
+              <div class="fld"><label>จำนวนเผื่อ</label>
+                <div class="iw"><input type="number" id="f-extra" placeholder="0" min="0" oninput="liveCalc()"/>
+                  <div class="iw-unit">ตัว</div></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="phd"><div class="phd-ic y">🧵</div><h2>ข้อมูลผ้า</h2></div>
+          <div class="pbd">
+            <div class="fld"><label>ชื่อ / รหัสผ้า</label>
+              <div class="iw"><input type="text" id="f-fab" placeholder="เช่น Cotton Pique 60/40"/></div></div>
+            <div class="frow">
+              <div class="fld"><label>ความกว้างผ้า</label>
+                <div class="iw"><input type="number" id="f-width" placeholder="60" oninput="liveCalc()"/>
+                  <div class="iw-unit" id="f-wlbl">นิ้ว</div></div></div>
+              <div class="fld"><label>หน่วย</label>
+                <div class="iw"><select id="f-wunit" onchange="document.getElementById('f-wlbl').textContent=this.value==='cm'?'ซม.':'นิ้ว'">
+                  <option value="inch">นิ้ว</option><option value="cm">ซม.</option></select></div></div>
+            </div>
+            <div class="frow">
+              <div class="fld"><label>หลา/ม้วน</label>
+                <div class="iw"><input type="number" id="f-roll" placeholder="100" oninput="liveCalc()"/>
+                  <div class="iw-unit">หลา</div></div></div>
+              <div class="fld"><label>ผ้าเผื่อ/ม้วน</label>
+                <div class="iw"><input type="number" id="f-buf" placeholder="0" oninput="liveCalc()"/>
+                  <div class="iw-unit">หลา</div></div></div>
+            </div>
+            <div class="fld"><label>จำนวนม้วนที่มี</label>
+              <div class="iw"><input type="number" id="f-rolls-avail" placeholder="10" min="0" step="0.5" oninput="liveCalc()"/>
+                <div class="iw-unit">ม้วน</div></div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="phd"><div class="phd-ic o">📏</div><h2>แผนการปูผ้า (Lay Plan)</h2></div>
+          <div class="pbd">
+            <div class="sec">กดที่ ✏️ บนหัวตารางเพื่อแก้ชื่อไซส์</div>
+            <div class="lay-plan-outer">
+              <table class="lay-table" id="layTable">
+                <thead id="layThead"></thead>
+                <tbody id="layTbody"></tbody>
+                <tfoot id="layTfoot"></tfoot>
+              </table>
+            </div>
+            <button class="btn-add-row" onclick="addLayRow()">＋ เพิ่มแถว</button>
+            <div class="hr" style="margin-top:14px"></div>
+            <div class="sec">สรุปผลการปูผ้า</div>
+            <div class="sumbox" id="laySumBox">
+              <div style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:8px">กรอกข้อมูลจะแสดงสรุปอัตโนมัติ</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="phd"><div class="phd-ic b">📊</div><h2>ตัวอย่างผลลัพธ์</h2></div>
+          <div class="pbd" id="f-preview">
+            <div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:0.86rem">กรอกข้อมูลเพื่อดูตัวอย่าง</div>
+          </div>
+        </div>
+        <button class="btn-save" onclick="saveJob()">💾 บันทึกงาน</button>
+        <button class="btn-print" onclick="printJob()">🖨️ พิมพ์ใบสรุปงาน</button>
+        <button class="btn-cancel" onclick="showPage('dash')">← กลับหน้าหลัก</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ CALC ═══ -->
+<div class="page" id="page-calc">
+  <div class="calc-wrap">
+    <h2 style="margin-bottom:16px;font-size:1.1rem">🧮 เครื่องคำนวณผ้า</h2>
+    <div class="calc-card">
+      <div class="calc-hd">⚖️ แปลงหน่วย — หลา ↔ กิโลกรัม</div>
+      <div class="calc-bd">
+        <div class="frow">
+          <div class="fld"><label>น้ำหนักผ้า (ก./หลา)</label>
+            <div class="iw"><input type="number" id="c-gsm" placeholder="250" oninput="calcFabric()"/>
+              <div class="iw-unit">ก./หลา</div></div></div>
+          <div class="fld"><label>ความกว้าง</label>
+            <div class="iw"><input type="number" id="c-w" placeholder="60" oninput="calcFabric()"/>
+              <div class="iw-unit" id="c-wlbl">นิ้ว</div></div></div>
+        </div>
+        <div class="frow">
+          <div class="fld"><label>หน่วยกว้าง</label>
+            <div class="iw"><select id="c-wunit" onchange="document.getElementById('c-wlbl').textContent=this.value==='cm'?'ซม.':'นิ้ว';calcFabric()">
+              <option value="inch">นิ้ว</option><option value="cm">ซม.</option></select></div></div>
+          <div class="fld"><label>หลา/ม้วน</label>
+            <div class="iw"><input type="number" id="c-rollLen" placeholder="100" oninput="calcFabric()"/>
+              <div class="iw-unit">หลา</div></div></div>
+        </div>
+        <div class="hr"></div>
+        <div class="frow">
+          <div class="fld"><label>กก. → หา หลา</label>
+            <div class="iw"><input type="number" id="c-kg" placeholder="50" oninput="calcFabric()"/>
+              <div class="iw-unit">กก.</div></div></div>
+          <div class="fld"><label>หลา → หา กก.</label>
+            <div class="iw"><input type="number" id="c-yds" placeholder="200" oninput="calcFabric()"/>
+              <div class="iw-unit">หลา</div></div></div>
+        </div>
+        <div class="fld"><label>จำนวนตัว × หลา/ตัว → หลา + กก. รวม</label>
+          <div class="frow">
+            <div class="iw"><input type="number" id="c-units" placeholder="ตัว" oninput="calcFabric()"/>
+              <div class="iw-unit">ตัว</div></div>
+            <div class="iw"><input type="number" id="c-ypu" placeholder="หลา/ตัว" oninput="calcFabric()"/>
+              <div class="iw-unit">หลา/ตัว</div></div>
+          </div>
+        </div>
+        <div class="calc-res" id="cr1"><div style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:6px">กรอกน้ำหนักผ้าและค่าที่ต้องการแปลง</div></div>
+      </div>
+    </div>
+    <div class="calc-card">
+      <div class="calc-hd">📦 คำนวณจากม้วน</div>
+      <div class="calc-bd">
+        <div class="frow3">
+          <div class="fld"><label>จำนวนม้วน</label>
+            <div class="iw"><input type="number" id="c-r" placeholder="5" oninput="calcRolls()"/><div class="iw-unit">ม้วน</div></div></div>
+          <div class="fld"><label>หลา/ม้วน</label>
+            <div class="iw"><input type="number" id="c-rl" placeholder="100" oninput="calcRolls()"/><div class="iw-unit">หลา</div></div></div>
+          <div class="fld"><label>ก./หลา</label>
+            <div class="iw"><input type="number" id="c-rg" placeholder="200" oninput="calcRolls()"/><div class="iw-unit">ก./หลา</div></div></div>
+        </div>
+        <div class="calc-res" id="cr2"><div style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:6px">กรอกจำนวนม้วนและหลา/ม้วน</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-hd"><h3 id="modal-title">รายละเอียดงาน</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-bd" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+var jobs=JSON.parse(localStorage.getItem('fabricJobs')||'[]');
+var editingId=null,curFilter='all',layRowCount=0;
+var NUM_SIZES=1;
+var sizeLabels=['S'];
+
+function saveData(){localStorage.setItem('fabricJobs',JSON.stringify(jobs))}
+
+function showPage(p){
+  document.querySelectorAll('.page').forEach(function(x){x.classList.remove('active')});
+  document.querySelectorAll('.nav-btn').forEach(function(x){x.classList.remove('active')});
+  document.getElementById('page-'+p).classList.add('active');
+  document.getElementById('nav-'+p).classList.add('active');
+  if(p==='dash')renderDash();
+}
+function newJob(){editingId=null;resetForm();showPage('form')}
+
+function setFilter(f,btn){
+  curFilter=f;
+  document.querySelectorAll('.chip').forEach(function(c){c.classList.remove('active')});
+  btn.classList.add('active');
+  renderDash();
+}
+
+function renderDash(){
+  var q=(document.getElementById('searchInput').value||'').toLowerCase();
+  var now=new Date();
+  var list=jobs.filter(function(j){
+    var m=!q||(j.jobName+(j.fabricName||'')).toLowerCase().includes(q);
+    if(!m)return false;
+    if(curFilter==='month'){var d=new Date(j.date);return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth()}
+    if(curFilter==='week'){var diff=(now-new Date(j.date))/86400000;return diff>=0&&diff<7}
+    return true;
+  });
+  var ty=list.reduce(function(s,j){return s+(j.totalYards||0)},0);
+  var tkg=list.filter(function(j){return j.totalKg>0}).reduce(function(s,j){return s+(j.totalKg||0)},0);
+  var tr=list.reduce(function(s,j){return s+(j.totalRolls||0)},0);
+  document.getElementById('s-jobs').textContent=list.length;
+  document.getElementById('s-yards').textContent=f2(ty);
+  document.getElementById('s-kg').textContent=tkg>0?f2(tkg):'—';
+  document.getElementById('s-rolls').textContent=f2(tr);
+  var el=document.getElementById('jobList');
+  if(!list.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div>'+(q?'ไม่พบงาน':'ยังไม่มีงาน — กด <strong>"＋ งานใหม่"</strong>')+'</div></div>';return}
+  el.innerHTML=[].concat(list).reverse().map(function(j){
+    var ds=j.date?new Date(j.date).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}):'';
+    return '<div class="jcard" onclick="showDetail(\''+j.id+'\')"><div><div class="jname">'+(j.jobName||'(ไม่มีชื่อ)')+'</div><div class="jmeta">'+(j.fabricName?'<span class="jtag y">'+j.fabricName+'</span>':'')+(ds?'<span class="jtag m">📅 '+ds+'</span>':'')+(j.qty?'<span class="jtag g">'+Math.floor(+j.qty).toLocaleString('th')+' ตัว</span>':'')+'</div></div><div class="jcard-r"><div class="jnums"><div><div class="jnum-val y">'+f2(j.totalYards||0)+'</div><div class="jnum-lbl">หลา</div></div><div><div class="jnum-val g">'+(j.totalKg>0?f2(j.totalKg):'—')+'</div><div class="jnum-lbl">กก.</div></div><div><div class="jnum-val o">'+f2(j.totalRolls||0)+'</div><div class="jnum-lbl">ม้วน</div></div></div><div class="jact" onclick="event.stopPropagation()"><button class="jact-btn" onclick="editJob(\''+j.id+'\')">✏️ แก้ไข</button><button class="jact-btn del" onclick="deleteJob(\''+j.id+'\')">🗑</button></div></div></div>';
+  }).join('');
+}
+
+// ─── LAY TABLE ───
+function buildLayHeader(){
+  var th='<tr>';
+  th+='<th style="min-width:52px"><div class="th-inner">ม้วนที่</div></th>';
+  th+='<th style="min-width:78px"><div class="th-inner">สี</div></th>';
+  th+='<th style="min-width:68px"><div class="th-inner">น้ำหนัก</div></th>';
+  th+='<th style="min-width:62px"><div class="th-inner">หลา</div></th>';
+  th+='<th style="min-width:58px"><div class="th-inner">แผ่น</div></th>';
+  for(var i=0;i<NUM_SIZES;i++){
+    th+='<th class="sz-th"><div class="th-inner-sz">'
+      +'<input class="sz-lbl-inp" type="text" value="'+(sizeLabels[i]||'')+'" placeholder="ไซส์" '
+      +'oninput="sizeLabels['+i+']=this.value;" title="คลิกเพื่อแก้ชื่อไซส์" /></div></th>';
+  }
+  th+='<th class="tot-th" style="min-width:56px"><div class="th-inner" style="color:var(--accent)">รวม</div></th>';
+  th+='<th style="width:26px;border:none;background:none"></th>';
+  th+='</tr>';
+  document.getElementById('layThead').innerHTML=th;
+}
+
+function buildLayFoot(){
+  var tf='<tr><td class="lbl" colspan="6">รวมทั้งหมด</td>';
+  for(var i=0;i<NUM_SIZES;i++) tf+='<td id="ft-'+i+'">—</td>';
+  tf+='<td style="border:none;background:none"></td>';
+  tf+='<td class="grand" id="ft-tot">—</td><td style="border:none;background:none"></td></tr>';
+  document.getElementById('layTfoot').innerHTML=tf;
+}
+
+function updateFoot(){
+  var szT=new Array(NUM_SIZES).fill(0),grand=0;
+  document.querySelectorAll('#layTbody tr').forEach(function(tr){
+    var inp=tr.querySelectorAll('input');
+    for(var i=0;i<NUM_SIZES;i++) szT[i]+=(parseFloat(inp[5+i].value)||0);
+    grand+=(parseFloat(inp[5+NUM_SIZES].value)||0);
+  });
+  for(var i=0;i<NUM_SIZES;i++){var el=document.getElementById('ft-'+i);if(el)el.textContent=szT[i]>0?fi(szT[i]):'—'}
+  var ft=document.getElementById('ft-tot');if(ft)ft.textContent=grand>0?fi(grand):'—';
+}
+
+function updateRowTotal(tr){
+  var inp=tr.querySelectorAll('input');
+  var s=0;for(var i=0;i<NUM_SIZES;i++)s+=(parseFloat(inp[5+i].value)||0);
+  inp[5+NUM_SIZES].value=s>0?s:'';
+  updateFoot();liveCalc();
+}
+
+function addLayRow(data){
+  layRowCount++;
+  var id=layRowCount;
+  var tr=document.createElement('tr');
+  tr.id='lr-'+id;
+  var h='<td><input type="number" placeholder="1" step="1" min="1" style="text-align:center" value="'+(data&&data.rollNo!=null?data.rollNo:layRowCount)+'" oninput="liveCalc()"/></td>';
+  h+='<td><input type="text" placeholder="เช่น ขาว" value="'+(data&&data.color||'')+'" oninput="liveCalc()"/></td>';
+  h+='<td><input type="number" placeholder="0" step="0.01" value="'+(data&&data.weight||'')+'" oninput="liveCalc()"/></td>';
+  h+='<td><input type="number" placeholder="0" step="0.5" value="'+(data&&data.yards||'')+'" oninput="liveCalc()"/></td>';
+  h+='<td><input type="number" placeholder="0" step="1" value="'+(data&&data.sheets||'')+'" oninput="liveCalc()"/></td>';
+  for(var i=0;i<NUM_SIZES;i++){
+    h+='<td class="sz"><input type="number" placeholder="" step="1" min="0" value="'+(data&&data.sizes&&data.sizes[i]||'')+'" oninput="updateRowTotal(this.closest(\'tr\'))"/></td>';
+  }
+  var rowSum=data&&data.sizes?data.sizes.reduce(function(s,v){return s+(v||0)},0):0;
+  h+='<td style="border:none;background:none"></td>';
+  h+='<td class="sz-add-data" onclick="addSize()"></td>';
+  h+='<td class="row-tot"><input type="number" readonly value="'+(rowSum||'')+'"/></td>';
+  h+='<td class="rm"><button class="rm-btn" onclick="removeLayRow('+id+')" title="ลบ">✕</button></td>';
+  tr.innerHTML=h;
+  document.getElementById('layTbody').appendChild(tr);
+  updateFoot();liveCalc();
+}
+
+function removeLayRow(id){
+  var el=document.getElementById('lr-'+id);if(el)el.remove();
+  updateFoot();liveCalc();
+}
+
+function addSize(){
+  sizeLabels.push('');
+  NUM_SIZES++;
+  buildLayHeader();
+  buildLayFoot();
+  document.querySelectorAll('#layTbody tr').forEach(function(tr){
+    // insert before the blank + spacer td (second to last before row-tot)
+    var allTds=tr.querySelectorAll('td');
+    var totTd=tr.querySelector('td.row-tot');
+    var spacerTd=totTd?totTd.previousElementSibling:null;
+    var newTd=document.createElement('td');
+    newTd.className='sz';
+    newTd.innerHTML='<input type="number" placeholder="" step="1" min="0" oninput="updateRowTotal(this.closest(\'tr\'))" />';
+    if(spacerTd) tr.insertBefore(newTd,spacerTd);
+    else tr.insertBefore(newTd,totTd);
+  });
+  updateFoot();
+}
+
+function removeSize(){
+  removeSizeAt(NUM_SIZES-1);
+}
+function removeSizeAt(idx){
+  if(NUM_SIZES<=1){return;}
+  sizeLabels.splice(idx,1);
+  NUM_SIZES--;
+  buildLayHeader();
+  buildLayFoot();
+  document.querySelectorAll('#layTbody tr').forEach(function(tr){
+    var szCells=tr.querySelectorAll('td.sz');
+    if(szCells[idx]) szCells[idx].remove();
+    updateRowTotal(tr);
+  });
+  updateFoot();
+}
+
+function getLayData(){
+  return Array.from(document.querySelectorAll('#layTbody tr')).map(function(tr){
+    var inp=tr.querySelectorAll('input');
+    return{
+      rollNo:parseFloat(inp[0].value)||0,
+      color:inp[1].value.trim(),
+      weight:parseFloat(inp[2].value)||0,
+      yards:parseFloat(inp[3].value)||0,
+      sheets:parseFloat(inp[4].value)||0,
+      sizes:Array.from({length:NUM_SIZES},function(_,i){return parseFloat(inp[5+i].value)||0})
+    };
+  });
+}
+
+// ─── COMPUTE ───
+function liveCalc(){
+  var rollLen=parseFloat(document.getElementById('f-roll').value)||0;
+  var buf=parseFloat(document.getElementById('f-buf').value)||0;
+  var rollsAvail=parseFloat(document.getElementById('f-rolls-avail').value)||0;
+  var qty=parseInt(document.getElementById('f-qty').value)||0;
+  var extraQty=parseInt(document.getElementById('f-extra').value)||0;
+  var totalQty=qty+extraQty;
+  var lays=getLayData().filter(function(l){return l.yards>0||l.sheets>0||l.sizes.some(function(s){return s>0;})||l.color||l.rollNo>0;});
+  if(!lays.length){
+    document.getElementById('laySumBox').innerHTML='<div style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:8px">กรอกแผนปูผ้าจะแสดงสรุปอัตโนมัติ</div>';
+    renderPreview();return;
+  }
+  var usable=rollLen-buf;
+  var ty=0,totalSizes=new Array(NUM_SIZES).fill(0);
+  lays.forEach(function(l){ty+=l.yards;l.sizes.forEach(function(s,i){totalSizes[i]+=s})});
+  var tu=totalSizes.reduce(function(s,v){return s+v},0);
+  var tRolls=usable>0?ty/usable:0;
+  var ypu=tu>0?ty/tu:0,yo=ypu*totalQty,ro=usable>0?yo/usable:0;
+  var enoughStr=totalQty>0?(tu>=totalQty?'<span style="color:var(--accent2)">✅ ครบ ('+fi(tu)+' ≥ '+fi(totalQty)+' ตัว)</span>':'<span style="color:var(--danger)">⚠️ ขาด '+fi(totalQty-tu)+' ตัว</span>'):'';
+  var szTags=sizeLabels.map(function(lbl,i){return totalSizes[i]>0?'<span style="background:var(--surface3);padding:2px 7px;border-radius:4px;font-size:0.7rem;font-family:\'IBM Plex Mono\',monospace;margin:2px">'+(lbl||'ไซส์'+(i+1))+': <strong style="color:var(--text)">'+fi(totalSizes[i])+'</strong></span>':''}).join('');
+  var rollsSuffix=rollsAvail>0?' | มีอยู่ '+f2(rollsAvail)+' ม้วน ('+(rollsAvail>=ro?'✅ เพียงพอ':'⚠️ ขาดอีก '+f2(ro-rollsAvail)+' ม้วน')+')':'';
+  var extraStr=extraQty>0?' <span style="color:var(--text-muted);font-size:0.76rem">(ออเดอร์ '+fi(qty)+' + เผื่อ '+fi(extraQty)+')</span>':'';
+  document.getElementById('laySumBox').innerHTML='<div class="sumbox-ttl">สรุปผลหลัง Lay Plan</div>'
+    +'<div class="sumrow"><span class="sumrow-lbl">ม้วนรวม (Lay Plan)</span><span class="sumrow-val o">'+f2(tRolls)+' ม้วน</span></div>'
+    +'<div class="sumrow"><span class="sumrow-lbl">หลารวม (Lay Plan)</span><span class="sumrow-val y">'+f2(ty)+' หลา</span></div>'
+    +'<div class="sumrow"><span class="sumrow-lbl">ชิ้นรวมทุกไซส์</span><span class="sumrow-val">'+fi(tu)+' ตัว '+enoughStr+'</span></div>'
+    +(szTags?'<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:2px">'+szTags+'</div>':'')
+    +(totalQty>0?'<div class="sumrow" style="margin-top:5px"><span class="sumrow-lbl" style="font-weight:600">📦 รวม '+fi(totalQty)+' ตัว'+extraStr+' — หลา</span><span class="sumrow-val y big">'+f2(yo)+' หลา</span></div>'
+      +'<div class="sumrow"><span class="sumrow-lbl" style="font-weight:600">📦 รวม '+fi(totalQty)+' ตัว — ม้วน</span><span class="sumrow-val o">'+f2(ro)+' ม้วน (≈'+Math.ceil(ro)+' ม้วน)'+rollsSuffix+'</span></div>':'');
+  renderPreview();
+}
+
+function renderPreview(){
+  var rollLen=parseFloat(document.getElementById('f-roll').value)||0;
+  var buf=parseFloat(document.getElementById('f-buf').value)||0;
+  var rollsAvailP=parseFloat(document.getElementById('f-rolls-avail').value)||0;
+  var qty=parseInt(document.getElementById('f-qty').value)||0;
+  var extraQtyP=parseInt(document.getElementById('f-extra').value)||0;
+  var totalQtyP=qty+extraQtyP;
+  var jobName=document.getElementById('f-job').value.trim();
+  var lays=getLayData().filter(function(l){return l.yards>0||l.sizes.some(function(s){return s>0;})||l.color||l.rollNo>0;});
+  if(!lays.length||!rollLen){
+    document.getElementById('f-preview').innerHTML='<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:0.86rem">กรอกข้อมูลเพื่อดูตัวอย่าง</div>';return;
+  }
+  var usable=rollLen-buf,ty=0,tu=0;
+  lays.forEach(function(l){ty+=l.yards;tu+=l.sizes.reduce(function(s,v){return s+v},0)});
+  var ypu=tu>0?ty/tu:0,yo=ypu*totalQtyP,ro=usable>0?yo/usable:0;
+  var tRolls=usable>0?ty/usable:0;
+  document.getElementById('f-preview').innerHTML=
+    (jobName?'<div style="font-weight:700;font-size:0.95rem;margin-bottom:12px">'+jobName+'</div>':'')
+    +'<div class="sg"><div class="sc y"><div class="sl">หลาทั้งออเดอร์</div><div class="sv y">'+f2(yo)+'</div><div class="su">หลา</div></div>'
+    +'<div class="sc g"><div class="sl">กก.ทั้งออเดอร์</div><div class="sv g">'+(gsm>0?f2(ko):'—')+'</div><div class="su">'+(gsm>0?'กก.':'ไม่ระบุ')+'</div></div>'
+    +'<div class="sc o"><div class="sl">ม้วนทั้งออเดอร์</div><div class="sv o">'+f2(ro)+'</div><div class="su">≈'+Math.ceil(ro)+' ม้วน</div></div>'
+    +'<div class="sc"><div class="sl">หลา Lay Plan รวม</div><div class="sv">'+f2(ty)+'</div><div class="su">จาก '+f2(tRolls)+' ม้วน</div></div></div>'
+    +'<div class="sec" style="margin-bottom:7px">รายละเอียด Lay Plan</div>'
+    +'<table class="dtbl"><thead><tr><th>สี</th><th>น้ำหนัก</th><th>หลา</th><th>แผ่น</th><th>รวมตัว</th></tr></thead><tbody>'
+    +lays.map(function(l){return'<tr><td class="nm">'+(l.color||'—')+'</td><td>'+l.weight+'</td><td>'+f2(l.yards)+'</td><td>'+(l.sheets||'—')+'</td><td>'+fi(l.sizes.reduce(function(s,v){return s+v},0))+'</td></tr>'}).join('')
+    +'</tbody><tfoot><tr><td class="nm" style="font-family:\'Sarabun\',sans-serif">รวม</td><td>—</td><td>'+f2(ty)+'</td><td>—</td><td>'+fi(tu)+'</td></tr></tfoot></table>';
+}
+
+// ─── SAVE / EDIT / DELETE ───
+function saveJob(){
+  var jobName=document.getElementById('f-job').value.trim();
+  var date=document.getElementById('f-date').value;
+  var qty=parseInt(document.getElementById('f-qty').value)||0;
+  var extraQty=parseInt(document.getElementById('f-extra').value)||0;
+  var totalQty=qty+extraQty;
+  var fabricName=document.getElementById('f-fab').value.trim();
+  var fabricWidth=parseFloat(document.getElementById('f-width').value)||0;
+  var widthUnit=document.getElementById('f-wunit').value;
+  var rollLen=parseFloat(document.getElementById('f-roll').value)||0;
+  var buf=parseFloat(document.getElementById('f-buf').value)||0;
+  var rollsAvail=parseFloat(document.getElementById('f-rolls-avail').value)||0;
+  var lays=getLayData();
+  var szL=[].concat(sizeLabels);
+  if(!jobName){alert('กรุณากรอกชื่องาน');return}
+  if(!rollLen){alert('กรุณากรอกความยาวต่อม้วน');return}
+  var usable=rollLen-buf,ty=0,tu=0;
+  lays.filter(function(l){return l.yards>0}).forEach(function(l){ty+=l.yards;tu+=l.sizes.reduce(function(s,v){return s+v},0)});
+  var ypu=tu>0?ty/tu:0,yo=ypu*totalQty,ro=usable>0?yo/usable:0;
+  var tRolls=usable>0?ty/usable:0;
+  var job={id:editingId||Date.now().toString(),jobName,date,qty,extraQty,totalQty,fabricName,fabricWidth,widthUnit,rollLen,buf,rollsAvail,lays,szLabels:szL,
+    totalYards:yo,totalRolls:ro,yardsLay:ty,rollsLay:tRolls,yardsPerUnit:ypu,totalUnits:tu,savedAt:new Date().toISOString()};
+  if(editingId){var idx=jobs.findIndex(function(j){return j.id===editingId});if(idx>=0)jobs[idx]=job}
+  else jobs.push(job);
+  saveData();editingId=null;showPage('dash');
+}
+
+function editJob(id){
+  var j=jobs.find(function(x){return x.id===id});if(!j)return;
+  editingId=id;
+  document.getElementById('f-job').value=j.jobName||'';
+  document.getElementById('f-date').value=j.date||'';
+  document.getElementById('f-qty').value=j.qty||'';
+  document.getElementById('f-extra').value=j.extraQty||'';
+  document.getElementById('f-fab').value=j.fabricName||'';
+  document.getElementById('f-width').value=j.fabricWidth||'';
+  document.getElementById('f-roll').value=j.rollLen||'';
+  document.getElementById('f-buf').value=j.buf||'';
+  document.getElementById('f-rolls-avail').value=j.rollsAvail||'';
+  document.getElementById('f-wunit').value=j.widthUnit||'inch';
+  document.getElementById('f-wlbl').textContent=j.widthUnit==='cm'?'ซม.':'นิ้ว';
+  if(j.szLabels)sizeLabels=[].concat(j.szLabels);
+  buildLayHeader();buildLayFoot();
+  document.getElementById('layTbody').innerHTML='';layRowCount=0;
+  (j.lays||[]).forEach(function(l){addLayRow(l)});
+  showPage('form');
+}
+
+function deleteJob(id){
+  if(!confirm('ลบงานนี้?'))return;
+  jobs=jobs.filter(function(j){return j.id!==id});
+  saveData();renderDash();
+}
+
+// ─── MODAL ───
+function showDetail(id){
+  var j=jobs.find(function(x){return x.id===id});if(!j)return;
+  var ds=j.date?new Date(j.date).toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'}):'—';
+  var szTotals=new Array(NUM_SIZES).fill(0);
+  (j.lays||[]).forEach(function(l){(l.sizes||[]).forEach(function(s,i){szTotals[i]+=s})});
+  var heads=(j.szLabels||sizeLabels).map(function(lbl,i){return szTotals[i]>0?'<th>'+(lbl||'ไซส์'+(i+1))+'</th>':''}).join('');
+  var cells=(j.szLabels||sizeLabels).map(function(lbl,i){return szTotals[i]>0?'<td style="text-align:center;font-family:\'IBM Plex Mono\',monospace">'+fi(szTotals[i])+'</td>':''}).join('');
+  var szHTML=heads?'<div class="sec" style="margin:12px 0 7px">รวมตัวแต่ละไซส์</div><table class="dtbl"><thead><tr>'+heads+'<th>รวม</th></tr></thead><tbody><tr>'+cells+'<td style="text-align:center;color:var(--accent);font-family:\'IBM Plex Mono\',monospace;font-weight:700">'+fi(j.totalUnits)+'</td></tr></tbody></table>':'';
+  document.getElementById('modal-title').textContent=j.jobName||'(ไม่มีชื่อ)';
+  document.getElementById('modal-body').innerHTML=
+    '<div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px">'
+    +(j.fabricName?'<span class="badge badge-y">'+j.fabricName+'</span>':'')
+    +'<span class="badge badge-g">'+ds+'</span>'
+    
+    +(j.qty?'<span class="badge" style="background:rgba(240,123,79,0.12);color:var(--accent3)">'+Math.floor(+j.qty).toLocaleString('th')+' ตัว</span>':'')
+    +'</div>'
+    +'<div class="sg"><div class="sc y"><div class="sl">หลาทั้งออเดอร์</div><div class="sv y">'+f2(j.totalYards||0)+'</div><div class="su">หลา</div></div>'
+    +'<div class="sc g"><div class="sl">กก.ทั้งออเดอร์</div><div class="sv g">'+(j.totalKg>0?f2(j.totalKg):'—')+'</div><div class="su">'+(j.totalKg>0?'กก.':'ไม่ระบุน้ำหนัก')+'</div></div>'
+    +'<div class="sc o"><div class="sl">ม้วนทั้งออเดอร์</div><div class="sv o">'+f2(j.totalRolls||0)+'</div><div class="su">≈'+Math.ceil(j.totalRolls||0)+' ม้วน</div></div>'
+    +'<div class="sc"><div class="sl">หลา/ตัว เฉลี่ย</div><div class="sv">'+f3(j.yardsPerUnit||0)+'</div><div class="su">หลา/ตัว</div></div></div>'
+    +'<div class="sec" style="margin-bottom:7px">Lay Plan รวม</div>'
+    +'<div class="sg3"><div class="sc y"><div class="sl">หลา</div><div class="sv y" style="font-size:1.05rem">'+f2(j.yardsLay||0)+'</div><div class="su">หลา</div></div>'
+    +'<div class="sc g"><div class="sl">กก.</div><div class="sv g" style="font-size:1.05rem">'+(j.kgLay>0?f2(j.kgLay):'—')+'</div><div class="su">'+(j.kgLay>0?'กก.':'')+'</div></div>'
+    +'<div class="sc o"><div class="sl">ม้วน</div><div class="sv o" style="font-size:1.05rem">'+f2(j.rollsLay||0)+'</div><div class="su">ม้วน</div></div></div>'
+    +szHTML
+    +'<div style="margin-top:12px;font-size:0.7rem;color:var(--text-muted);line-height:2">ผ้า: <strong style="color:var(--text)">'+(j.fabricName||'—')+'</strong>'
+    +(j.fabricWidth?' · กว้าง <strong style="color:var(--text)">'+j.fabricWidth+' '+(j.widthUnit==='cm'?'ซม.':'นิ้ว')+'</strong>':'')
+    +' · ม้วนละ <strong style="color:var(--text)">'+(j.rollLen||'—')+' หลา</strong>'
+    +(j.buf>0?' · เผื่อ '+j.buf+' หลา':'')
+    +(j.gsm>0?' · '+j.gsm+' ก./หลา':'')+'</div>'
+    +'<div style="display:flex;gap:7px;margin-top:12px"><button class="btn-save" style="flex:1" onclick="closeModal();editJob(\''+j.id+'\')">✏️ แก้ไข</button><button class="btn-print" style="flex:1" onclick="printJobById(\''+j.id+'\')">🖨️ พิมพ์</button><button class="btn-cancel" style="flex:1" onclick="closeModal()">ปิด</button></div>';
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){document.getElementById('modal').classList.remove('open')}
+
+// ─── CALC ───
+function calcFabric(){
+  var gsm=parseFloat(document.getElementById('c-gsm').value)||0;
+  var kg=parseFloat(document.getElementById('c-kg').value)||0;
+  var yds=parseFloat(document.getElementById('c-yds').value)||0;
+  var units=parseFloat(document.getElementById('c-units').value)||0;
+  var ypu=parseFloat(document.getElementById('c-ypu').value)||0;
+  if(!gsm){document.getElementById('cr1').innerHTML='<div style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:6px">กรอกน้ำหนักผ้า (ก./หลา) ก่อน</div>';return}
+  var rows=[];
+  if(kg>0)rows.push([kg+' กก. →',f2(kg*1000/gsm)+' หลา','g']);
+  if(yds>0)rows.push([yds+' หลา →',f2(yds*gsm/1000)+' กก.','y']);
+  if(units>0&&ypu>0){var ty=units*ypu;rows.push([units+' ตัว × '+ypu+' หลา',f2(ty)+' หลา','y']);rows.push(['น้ำหนักรวม '+units+' ตัว',f2(ty*gsm/1000)+' กก.','g'])}
+  if(!rows.length){document.getElementById('cr1').innerHTML='<div style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:6px">กรอกค่าที่ต้องการแปลง</div>';return}
+  document.getElementById('cr1').innerHTML=rows.map(function(r){return'<div class="crrow"><span class="cr-lbl">'+r[0]+'</span><span class="cr-val '+r[2]+'">'+r[1]+'</span></div>'}).join('');
+}
+function calcRolls(){
+  var r=parseFloat(document.getElementById('c-r').value)||0;
+  var rl=parseFloat(document.getElementById('c-rl').value)||0;
+  var g=parseFloat(document.getElementById('c-rg').value)||0;
+  if(!r||!rl){document.getElementById('cr2').innerHTML='<div style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:6px">กรอกจำนวนม้วนและหลา/ม้วน</div>';return}
+  var ty=r*rl;
+  document.getElementById('cr2').innerHTML='<div class="crrow"><span class="cr-lbl">'+r+' ม้วน × '+rl+' หลา</span><span class="cr-val y">'+f2(ty)+' หลา</span></div><div class="crrow"><span class="cr-lbl">น้ำหนักรวม</span><span class="cr-val g">'+(g>0?f2(ty*g/1000)+' กก.':'— (ไม่ระบุน้ำหนัก)')+'</span></div>';
+}
+
+// ─── HELPERS ───
+function f2(n){return(isNaN(n)||!isFinite(n))?'—':n.toFixed(2)}
+function f3(n){return(isNaN(n)||!isFinite(n))?'—':n.toFixed(3)}
+function fi(n){return isNaN(n)?'—':Math.floor(n).toLocaleString('th')}
+
+function resetForm(){
+  ['f-job','f-fab'].forEach(function(id){document.getElementById(id).value=''});
+  ['f-width','f-roll','f-buf','f-rolls-avail','f-qty','f-extra'].forEach(function(id){document.getElementById(id).value=''});
+  document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+  sizeLabels=['S'];NUM_SIZES=1;
+  buildLayHeader();buildLayFoot();
+  document.getElementById('layTbody').innerHTML='';layRowCount=0;
+  addLayRow();addLayRow();
+  document.getElementById('laySumBox').innerHTML='<div style="color:var(--text-muted);font-size:0.8rem;text-align:center;padding:8px">กรอกข้อมูลจะแสดงสรุปอัตโนมัติ</div>';
+  document.getElementById('f-preview').innerHTML='<div style="text-align:center;padding:40px 0;color:var(--text-muted);font-size:0.86rem">กรอกข้อมูลเพื่อดูตัวอย่าง</div>';
+}
+
+
+// ── PRINT ──
+function buildPrintHTML(j){
+  var ds=j.date?new Date(j.date).toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric'}):'—';
+  var now=new Date().toLocaleDateString('th-TH',{day:'numeric',month:'long',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  var szHds=(j.szLabels||[]).map(function(s){return'<th>'+(s||'—')+'</th>'}).join('');
+  var rows=(j.lays||[]).map(function(l){
+    var total=(l.sizes||[]).reduce(function(s,v){return s+(+v||0)},0);
+    return'<tr><td>'+(l.color||'—')+'</td>'
+      +'<td>'+(l.weight||'—')+'</td>'
+      +'<td>'+(l.yards?f2(l.yards):'—')+'</td>'
+      +'<td>'+(l.sheets||'—')+'</td>'
+      +(l.sizes||[]).map(function(v){return'<td>'+(v||'')+'</td>'}).join('')
+      +'<td style="font-weight:700">'+(total||'')+'</td>'
+      +'</tr>';
+  }).join('');
+  var usable=(j.rollLen||0)-(j.buf||0);
+  var extraStr=j.extraQty>0?' + เผื่อ '+j.extraQty+' ตัว':'';
+  return '<div class="print-header">'
+    +'<div><div class="print-logo">✂️ ระบบคำนวณผ้า</div></div>'
+    +'<div class="print-meta">พิมพ์: '+now+'</div>'
+    +'</div>'
+    +'<div class="print-job">'+(j.jobName||'(ไม่มีชื่อ)')+'</div>'
+    +'<div class="print-sub">'
+      +(j.fabricName?'ผ้า: '+j.fabricName+' · ':'')
+      +(j.fabricWidth?'กว้าง '+j.fabricWidth+(j.widthUnit==='cm'?' ซม.'|0:' นิ้ว')+' · ':'')
+      +'ม้วนละ '+(j.rollLen||'—')+' หลา'+(j.buf>0?' (เผื่อ '+j.buf+' หลา)':'')
+      +(j.rollsAvail>0?' · มีม้วน '+j.rollsAvail+' ม้วน':'')
+      +'</div>'
+
+    +'<div class="print-stats">'
+      +'<div class="print-stat"><div class="print-stat-lbl">ออเดอร์รวม</div><div class="print-stat-val">'+(j.totalQty||j.qty||0)+'</div><div class="print-stat-unit">ตัว'+extraStr+'</div></div>'
+      +'<div class="print-stat"><div class="print-stat-lbl">หลาทั้งหมด</div><div class="print-stat-val">'+f2(j.totalYards)+'</div><div class="print-stat-unit">หลา ('+f2(j.yardsPerUnit)+' หลา/ตัว)</div></div>'
+      +'<div class="print-stat"><div class="print-stat-lbl">ม้วนที่ต้องใช้</div><div class="print-stat-val">'+f2(j.totalRolls)+'</div><div class="print-stat-unit">≈'+Math.ceil(j.totalRolls||0)+' ม้วน</div></div>'
+    +'</div>'
+
+    +'<div class="print-section">แผนการปูผ้า (Lay Plan)</div>'
+    +'<table class="print-table">'
+      +'<thead><tr><th>สี</th><th>น้ำหนัก</th><th>หลา</th><th>แผ่น</th>'+szHds+'<th>รวม</th></tr></thead>'
+      +'<tbody>'+rows+'</tbody>'
+      +'<tfoot><tr>'
+        +'<td>รวม</td><td>—</td>'
+        +'<td>'+f2(j.yardsLay)+'</td>'
+        +'<td>—</td>'
+        +(j.szLabels||[]).map(function(){return'<td>—</td>'}).join('')
+        +'<td>'+(j.totalUnits||0)+'</td>'
+      +'</tr></tfoot>'
+    +'</table>'
+
+    +'<div class="print-section">สรุปผล</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">'
+      +'<div>'
+        +'<div class="print-sumrow"><span>หลารวม Lay Plan</span><span class="print-sumrow-val">'+f2(j.yardsLay)+' หลา</span></div>'
+        +'<div class="print-sumrow"><span>ม้วนรวม Lay Plan</span><span class="print-sumrow-val">'+f2(j.rollsLay)+' ม้วน</span></div>'
+        +'<div class="print-sumrow"><span>ม้วนที่มี</span><span class="print-sumrow-val">'+(j.rollsAvail>0?f2(j.rollsAvail)+' ม้วน':'—')+'</span></div>'
+      +'</div>'
+      +'<div>'
+        +'<div class="print-sumrow"><span>ออเดอร์รวม</span><span class="print-sumrow-val">'+fi(j.totalQty||j.qty||0)+' ตัว</span></div>'
+        +'<div class="print-sumrow"><span>หลาทั้งออเดอร์</span><span class="print-sumrow-val">'+f2(j.totalYards)+' หลา</span></div>'
+        +'<div class="print-sumrow"><span>ม้วนที่ต้องใช้</span><span class="print-sumrow-val">'+f2(j.totalRolls)+' ม้วน (≈'+Math.ceil(j.totalRolls||0)+' ม้วน)</span></div>'
+      +'</div>'
+    +'</div>'
+    +'<div class="print-footer">สร้างโดย ระบบคำนวณผ้า · '+now+'</div>';
+}
+
+function printJob(){
+  // Build job object from current form
+  var rollLen=parseFloat(document.getElementById('f-roll').value)||0;
+  var buf=parseFloat(document.getElementById('f-buf').value)||0;
+  var rollsAvail=parseFloat(document.getElementById('f-rolls-avail').value)||0;
+  var qty=parseInt(document.getElementById('f-qty').value)||0;
+  var extraQty=parseInt(document.getElementById('f-extra').value)||0;
+  var totalQty=qty+extraQty;
+  var usable=rollLen-buf;
+  var lays=getLayData();
+  var szL=[].concat(sizeLabels);
+  var ty=0,tu=0;
+  lays.filter(function(l){return l.yards>0}).forEach(function(l){ty+=l.yards;tu+=l.sizes.reduce(function(s,v){return s+v},0)});
+  var ypu=tu>0?ty/tu:0,yo=ypu*totalQty,ro=usable>0?yo/usable:0;
+  var tRolls=usable>0?ty/usable:0;
+  var j={
+    jobName:document.getElementById('f-job').value.trim(),
+    date:document.getElementById('f-date').value,
+    qty:qty,extraQty:extraQty,totalQty:totalQty,
+    fabricName:document.getElementById('f-fab').value.trim(),
+    fabricWidth:parseFloat(document.getElementById('f-width').value)||0,
+    widthUnit:document.getElementById('f-wunit').value,
+    rollLen:rollLen,buf:buf,rollsAvail:rollsAvail,
+    lays:lays,szLabels:szL,
+    totalYards:yo,totalRolls:ro,yardsLay:ty,rollsLay:tRolls,
+    yardsPerUnit:ypu,totalUnits:tu
+  };
+  document.getElementById('printArea').innerHTML=buildPrintHTML(j);
+  window.print();
+}
+
+function printJobById(id){
+  var j=jobs.find(function(x){return x.id===id});
+  if(!j)return;
+  document.getElementById('printArea').innerHTML=buildPrintHTML(j);
+  closeModal();
+  setTimeout(function(){window.print();},150);
+}
+
+document.addEventListener('DOMContentLoaded',function(){
+  resetForm();renderDash();
+  document.getElementById('page-form').addEventListener('input',function(){liveCalc()});
+});
+</script>
+
+<!-- PRINT AREA -->
+<div id="printArea"></div>
+</body>
+</html>
