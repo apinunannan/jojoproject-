@@ -540,6 +540,8 @@ function removeLayRow(id){
 }
 
 function addSize(){
+  // sync ค่าปัจจุบันก่อน rebuild
+  document.querySelectorAll('.sz-lbl-inp').forEach(function(inp,i){ sizeLabels[i]=inp.value; });
   sizeLabels.push('');
   NUM_SIZES++;
   buildLayHeader();
@@ -556,6 +558,8 @@ function addSize(){
     else tr.insertBefore(newTd,totTd);
   });
   updateFoot();
+  // focus ช่องไซส์ใหม่
+  var newInp=document.querySelectorAll('.sz-lbl-inp');if(newInp.length)newInp[newInp.length-1].focus();
 }
 
 function removeSize(){
