@@ -75,7 +75,12 @@
   .img-upload-text{font-size:13px;color:#94a3b8}
   .img-grid{display:grid;gap:8px}
   .img-wrap{position:relative}
-  .img-preview{width:100%;aspect-ratio:16/9;object-fit:contain;border-radius:8px;display:block;background:#f1f5f9}
+  .img-preview{width:100%;height:var(--img-h,120px);object-fit:cover;border-radius:8px;display:block;transition:height .15s}
+
+  .img-size-ctrl{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px}
+  .img-size-btn{background:#e2e8f0;border:none;border-radius:5px;width:24px;height:24px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;color:#475569;line-height:1}
+  .img-size-btn:hover{background:#cbd5e1}
+  .img-size-label{font-size:11px;color:#94a3b8;min-width:30px;text-align:center}
   .img-remove{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;font-family:inherit}
 
   /* Size table */
@@ -109,29 +114,13 @@
   .detail-size-table th.center{text-align:center}
   .detail-size-table td{padding:4px 8px;border-bottom:1px solid #f1f5f9}
   .detail-size-table td.center{text-align:center;font-weight:800;color:#1d4ed8}
-  .detail-size-table td.muted{text-align:center;color:#1e293b;font-weight:700}
+  .detail-size-table td.muted{text-align:center;color:#64748b}
 
   /* Print */
   @media print{
     .no-print{display:none!important}
-    body{background:white;font-size:11px}
-    #app{max-width:100%;padding:0}
-    .form-body{padding:6px}
-    .section{box-shadow:none;border:1px solid #e2e8f0;padding:8px;margin-bottom:6px;border-radius:6px;page-break-inside:avoid}
-    .section-title{font-size:12px}
-    .detail-grid{grid-template-columns:repeat(3,1fr);gap:6px}
-    .detail-val{font-size:13px}
-    .detail-label{font-size:10px}
-    .img-preview{aspect-ratio:16/9;object-fit:contain;max-height:240px}
-    .pre-wrap{font-size:11px;line-height:1.5}
-    .detail-size-table{font-size:12px;width:100%}
-    .detail-size-table th{padding:4px 6px;font-size:11px}
-    .detail-size-table td{padding:4px 6px;color:#000!important;font-weight:700!important}
-    .detail-size-table td.muted{color:#000!important;font-weight:800!important;text-align:center!important}
-    .detail-size-table td.center{font-size:14px;font-weight:800!important;color:#000!important}
-    .detail-2col{gap:8px}
-    #print-header{display:block!important}
-    @page{size:A4 portrait;margin:10mm}
+    body{background:white}
+    .section{box-shadow:none;border:1px solid #e2e8f0}
   }
 
   /* Responsive */
@@ -263,8 +252,13 @@ function renderForm(){
     `<div class="img-grid" style="grid-template-columns:repeat(${Math.min(o.images.length+(o.images.length<3?1:0),3)},1fr)">
       ${o.images.map((img,i)=>`
         <div class="img-wrap">
-          <img src="${img}" class="img-preview" alt="">
+          <img src="${getImgSrc(img)}" class="img-preview" style="--img-h:${getImgSize(img)}px" alt="">
           <button class="img-remove" onclick="removeImage(${i})">✕</button>
+          <div class="img-size-ctrl">
+            <button class="img-size-btn" onclick="resizeImage(${i},-20)">−</button>
+            <span class="img-size-label">${getImgSize(img)}px</span>
+            <button class="img-size-btn" onclick="resizeImage(${i},20)">＋</button>
+          </div>
         </div>`).join("")}
       ${o.images.length<3?`<div class="img-upload-box" onclick="document.getElementById('img-file').click()" style="padding:16px">
         <div style="font-size:24px">📷</div>
@@ -279,9 +273,9 @@ function renderForm(){
   // Size rows
   const sizeRows=o.sizeNames.map((name,i)=>`
     <tr>
-      <td><input class="size-name-input" value="${escHtml(name)}" onchange="setSizeName(${i},this.value)" placeholder="เช่น 0"></td>
-      <td class="center"><input class="size-qty-input" type="number" min="0" value="${o.sizeQty[name]||""}" onchange="setSizeQty('${escHtml(name)}',this.value,${i})" placeholder="0"></td>
-      <td class="center"><input class="size-qty-input" type="number" min="0" value="${(o.sizeExtra||{})[name]||""}" onchange="setSizeExtra('${escHtml(name)}',this.value)" placeholder="0"></td>
+      <td><input class="size-name-input" value="${escHtml(name)}" oninput="setSizeName(${i},this.value)" placeholder="เช่น 0"></td>
+      <td class="center"><input class="size-qty-input" type="number" min="0" value="${o.sizeQty[name]||""}" oninput="setSizeQty('${escHtml(name)}',this.value,${i})" placeholder="0"></td>
+      <td class="center"><input class="size-qty-input" type="number" min="0" value="${(o.sizeExtra||{})[name]||""}" oninput="setSizeExtra('${escHtml(name)}',this.value)" placeholder="0"></td>
       <td class="center"><button class="size-remove" onclick="removeSize(${i})">✕</button></td>
     </tr>`).join("");
   const total=totalQty(o.sizeQty);
@@ -396,9 +390,8 @@ function renderForm(){
 function renderDetail(){
   const o=state.current;
   const total=totalQty(o.sizeQty);
-  const sizeEntries=(o.sizeNames||[]).map(n=>[n,o.sizeQty?.[n]||""]).filter(([n,v])=>parseInt(v)>0||parseInt((o.sizeExtra||{})[n])>0);
-  const extraTotal=sizeEntries.reduce((s,[n])=>s+(parseInt((o.sizeExtra||{})[n])||0),0);
-  const grandTotal=total+extraTotal;
+  const sizeEntries=(o.sizeNames||[]).map(n=>[n,o.sizeQty?.[n]||""]).filter(([,v])=>parseInt(v)>0);
+  const extraTotal=(o.sizeNames||[]).reduce((s,n)=>s+(parseInt((o.sizeExtra||{})[n])||0),0);
 
   const imgs=o.images&&o.images.length>0
     ?`<div class="img-grid" style="grid-template-columns:repeat(${Math.min(o.images.length,3)},1fr);gap:8px;margin-bottom:12px">
@@ -413,6 +406,7 @@ function renderDetail(){
     </tr>`).join("");
 
   return `
+    <style>@media print{.no-print{display:none!important}}</style>
     <div class="header no-print">
       <div style="display:flex;align-items:center;gap:10px">
         <button class="btn-back" onclick="goList()">←</button>
@@ -438,10 +432,7 @@ function renderDetail(){
           <div><div class="detail-label">กำหนดส่ง</div><div class="detail-val">${formatDate(o.dueDate)}</div></div>
           <div><div class="detail-label">รวมทั้งหมด</div><div class="detail-val">${total>0?total+" ตัว":"-"}</div></div>
         </div>
-        <div class="detail-sep" style="display:flex;gap:20px;flex-wrap:wrap;align-items:baseline">
-          <div><div class="detail-label">ชื่อลูกค้า</div><div class="detail-val">${escHtml(o.customerName||'-')}</div></div>
-          ${o.jobName?`<div><div class="detail-label">ชื่องาน</div><div class="detail-val blue">${escHtml(o.jobName)}</div></div>`:''}
-        </div>
+        ${o.jobName?`<div class="detail-sep"><div class="detail-label">ชื่องาน</div><div class="detail-val blue">${escHtml(o.jobName)}</div></div>`:""}
       </div>
 
       ${o.jobDetail?`<div class="section">
@@ -474,7 +465,7 @@ function renderDetail(){
               <td class="center" style="padding:6px 8px;font-size:15px">${total}</td>
               <td class="center" style="padding:6px 8px;font-size:15px">${extraTotal||"-"}</td>
             </tr>
-            ${grandTotal>0?`<tr class="tfoot-grand"><td colspan="3">รวมทั้งหมด: ${grandTotal} ตัว</td></tr>`:""}
+            ${total+extraTotal>0?`<tr class="tfoot-grand"><td colspan="3">รวมทั้งหมด: ${total+extraTotal} ตัว</td></tr>`:""}
           </tfoot>
         </table>
       </div>`:""}
@@ -550,7 +541,7 @@ function setSizeName(i,v){
     state.current.sizeExtra[v]=state.current.sizeExtra[oldName];
     delete state.current.sizeExtra[oldName];
   }
-  saveOrders(state.orders);
+  render();
 }
 function setSizeQty(name,v,i){
   collectForm();
@@ -600,7 +591,7 @@ function addImage(input){
   reader.onload=ev=>{
     collectForm();
     if(!state.current.images) state.current.images=[];
-    if(state.current.images.length<3) state.current.images.push(ev.target.result);
+    if(state.current.images.length<3) state.current.images.push({src:ev.target.result,size:120});
     input.value="";
     render();
   };
@@ -611,6 +602,17 @@ function removeImage(i){
   state.current.images.splice(i,1);
   render();
 }
+function resizeImage(i,delta){
+  collectForm();
+  const imgs=state.current.images;
+  if(!imgs||!imgs[i])return;
+  // support both old string format and new object format
+  if(typeof imgs[i]==='string') imgs[i]={src:imgs[i],size:120};
+  imgs[i].size=Math.max(60,Math.min(300,imgs[i].size+delta));
+  render();
+}
+function getImgSrc(img){return typeof img==='string'?img:img.src;}
+function getImgSize(img){return typeof img==='string'?120:(img.size||120);}
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 document.body.insertAdjacentHTML("beforeend",`<div id="toast" class="toast"></div>`);
