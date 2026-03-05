@@ -75,8 +75,21 @@
   .img-upload-text{font-size:13px;color:#94a3b8}
   .img-grid{display:grid;gap:8px}
   .img-wrap{position:relative}
-  .img-preview{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block}
+  .img-preview{width:100%;object-fit:cover;border-radius:8px;display:block;cursor:zoom-in;transition:height .1s}
   .img-remove{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;font-family:inherit}
+  .img-size-bar{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:4px}
+  .img-sz-btn{width:26px;height:26px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;color:#475569;font-family:inherit}
+  .img-sz-btn:hover{background:#e2e8f0}
+  .img-sz-lbl{font-size:11px;color:#94a3b8;min-width:34px;text-align:center}
+  #img-zoom-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out}
+  #img-zoom-overlay.open{display:flex}
+  #img-zoom-img{max-width:90vw;max-height:85vh;border-radius:10px;transform-origin:center;transition:transform .15s;user-select:none;cursor:default}
+  #img-zoom-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:22px;width:38px;height:38px;border-radius:50%;cursor:pointer}
+  #img-zoom-close:hover{background:rgba(255,255,255,.3)}
+  #zoom-controls{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:10px;align-items:center}
+  .zoom-btn{background:rgba(255,255,255,.15);border:none;color:#fff;font-size:20px;width:40px;height:40px;border-radius:50%;cursor:pointer;font-family:inherit}
+  .zoom-btn:hover{background:rgba(255,255,255,.3)}
+  #zoom-level{color:#fff;font-size:13px;min-width:44px;text-align:center}
 
   /* Size table */
   .size-table{width:100%;border-collapse:collapse;font-size:13px}
@@ -113,9 +126,22 @@
 
   /* Print */
   @media print{
+    @page{size:A4 portrait;margin:10mm 12mm}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .no-print{display:none!important}
-    body{background:white}
-    .section{box-shadow:none;border:1px solid #e2e8f0}
+    body{background:white;font-size:11px}
+    #app{padding:0!important}
+    .form-body{padding:0!important;margin:0!important;max-width:100%!important}
+    .section{box-shadow:none!important;border:1px solid #e2e8f0!important;margin-bottom:6px!important;padding:8px 10px!important;break-inside:avoid}
+    .section-title{font-size:11px!important}
+    .detail-label{font-size:9px!important}
+    .detail-val{font-size:12px!important}
+    .pre-wrap{font-size:11px!important}
+    .img-preview{max-height:140px!important;object-fit:cover}
+    .img-grid{gap:4px!important;margin-bottom:6px!important}
+    .detail-size-table{font-size:11px!important}
+    .detail-size-table th,.detail-size-table td{padding:3px 6px!important}
+    .img-size-bar{display:none!important}
   }
 
   /* Responsive */
@@ -259,11 +285,16 @@ function renderForm(){
   const isNew=!state.orders.find(x=>x.id===o.id);
   const imgGrid=o.images&&o.images.length>0?
     `<div class="img-grid" style="grid-template-columns:repeat(${Math.min(o.images.length+(o.images.length<3?1:0),3)},1fr)">
-      ${o.images.map((img,i)=>`
+      ${o.images.map((img,i)=>{const src=typeof img==='object'?img.src:img;const h=typeof img==='object'&&img.h?img.h:120;return`
         <div class="img-wrap">
-          <img src="${img}" class="img-preview" alt="">
+          <img src="${src}" class="img-preview" style="height:${h}px" alt="" onclick="openZoom('${src.substring(0,30)==='data:'?'__idx__'+i:''}',${i})">
           <button class="img-remove" onclick="removeImage(${i})">✕</button>
-        </div>`).join("")}
+          <div class="img-size-bar">
+            <button class="img-sz-btn" onclick="resizeImg(${i},-20)">−</button>
+            <span class="img-sz-lbl">${h}px</span>
+            <button class="img-sz-btn" onclick="resizeImg(${i},20)">＋</button>
+          </div>
+        </div>`;}).join("")}
       ${o.images.length<3?`<div class="img-upload-box" onclick="document.getElementById('img-file').click()" style="padding:16px">
         <div style="font-size:24px">📷</div>
         <div style="font-size:11px;color:#94a3b8">+ เพิ่มรูป</div>
@@ -278,8 +309,8 @@ function renderForm(){
   const sizeRows=o.sizeNames.map((name,i)=>`
     <tr>
       <td><input class="size-name-input" value="${escHtml(name)}" oninput="setSizeName(${i},this.value)" placeholder="เช่น 0"></td>
-      <td class="center"><input class="size-qty-input" type="number" min="0" value="${o.sizeQty[name]||""}" oninput="setSizeQty('${escHtml(name)}',this.value,${i})" placeholder="0"></td>
-      <td class="center"><input class="size-qty-input" type="number" min="0" value="${(o.sizeExtra||{})[name]||""}" oninput="setSizeExtra('${escHtml(name)}',this.value)" placeholder="0"></td>
+      <td class="center"><input class="size-qty-input" type="text" inputmode="numeric" pattern="[0-9]*" value="${o.sizeQty[name]||""}" onclick="this.select()" onfocus="this.select()" oninput="setSizeQty('${escHtml(name)}',this.value,${i})" placeholder="0"></td>
+      <td class="center"><input class="size-qty-input" type="text" inputmode="numeric" pattern="[0-9]*" value="${(o.sizeExtra||{})[name]||""}" onclick="this.select()" onfocus="this.select()" oninput="setSizeExtra('${escHtml(name)}',this.value)" placeholder="0"></td>
       <td class="center"><button class="size-remove" onclick="removeSize(${i})">✕</button></td>
     </tr>`).join("");
   const total=totalQty(o.sizeQty);
@@ -399,7 +430,7 @@ function renderDetail(){
 
   const imgs=o.images&&o.images.length>0
     ?`<div class="img-grid" style="grid-template-columns:repeat(${Math.min(o.images.length,3)},1fr);gap:8px;margin-bottom:12px">
-        ${o.images.map(img=>`<img src="${img}" class="img-preview" alt="">`).join("")}
+        ${o.images.map((img,i)=>{const src=typeof img==='object'?img.src:img;const h=typeof img==='object'&&img.h?img.h:120;return`<img src="${src}" class="img-preview" style="height:${h}px" alt="" onclick="openZoom('',${i})">`}).join("")}
       </div>`:""
 
   const sizeRows=sizeEntries.map(([name,qty])=>`
@@ -410,7 +441,7 @@ function renderDetail(){
     </tr>`).join("");
 
   return `
-    <style>@media print{.no-print{display:none!important}}</style>
+    
     <div class="header no-print">
       <div style="display:flex;align-items:center;gap:10px">
         <button class="btn-back" onclick="goList()">←</button>
@@ -595,7 +626,7 @@ function addImage(input){
   reader.onload=ev=>{
     collectForm();
     if(!state.current.images) state.current.images=[];
-    if(state.current.images.length<3) state.current.images.push(ev.target.result);
+    if(state.current.images.length<3) state.current.images.push({src:ev.target.result,h:120});
     input.value="";
     render();
   };
@@ -606,11 +637,49 @@ function removeImage(i){
   state.current.images.splice(i,1);
   render();
 }
+function resizeImg(i,delta){
+  collectForm();
+  const imgs=state.current.images;
+  if(!imgs||imgs[i]===undefined)return;
+  if(typeof imgs[i]==='string') imgs[i]={src:imgs[i],h:120};
+  imgs[i].h=Math.max(60,Math.min(400,imgs[i].h+delta));
+  render();
+}
+var _zScale=1,_zImgIdx=-1;
+function openZoom(src,idx){
+  _zScale=1;_zImgIdx=idx;
+  const imgs=state.current&&state.current.images;
+  const img=imgs&&imgs[idx];
+  const realSrc=src||( typeof img==='object'?img.src:img)||'';
+  document.getElementById('img-zoom-img').src=realSrc;
+  document.getElementById('img-zoom-img').style.transform='scale(1)';
+  document.getElementById('zoom-level').textContent='100%';
+  document.getElementById('img-zoom-overlay').classList.add('open');
+}
+function closeZoom(){document.getElementById('img-zoom-overlay').classList.remove('open');}
+function zoomIn(){_zScale=Math.min(4,Math.round((_zScale+0.25)*100)/100);applyZoom();}
+function zoomOut(){_zScale=Math.max(0.25,Math.round((_zScale-0.25)*100)/100);applyZoom();}
+function zoomReset(){_zScale=1;applyZoom();}
+function applyZoom(){
+  document.getElementById('img-zoom-img').style.transform='scale('+_zScale+')';
+  document.getElementById('zoom-level').textContent=Math.round(_zScale*100)+'%';
+}
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 document.body.insertAdjacentHTML("beforeend",`<div id="toast" class="toast"></div>`);
 render();
 loadFromSheet();
 </script>
+
+<div id="img-zoom-overlay" onclick="if(event.target.id==='img-zoom-overlay')closeZoom()">
+  <img id="img-zoom-img" src="" alt="">
+  <button id="img-zoom-close" onclick="closeZoom()">✕</button>
+  <div id="zoom-controls">
+    <button class="zoom-btn" onclick="zoomOut()">−</button>
+    <span id="zoom-level">100%</span>
+    <button class="zoom-btn" onclick="zoomReset()">⊙</button>
+    <button class="zoom-btn" onclick="zoomIn()">＋</button>
+  </div>
+</div>
 </body>
 </html>
