@@ -276,11 +276,6 @@ body{background:var(--bg);color:var(--text);font-family:'Sarabun',sans-serif;min
         <div class="panel">
           <div class="phd"><div class="phd-ic g">📋</div><h2>ข้อมูลออเดอร์</h2></div>
           <div class="pbd">
-            <div class="fld"><label>📦 เลือกจาก Order Manager</label>
-              <select id="f-order-sel" onchange="fillFromOrder(this.value)" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;outline:none">
-                <option value="">-- เลือกออเดอร์ หรือพิมพ์เองด้านล่าง --</option>
-              </select>
-            </div>
             <div class="fld"><label>ลูกค้า</label>
               <div class="iw"><input type="text" id="f-customer" placeholder="ชื่อลูกค้า"/></div></div>
             <div class="fld"><label>ชื่อสินค้า</label>
@@ -538,7 +533,7 @@ function showPage(p){
   document.getElementById('nav-'+p).classList.add('active');
   if(p==='dash')renderDash();if(p==='tracker'){loadTrackerData().then(renderTracker);}
 }
-function newJob(){editingId=null;resetForm();showPage('form');populateOrderDropdown();var osel=document.getElementById('f-order-sel');if(osel)osel.value='';}
+function newJob(){editingId=null;resetForm();showPage('form')}
 
 function setFilter(f,btn){
   curFilter=f;
@@ -568,7 +563,7 @@ function renderDash(){
   if(!list.length){el.innerHTML='<div class="empty-state"><div class="empty-icon">📋</div><div>'+(q?'ไม่พบงาน':'ยังไม่มีงาน — กด <strong>"＋ งานใหม่"</strong>')+'</div></div>';return}
   el.innerHTML=[].concat(list).reverse().map(function(j){
     var ds=j.date?new Date(j.date).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}):'';
-    return '<div class="jcard" onclick="showDetail(\''+j.id+'\')"><div><div class="jname">'+(j.customer?j.customer+' · ':'')+( j.jobName||'(ไม่มีชื่อ)')+(j.subproduct?' · '+j.subproduct:'')+'</div><div class="jmeta">'+(j.fabricName?'<span class="jtag y">'+j.fabricName+'</span>':'')+(ds?'<span class="jtag m">📅 '+ds+'</span>':'')+(j.qty?'<span class="jtag g">'+Math.floor(+j.qty).toLocaleString('th')+' ตัว</span>':'')+'</div></div><div class="jcard-r"><div class="jnums"><div><div class="jnum-val y">'+f2(j.totalYards||0)+'</div><div class="jnum-lbl">หลา</div></div><div><div class="jnum-val g">'+(j.totalKg>0?f2(j.totalKg):'—')+'</div><div class="jnum-lbl">กก.</div></div><div><div class="jnum-val o">'+f2(j.totalRolls||0)+'</div><div class="jnum-lbl">ม้วน</div></div></div><div class="jact" onclick="event.stopPropagation()"><button class="jact-btn" onclick="editJob(\''+j.id+'\')">✏️ แก้ไข</button><button class="jact-btn del" onclick="deleteJob(\''+j.id+'\')">🗑</button></div></div></div>';
+    var div=document.createElement('div');div.className='jcard';div.dataset.id=j.id;div.innerHTML='<div><div class="jname">'+(j.customer?j.customer+' · ':'')+( j.jobName||'(ไม่มีชื่อ)')+(j.subproduct?' · '+j.subproduct:'')+'</div><div class="jmeta">'+(j.fabricName?'<span class="jtag y">'+j.fabricName+'</span>':'')+(ds?'<span class="jtag m">📅 '+ds+'</span>':'')+(j.qty?'<span class="jtag g">'+Math.floor(+j.qty).toLocaleString('th')+' ตัว</span>':'')+'</div></div><div class="jcard-r"><div class="jnums"><div><div class="jnum-val y">'+f2(j.totalYards||0)+'</div><div class="jnum-lbl">หลา</div></div><div><div class="jnum-val g">'+(j.totalKg>0?f2(j.totalKg):'—')+'</div><div class="jnum-lbl">กก.</div></div><div><div class="jnum-val o">'+f2(j.totalRolls||0)+'</div><div class="jnum-lbl">ม้วน</div></div></div><div class="jact"><button class="jact-btn edit-btn">✏️ แก้ไข</button><button class="jact-btn del del-btn">🗑</button></div></div></div>';div.onclick=function(e){if(e.target.classList.contains('edit-btn')){e.stopPropagation();editJob(j.id);}else if(e.target.classList.contains('del-btn')){e.stopPropagation();deleteJob(j.id);}else{showDetail(j.id);}};return div.outerHTML;
   }).join('');
 }
 
@@ -625,6 +620,12 @@ function renderTracker(){
 
   var filtered=tGetFiltered();
   var body=document.getElementById('t-body');
+  body.onclick=function(e){
+    var editBtn=e.target.closest('.t-edit-btn');
+    var delBtn=e.target.closest('.t-del-btn');
+    if(editBtn){openTrackerEdit(editBtn.dataset.id);}
+    else if(delBtn){deleteTrackerRecord(delBtn.dataset.id);}
+  };
   if(!filtered.length){body.innerHTML='<div style="text-align:center;padding:60px;color:var(--text-muted)">ยังไม่มีข้อมูล กด "+ บันทึก" เพื่อเพิ่มครับ</div>';return;}
 
   if(tTab==='daily'){
@@ -659,8 +660,8 @@ function renderTracker(){
              +'<td style="padding:8px;color:var(--text-muted)">'+( r.sub||'-')+'</td>'
              +'<td style="padding:8px;text-align:center;font-family:var(--mono);font-weight:700;font-size:14px">'+(+(r.qty)||0).toLocaleString()+'</td>'
              +'<td style="padding:8px;white-space:nowrap">'
-             +'<button onclick="openTrackerEdit(''+r.id+'')" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:13px;padding:3px 6px;border-radius:5px">✏️</button>'
-             +'<button onclick="deleteTrackerRecord(''+r.id+'')" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:13px;padding:3px 6px;border-radius:5px">🗑</button>'
+             +'<button class="t-edit-btn" data-id="'+r.id+'" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:13px;padding:3px 6px;border-radius:5px">✏️</button>'
+             +'<button class="t-del-btn" data-id="'+r.id+'" style="background:none;border:none;cursor:pointer;color:var(--red,#f87171);font-size:13px;padding:3px 6px;border-radius:5px">🗑</button>'
              +'</td></tr>';
       });
       html+='</tbody></table>';
@@ -1205,48 +1206,9 @@ function printJobById(id){
   setTimeout(function(){window.print();},150);
 }
 
-// ─── ORDER MANAGER INTEGRATION ───
-var paymentOrders = [];
-
-async function loadPaymentOrders(){
-  try{
-    const r = await fetch(GAS_URL + '?store=jojo_payment&t=' + Date.now());
-    const d = await r.json();
-    paymentOrders = Array.isArray(d) ? d : [];
-  } catch(e) {
-    const c = localStorage.getItem('jojo_payment');
-    paymentOrders = c ? JSON.parse(c) : [];
-  }
-  populateOrderDropdown();
-}
-
-function populateOrderDropdown(){
-  const sel = document.getElementById('f-order-sel');
-  if(!sel) return;
-  sel.innerHTML = '<option value="">-- เลือกออเดอร์ หรือพิมพ์เองด้านล่าง --</option>';
-  paymentOrders.forEach(function(o){
-    const label = [o.name, o.product, o.subproduct].filter(Boolean).join(' · ');
-    const opt = document.createElement('option');
-    opt.value = o.id;
-    opt.textContent = label || '(ไม่มีชื่อ)';
-    sel.appendChild(opt);
-  });
-}
-
-function fillFromOrder(id){
-  if(!id) return;
-  const o = paymentOrders.find(function(x){ return x.id === id; });
-  if(!o) return;
-  document.getElementById('f-customer').value = o.name || '';
-  document.getElementById('f-job').value = o.product || '';
-  document.getElementById('f-subproduct').value = o.subproduct || '';
-  liveCalc();
-}
-
 document.addEventListener('DOMContentLoaded',function(){
   resetForm();
   loadFromSheet();
-  loadPaymentOrders();
   document.getElementById('page-form').addEventListener('input',function(){liveCalc()});
 });
 </script>
