@@ -77,22 +77,6 @@
   .img-wrap{position:relative}
   .img-preview{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block}
   .img-remove{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;font-family:inherit}
-  .img-size-bar{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:4px}
-  .img-sz-btn{width:26px;height:26px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;color:#475569;line-height:1;font-family:inherit}
-  .img-sz-btn:hover{background:#e2e8f0}
-  .img-sz-lbl{font-size:11px;color:#94a3b8;min-width:32px;text-align:center}
-  .img-preview{border-radius:8px;display:block;object-fit:cover;cursor:zoom-in;transition:height .1s}
-  /* zoom lightbox */
-  #img-zoom-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out}
-  #img-zoom-overlay.open{display:flex}
-  #img-zoom-wrap{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%}
-  #img-zoom-img{max-width:90vw;max-height:90vh;border-radius:10px;transform-origin:center;transition:transform .15s;user-select:none}
-  #img-zoom-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:22px;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
-  #img-zoom-close:hover{background:rgba(255,255,255,.3)}
-  #zoom-controls{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:10px;align-items:center}
-  .zoom-btn{background:rgba(255,255,255,.15);border:none;color:#fff;font-size:20px;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit}
-  .zoom-btn:hover{background:rgba(255,255,255,.3)}
-  #zoom-level{color:#fff;font-size:13px;min-width:44px;text-align:center;font-family:inherit}
 
   /* Size table */
   .size-table{width:100%;border-collapse:collapse;font-size:13px}
@@ -148,12 +132,26 @@
 // ── Data ──────────────────────────────────────────────────────────────────────
 const DEFAULT_SIZES = ["0","1","2","3","4","5","6","7","9(S)","10(M)","2XL"];
 const STORAGE_KEY = "order_bill_v1";
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzwUjqW8HS-dQ80PIjxfBJ14t56wu_gCnwtLv2juQ9CzA6bMd2eN86mbEOVyH-GMeAHWQ/exec';
+const SHEET_STORE = 'jojo_payment';
 
 function loadOrders(){
   try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]"); }catch{ return []; }
 }
 function saveOrders(orders){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+  fetch(GAS_URL, {method:'POST', body:JSON.stringify({store:SHEET_STORE, data:orders})}).catch(()=>{});
+}
+async function loadFromSheet(){
+  try{
+    const r = await fetch(GAS_URL+'?store='+SHEET_STORE+'&t='+Date.now());
+    const d = await r.json();
+    if(Array.isArray(d) && d.length > 0){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+      state.orders = d;
+      render();
+    }
+  }catch(e){}
 }
 function newOrder(){
   return {
@@ -259,19 +257,12 @@ function renderList(){
 function renderForm(){
   const o=state.current;
   const isNew=!state.orders.find(x=>x.id===o.id);
-  const getImgSrc=img=>typeof img==='string'?img:(img&&img.src?img.src:img);
-  const getImgH=img=>typeof img==='object'&&img&&img.h?img.h:120;
   const imgGrid=o.images&&o.images.length>0?
     `<div class="img-grid" style="grid-template-columns:repeat(${Math.min(o.images.length+(o.images.length<3?1:0),3)},1fr)">
       ${o.images.map((img,i)=>`
         <div class="img-wrap">
-          <img src="${getImgSrc(img)}" class="img-preview" style="width:100%;height:${getImgH(img)}px" alt="" onclick="openZoom(this.src)">
+          <img src="${img}" class="img-preview" alt="">
           <button class="img-remove" onclick="removeImage(${i})">✕</button>
-          <div class="img-size-bar">
-            <button class="img-sz-btn" onclick="resizeImg(${i},-20)">−</button>
-            <span class="img-sz-lbl">${getImgH(img)}px</span>
-            <button class="img-sz-btn" onclick="resizeImg(${i},20)">＋</button>
-          </div>
         </div>`).join("")}
       ${o.images.length<3?`<div class="img-upload-box" onclick="document.getElementById('img-file').click()" style="padding:16px">
         <div style="font-size:24px">📷</div>
@@ -287,8 +278,8 @@ function renderForm(){
   const sizeRows=o.sizeNames.map((name,i)=>`
     <tr>
       <td><input class="size-name-input" value="${escHtml(name)}" oninput="setSizeName(${i},this.value)" placeholder="เช่น 0"></td>
-      <td class="center"><input class="size-qty-input" type="text" inputmode="numeric" pattern="[0-9]*" value="${o.sizeQty[name]||""}" onclick="this.select()" oninput="setSizeQty('${escHtml(name)}',this.value,${i})" placeholder="0"></td>
-      <td class="center"><input class="size-qty-input" type="text" inputmode="numeric" pattern="[0-9]*" value="${(o.sizeExtra||{})[name]||""}" onclick="this.select()" oninput="setSizeExtra('${escHtml(name)}',this.value)" placeholder="0"></td>
+      <td class="center"><input class="size-qty-input" type="number" min="0" value="${o.sizeQty[name]||""}" oninput="setSizeQty('${escHtml(name)}',this.value,${i})" placeholder="0"></td>
+      <td class="center"><input class="size-qty-input" type="number" min="0" value="${(o.sizeExtra||{})[name]||""}" oninput="setSizeExtra('${escHtml(name)}',this.value)" placeholder="0"></td>
       <td class="center"><button class="size-remove" onclick="removeSize(${i})">✕</button></td>
     </tr>`).join("");
   const total=totalQty(o.sizeQty);
@@ -408,7 +399,7 @@ function renderDetail(){
 
   const imgs=o.images&&o.images.length>0
     ?`<div class="img-grid" style="grid-template-columns:repeat(${Math.min(o.images.length,3)},1fr);gap:8px;margin-bottom:12px">
-        ${o.images.map(img=>`<img src="${typeof img==='object'?img.src:img}" class="img-preview" style="width:100%;height:${typeof img==='object'&&img.h?img.h:120}px" alt="" onclick="openZoom(this.src)">`).join("")}
+        ${o.images.map(img=>`<img src="${img}" class="img-preview" alt="">`).join("")}
       </div>`:""
 
   const sizeRows=sizeEntries.map(([name,qty])=>`
@@ -604,7 +595,7 @@ function addImage(input){
   reader.onload=ev=>{
     collectForm();
     if(!state.current.images) state.current.images=[];
-    if(state.current.images.length<3) state.current.images.push({src:ev.target.result,h:120});
+    if(state.current.images.length<3) state.current.images.push(ev.target.result);
     input.value="";
     render();
   };
@@ -615,48 +606,11 @@ function removeImage(i){
   state.current.images.splice(i,1);
   render();
 }
-function resizeImg(i,delta){
-  collectForm();
-  const imgs=state.current.images;
-  if(!imgs||imgs[i]===undefined) return;
-  if(typeof imgs[i]==='string') imgs[i]={src:imgs[i],h:120};
-  imgs[i].h=Math.max(60,Math.min(400,imgs[i].h+delta));
-  render();
-}
-// ── Zoom lightbox ──
-var _zoomScale=1;
-function openZoom(src){
-  _zoomScale=1;
-  document.getElementById('img-zoom-img').src=src;
-  document.getElementById('img-zoom-img').style.transform='scale(1)';
-  document.getElementById('zoom-level').textContent='100%';
-  document.getElementById('img-zoom-overlay').classList.add('open');
-}
-function closeZoom(){document.getElementById('img-zoom-overlay').classList.remove('open');}
-function zoomIn(){_zoomScale=Math.min(4,+(_zoomScale+0.25).toFixed(2));applyZoom();}
-function zoomOut(){_zoomScale=Math.max(0.25,+(_zoomScale-0.25).toFixed(2));applyZoom();}
-function zoomReset(){_zoomScale=1;applyZoom();}
-function applyZoom(){
-  document.getElementById('img-zoom-img').style.transform='scale('+_zoomScale+')';
-  document.getElementById('zoom-level').textContent=Math.round(_zoomScale*100)+'%';
-}
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 document.body.insertAdjacentHTML("beforeend",`<div id="toast" class="toast"></div>`);
 render();
+loadFromSheet();
 </script>
-
-<div id="img-zoom-overlay" onclick="if(event.target===this||event.target.id==='img-zoom-wrap')closeZoom()">
-  <div id="img-zoom-wrap">
-    <img id="img-zoom-img" src="" alt="">
-    <button id="img-zoom-close" onclick="closeZoom()">✕</button>
-    <div id="zoom-controls">
-      <button class="zoom-btn" onclick="zoomOut()">−</button>
-      <span id="zoom-level">100%</span>
-      <button class="zoom-btn" onclick="zoomReset()">⊙</button>
-      <button class="zoom-btn" onclick="zoomIn()">+</button>
-    </div>
-  </div>
-</div>
 </body>
 </html>
