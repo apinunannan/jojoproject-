@@ -167,17 +167,14 @@ function loadOrders(){
 }
 function saveOrders(orders){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
-  // ตัดรูปออกก่อน sync เพราะ base64 ใหญ่เกินไป
   var slim = orders.map(function(o){
     var copy = Object.assign({}, o);
-    copy.images = (o.images||[]).map(function(img){
-      return typeof img === 'object' ? {h: img.h} : '';
-    });
+    copy.images = [];
     return copy;
   });
   fetch(GAS_URL, {
-    method:'POST',
-    body: JSON.stringify({store:SHEET_STORE, data:slim})
+    method: 'POST',
+    body: JSON.stringify({store: SHEET_STORE, data: slim})
   }).then(function(r){ return r.text(); })
     .then(function(t){ console.log('[Sheets save]', t); })
     .catch(function(e){ console.warn('[Sheets save error]', e); });
@@ -186,31 +183,12 @@ async function loadFromSheet(){
   try{
     const r = await fetch(GAS_URL+'?store='+SHEET_STORE+'&t='+Date.now());
     const d = await r.json();
-    console.log('[Sheets load]', d.length, 'orders');
     if(Array.isArray(d) && d.length > 0){
-      // merge รูปจาก localStorage กลับเข้ามา (รูปไม่ได้ sync ขึ้น Sheets)
-      const local = loadOrders();
-      const localMap = {};
-      local.forEach(function(o){ localMap[o.id] = o; });
-      const merged = d.map(function(o){
-        var loc = localMap[o.id];
-        if(loc && loc.images && loc.images.length > 0){
-          o.images = loc.images;
-        }
-        return o;
-      });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-      state.orders = merged;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+      state.orders = d;
       render();
-    } else {
-      // Sheets ว่าง แต่ local มีข้อมูล → sync ขึ้น Sheets
-      const local = loadOrders();
-      if(local.length > 0){
-        console.log('[Sheets] uploading local data:', local.length, 'orders');
-        saveOrders(local);
-      }
     }
-  }catch(e){ console.warn('[Sheets load error]', e); }
+  }catch(e){}
 }
 function newOrder(){
   return {
@@ -275,7 +253,7 @@ function renderList(){
       ${filtered.map(o=>{
         const total=totalQty(o.sizeQty);
         const thumb=o.images&&o.images.length>0
-          ?`<img src="${o.images[0]}" class="card-thumb" alt="">`
+          ?`<img src="${typeof o.images[0]==='object'?o.images[0].src:o.images[0]}" class="card-thumb" alt="">`
           :`<div class="card-thumb-placeholder">👖</div>`;
         return `<div class="card" onclick="openDetail('${o.id}')">
           <div class="card-inner">
