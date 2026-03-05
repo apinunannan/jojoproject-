@@ -519,10 +519,15 @@ function renderDetail(){
 // ── Event Handlers ────────────────────────────────────────────────────────────
 function bindEvents(){}
 
-// select-all เมื่อ focus ช่อง size-qty
-document.addEventListener('focusin', function(e){
-  if(e.target.classList.contains('size-qty-input')){
-    setTimeout(function(){ e.target.select(); }, 0);
+// คลิกครั้งเดียว select ทั้งช่อง size-qty
+document.addEventListener('mousedown', function(e){
+  var el = e.target;
+  if(el.classList.contains('size-qty-input') || el.classList.contains('size-name-input')){
+    if(document.activeElement !== el){
+      e.preventDefault();
+      el.focus();
+      el.select();
+    }
   }
 });
 
