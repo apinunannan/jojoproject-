@@ -75,12 +75,7 @@
   .img-upload-text{font-size:13px;color:#94a3b8}
   .img-grid{display:grid;gap:8px}
   .img-wrap{position:relative}
-  .img-preview{width:100%;height:var(--img-h,120px);object-fit:cover;border-radius:8px;display:block;transition:height .15s}
-
-  .img-size-ctrl{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px}
-  .img-size-btn{background:#e2e8f0;border:none;border-radius:5px;width:24px;height:24px;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-weight:700;color:#475569;line-height:1}
-  .img-size-btn:hover{background:#cbd5e1}
-  .img-size-label{font-size:11px;color:#94a3b8;min-width:30px;text-align:center}
+  .img-preview{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:block}
   .img-remove{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.5);color:#fff;border:none;border-radius:50%;width:26px;height:26px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;font-family:inherit}
 
   /* Size table */
@@ -137,12 +132,29 @@
 // ── Data ──────────────────────────────────────────────────────────────────────
 const DEFAULT_SIZES = ["0","1","2","3","4","5","6","7","9(S)","10(M)","2XL"];
 const STORAGE_KEY = "order_bill_v1";
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzwUjqW8HS-dQ80PIjxfBJ14t56wu_gCnwtLv2juQ9CzA6bMd2eN86mbEOVyH-GMeAHWQ/exec';
+const SHEET_STORE = 'jojo_payment';
 
 function loadOrders(){
   try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]"); }catch{ return []; }
 }
 function saveOrders(orders){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+  syncToSheet(orders);
+}
+async function syncToSheet(orders){
+  try{ await fetch(GAS_URL, {method:'POST', body:JSON.stringify({store:SHEET_STORE, data:orders})}); }catch(e){}
+}
+async function loadFromSheet(){
+  try{
+    const r = await fetch(GAS_URL+'?store='+SHEET_STORE+'&t='+Date.now());
+    const d = await r.json();
+    if(Array.isArray(d) && d.length){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
+      state.orders = d;
+      render();
+    }
+  }catch(e){}
 }
 function newOrder(){
   return {
@@ -252,13 +264,8 @@ function renderForm(){
     `<div class="img-grid" style="grid-template-columns:repeat(${Math.min(o.images.length+(o.images.length<3?1:0),3)},1fr)">
       ${o.images.map((img,i)=>`
         <div class="img-wrap">
-          <img src="${getImgSrc(img)}" class="img-preview" style="--img-h:${getImgSize(img)}px" alt="">
+          <img src="${img}" class="img-preview" alt="">
           <button class="img-remove" onclick="removeImage(${i})">✕</button>
-          <div class="img-size-ctrl">
-            <button class="img-size-btn" onclick="resizeImage(${i},-20)">−</button>
-            <span class="img-size-label">${getImgSize(img)}px</span>
-            <button class="img-size-btn" onclick="resizeImage(${i},20)">＋</button>
-          </div>
         </div>`).join("")}
       ${o.images.length<3?`<div class="img-upload-box" onclick="document.getElementById('img-file').click()" style="padding:16px">
         <div style="font-size:24px">📷</div>
@@ -591,7 +598,7 @@ function addImage(input){
   reader.onload=ev=>{
     collectForm();
     if(!state.current.images) state.current.images=[];
-    if(state.current.images.length<3) state.current.images.push({src:ev.target.result,size:120});
+    if(state.current.images.length<3) state.current.images.push(ev.target.result);
     input.value="";
     render();
   };
@@ -602,21 +609,11 @@ function removeImage(i){
   state.current.images.splice(i,1);
   render();
 }
-function resizeImage(i,delta){
-  collectForm();
-  const imgs=state.current.images;
-  if(!imgs||!imgs[i])return;
-  // support both old string format and new object format
-  if(typeof imgs[i]==='string') imgs[i]={src:imgs[i],size:120};
-  imgs[i].size=Math.max(60,Math.min(300,imgs[i].size+delta));
-  render();
-}
-function getImgSrc(img){return typeof img==='string'?img:img.src;}
-function getImgSize(img){return typeof img==='string'?120:(img.size||120);}
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 document.body.insertAdjacentHTML("beforeend",`<div id="toast" class="toast"></div>`);
 render();
+loadFromSheet();
 </script>
 </body>
 </html>
