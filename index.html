@@ -183,12 +183,35 @@ async function loadFromSheet(){
   try{
     const r = await fetch(GAS_URL+'?store='+SHEET_STORE+'&t='+Date.now());
     const d = await r.json();
+    console.log('[Sheets load]', d.length, 'orders');
     if(Array.isArray(d) && d.length > 0){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
-      state.orders = d;
+      // merge รูปจาก localStorage กลับเข้ามา
+      const local = loadOrders();
+      const localMap = {};
+      local.forEach(function(o){ localMap[o.id] = o; });
+      const merged = d.map(function(o){
+        const loc = localMap[o.id];
+        if(loc && loc.images){
+          o.images = loc.images.filter(function(img){
+            return typeof img==='string' ? img : (img && img.src);
+          });
+        } else {
+          o.images = [];
+        }
+        return o;
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+      state.orders = merged;
       render();
+    } else {
+      // Sheets ว่าง แต่ local มีข้อมูล → sync ขึ้น Sheets
+      const local = loadOrders();
+      if(local.length > 0){
+        console.log('[Sheets] uploading local:', local.length, 'orders');
+        saveOrders(local);
+      }
     }
-  }catch(e){}
+  }catch(e){ console.warn('[Sheets load error]', e); }
 }
 function newOrder(){
   return {
@@ -253,7 +276,7 @@ function renderList(){
       ${filtered.map(o=>{
         const total=totalQty(o.sizeQty);
         const thumb=o.images&&o.images.length>0
-          ?`<img src="${typeof o.images[0]==='object'?o.images[0].src:o.images[0]}" class="card-thumb" alt="">`
+          ?(o.images[0]&&(typeof o.images[0]==='object'?o.images[0].src:o.images[0]))?`<img src="${typeof o.images[0]==='object'?o.images[0].src:o.images[0]}" class="card-thumb" alt="">`:``
           :`<div class="card-thumb-placeholder">👖</div>`;
         return `<div class="card" onclick="openDetail('${o.id}')">
           <div class="card-inner">
@@ -296,9 +319,9 @@ function renderForm(){
   const isNew=!state.orders.find(x=>x.id===o.id);
   const imgGrid=o.images&&o.images.length>0?
     `<div class="img-grid" style="grid-template-columns:repeat(${Math.min(o.images.length+(o.images.length<3?1:0),3)},1fr)">
-      ${o.images.map((img,i)=>{const src=typeof img==='object'?img.src:img;const h=typeof img==='object'&&img.h?img.h:120;return`
+      ${o.images.filter(img=>typeof img==='string'?img:img&&img.src).map((img,i)=>{const src=typeof img==='object'?img.src:img;const h=typeof img==='object'&&img.h?img.h:120;return`
         <div class="img-wrap">
-          <img src="${src}" class="img-preview" style="height:${h}px" alt="" onclick="openZoom('${src.substring(0,30)==='data:'?'__idx__'+i:''}',${i})">
+          <img src="${src}" class="img-preview" style="height:${h}px" alt="" onclick="openZoom(${i})">
           <button class="img-remove" onclick="removeImage(${i})">✕</button>
           <div class="img-size-bar">
             <button class="img-sz-btn" onclick="resizeImg(${i},-20)">−</button>
@@ -441,7 +464,7 @@ function renderDetail(){
 
   const imgs=o.images&&o.images.length>0
     ?`<div class="img-grid" style="grid-template-columns:repeat(${Math.min(o.images.length,3)},1fr);gap:8px;margin-bottom:12px">
-        ${o.images.map((img,i)=>{const src=typeof img==='object'?img.src:img;const h=typeof img==='object'&&img.h?img.h:120;return`<img src="${src}" class="img-preview" style="height:${h}px" alt="" onclick="openZoom('',${i})">`}).join("")}
+        ${o.images.filter(img=>typeof img==='string'?img:img&&img.src).map((img,i)=>{const src=typeof img==='object'?img.src:img;const h=typeof img==='object'&&img.h?img.h:120;return`<img src="${src}" class="img-preview" style="height:${h}px" alt="" onclick="openZoom(${i})">`}).join("")}
       </div>`:""
 
   const sizeRows=sizeEntries.map(([name,qty])=>`
@@ -669,11 +692,13 @@ function resizeImg(i,delta){
   render();
 }
 var _zScale=1,_zImgIdx=-1;
-function openZoom(src,idx){
+function openZoom(idx){
   _zScale=1;_zImgIdx=idx;
   const imgs=state.current&&state.current.images;
   const img=imgs&&imgs[idx];
-  const realSrc=src||( typeof img==='object'?img.src:img)||'';
+  if(!img) return;
+  const realSrc=typeof img==='object'?img.src:img;
+  if(!realSrc) return;
   document.getElementById('img-zoom-img').src=realSrc;
   document.getElementById('img-zoom-img').style.transform='scale(1)';
   document.getElementById('zoom-level').textContent='100%';
