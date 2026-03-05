@@ -100,7 +100,8 @@
   .size-table td{padding:4px 6px;border-bottom:1px solid #f1f5f9}
   .size-table td.center{text-align:center}
   .size-name-input{border:1px solid #e2e8f0;border-radius:6px;padding:4px 6px;font-size:12px;font-weight:700;width:64px;outline:none;font-family:inherit;background:#fff}
-  .size-qty-input{border:1px solid #e2e8f0;border-radius:6px;padding:4px 6px;font-size:13px;font-weight:700;width:64px;text-align:center;outline:none;font-family:inherit;background:#fff}
+  .size-qty-input{border:1px solid #e2e8f0;border-radius:6px;padding:4px 6px;font-size:13px;font-weight:700;width:64px;text-align:center;outline:none;font-family:inherit;background:#fff;cursor:text}
+  .size-qty-input:focus{border-color:#3b82f6;background:#eff6ff}
   .size-remove{background:none;border:none;color:#cbd5e1;cursor:pointer;font-size:12px;padding:0}
   .tfoot-total td{padding:6px 8px;background:#eff6ff;font-weight:700;color:#1d4ed8}
   .tfoot-grand td{padding:5px 8px;background:#dbeafe;text-align:center;font-weight:800;color:#1e40af;font-size:13px}
@@ -309,8 +310,8 @@ function renderForm(){
   const sizeRows=o.sizeNames.map((name,i)=>`
     <tr>
       <td><input class="size-name-input" value="${escHtml(name)}" oninput="setSizeName(${i},this.value)" placeholder="เช่น 0"></td>
-      <td class="center"><input class="size-qty-input" type="text" inputmode="numeric" pattern="[0-9]*" value="${o.sizeQty[name]||""}" onclick="this.select()" onfocus="this.select()" oninput="setSizeQty('${escHtml(name)}',this.value,${i})" placeholder="0"></td>
-      <td class="center"><input class="size-qty-input" type="text" inputmode="numeric" pattern="[0-9]*" value="${(o.sizeExtra||{})[name]||""}" onclick="this.select()" onfocus="this.select()" oninput="setSizeExtra('${escHtml(name)}',this.value)" placeholder="0"></td>
+      <td class="center"><input class="size-qty-input" type="text" inputmode="numeric" pattern="[0-9]*" value="${o.sizeQty[name]||""}" oninput="setSizeQty('${escHtml(name)}',this.value,${i})" placeholder="0"></td>
+      <td class="center"><input class="size-qty-input" type="text" inputmode="numeric" pattern="[0-9]*" value="${(o.sizeExtra||{})[name]||""}" oninput="setSizeExtra('${escHtml(name)}',this.value)" placeholder="0"></td>
       <td class="center"><button class="size-remove" onclick="removeSize(${i})">✕</button></td>
     </tr>`).join("");
   const total=totalQty(o.sizeQty);
@@ -517,6 +518,13 @@ function renderDetail(){
 
 // ── Event Handlers ────────────────────────────────────────────────────────────
 function bindEvents(){}
+
+// select-all เมื่อ focus ช่อง size-qty
+document.addEventListener('focusin', function(e){
+  if(e.target.classList.contains('size-qty-input')){
+    setTimeout(function(){ e.target.select(); }, 0);
+  }
+});
 
 function escHtml(s){
   return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
