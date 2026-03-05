@@ -167,9 +167,17 @@ function loadOrders(){
 }
 function saveOrders(orders){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+  // ตัดรูปออกก่อน sync เพราะ base64 ใหญ่เกินไป
+  var slim = orders.map(function(o){
+    var copy = Object.assign({}, o);
+    copy.images = (o.images||[]).map(function(img){
+      return typeof img === 'object' ? {h: img.h} : '';
+    });
+    return copy;
+  });
   fetch(GAS_URL, {
     method:'POST',
-    body: JSON.stringify({store:SHEET_STORE, data:orders})
+    body: JSON.stringify({store:SHEET_STORE, data:slim})
   }).then(function(r){ return r.text(); })
     .then(function(t){ console.log('[Sheets save]', t); })
     .catch(function(e){ console.warn('[Sheets save error]', e); });
@@ -180,16 +188,20 @@ async function loadFromSheet(){
     const d = await r.json();
     console.log('[Sheets load]', d.length, 'orders');
     if(Array.isArray(d) && d.length > 0){
-      // merge: เอา Sheets เป็นหลัก แต่ถ้า local มีมากกว่าให้ save local ขึ้น Sheets
+      // merge รูปจาก localStorage กลับเข้ามา (รูปไม่ได้ sync ขึ้น Sheets)
       const local = loadOrders();
-      if(local.length > d.length){
-        // local มีข้อมูลมากกว่า → ให้ Sheets ตาม local
-        saveOrders(local);
-      } else {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
-        state.orders = d;
-        render();
-      }
+      const localMap = {};
+      local.forEach(function(o){ localMap[o.id] = o; });
+      const merged = d.map(function(o){
+        var loc = localMap[o.id];
+        if(loc && loc.images && loc.images.length > 0){
+          o.images = loc.images;
+        }
+        return o;
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+      state.orders = merged;
+      render();
     } else {
       // Sheets ว่าง แต่ local มีข้อมูล → sync ขึ้น Sheets
       const local = loadOrders();
