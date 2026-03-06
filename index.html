@@ -160,16 +160,21 @@
 const DEFAULT_SIZES = ["0","1","2","3","4","5","6","7","9(S)","10(M)","2XL"];
 const STORAGE_KEY = "order_bill_v1";
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzwUjqW8HS-dQ80PIjxfBJ14t56wu_gCnwtLv2juQ9CzA6bMd2eN86mbEOVyH-GMeAHWQ/exec';
-const SHEET_STORE = 'jojo_payment';
+const SHEET_STORE = 'jojo_orders';
 
 function loadOrders(){
   try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||"[]"); }catch{ return []; }
 }
 function saveOrders(orders){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(orders));
+  var slim = orders.map(function(o){
+    var copy = Object.assign({}, o);
+    copy.images = [];
+    return copy;
+  });
   fetch(GAS_URL, {
     method: 'POST',
-    body: JSON.stringify({store: SHEET_STORE, data: orders})
+    body: JSON.stringify({store: SHEET_STORE, data: slim})
   }).then(function(r){ return r.text(); })
     .then(function(t){ console.log('[Sheets save]', t); })
     .catch(function(e){ console.warn('[Sheets save error]', e); });
@@ -180,10 +185,26 @@ async function loadFromSheet(){
     const d = await r.json();
     console.log('[Sheets load]', d.length, 'orders');
     if(Array.isArray(d) && d.length > 0){
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(d));
-      state.orders = d;
+      // merge รูปจาก localStorage กลับเข้ามา
+      const local = loadOrders();
+      const localMap = {};
+      local.forEach(function(o){ localMap[o.id] = o; });
+      const merged = d.map(function(o){
+        const loc = localMap[o.id];
+        if(loc && loc.images){
+          o.images = loc.images.filter(function(img){
+            return typeof img==='string' ? img : (img && img.src);
+          });
+        } else {
+          o.images = [];
+        }
+        return o;
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+      state.orders = merged;
       render();
     } else {
+      // Sheets ว่าง แต่ local มีข้อมูล → sync ขึ้น Sheets
       const local = loadOrders();
       if(local.length > 0){
         console.log('[Sheets] uploading local:', local.length, 'orders');
@@ -644,31 +665,16 @@ function removeSize(i){
   render();
 }
 
-function compressImg(src, cb){
-  var img=new Image();
-  img.onload=function(){
-    var canvas=document.createElement('canvas');
-    var max=600,w=img.width,h=img.height;
-    if(w>max){h=h*max/w;w=max;}
-    if(h>max){w=w*max/h;h=max;}
-    canvas.width=w;canvas.height=h;
-    canvas.getContext('2d').drawImage(img,0,0,w,h);
-    cb(canvas.toDataURL('image/jpeg',0.5));
-  };
-  img.src=src;
-}
 function addImage(input){
   const file=input.files[0];
   if(!file) return;
   const reader=new FileReader();
   reader.onload=ev=>{
-    compressImg(ev.target.result,function(compressed){
-      collectForm();
-      if(!state.current.images) state.current.images=[];
-      if(state.current.images.length<3) state.current.images.push({src:compressed,h:120});
-      input.value="";
-      render();
-    });
+    collectForm();
+    if(!state.current.images) state.current.images=[];
+    if(state.current.images.length<3) state.current.images.push({src:ev.target.result,h:120});
+    input.value="";
+    render();
   };
   reader.readAsDataURL(file);
 }
