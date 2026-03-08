@@ -76,6 +76,19 @@ body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--t
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.photo-upload-area { border: 1.5px dashed var(--border); border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; transition: border-color 0.15s; margin-top: 6px; }
+.photo-upload-area:hover { border-color: var(--accent); }
+.photo-preview-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.photo-thumb { position: relative; width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); flex-shrink: 0; }
+.photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.photo-thumb-del { position: absolute; top: 2px; right: 2px; background: rgba(0,0,0,0.7); border: none; color: white; border-radius: 4px; width: 18px; height: 18px; cursor: pointer; font-size: 10px; display: flex; align-items: center; justify-content: center; }
+.photo-full-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.photo-full-thumb { width: 90px; height: 90px; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); cursor: pointer; flex-shrink: 0; }
+.photo-full-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s; }
+.photo-full-thumb:hover img { transform: scale(1.05); }
+.photo-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 999; display: flex; align-items: center; justify-content: center; }
+.photo-lightbox img { max-width: 90vw; max-height: 88vh; border-radius: 8px; object-fit: contain; }
+.photo-lightbox-close { position: absolute; top: 18px; right: 22px; background: none; border: none; color: white; font-size: 26px; cursor: pointer; }
 </style>
 </head>
 <body>
@@ -123,11 +136,9 @@ body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--t
       <th onclick="sortBy('qty')">จำนวน</th>
       <th onclick="sortBy('total')">ยอดก่อน VAT</th>
       <th>VAT 7%</th>
-      <th>หัก ณ ที่จ่าย</th>
       <th onclick="sortBy('total')">ยอดรวม ↕</th>
-      <th onclick="sortBy('deadline')">วันส่ง</th>
+      <th onclick="sortBy('date')">วันรับ</th>
       <th onclick="sortBy('archivedAt')">วันจ่าย</th>
-      <th>ธนาคาร</th>
     </tr></thead>
     <tbody id="tableBody"></tbody>
   </table>
@@ -160,17 +171,25 @@ body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--t
         <span id="addCalcDetail" style="color:var(--text3);margin-left:6px"></span>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">วันที่รับออเดอร์</label><input class="a-inp" id="a_date" type="date"></div>
         <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">กำหนดส่ง</label><input class="a-inp" id="a_deadline" type="date"></div>
         <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">วันที่จ่ายเงิน *</label><input class="a-inp" id="a_paiddate" type="date"></div>
       </div>
       <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">หมายเหตุ</label><textarea class="a-inp" id="a_note" placeholder="รายละเอียดเพิ่มเติม..." style="resize:none;min-height:50px"></textarea>
-      <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">หัก ณ ที่จ่าย (บาท)</label><input class="a-inp" id="a_wht" type="number" placeholder="0"></div>
-        <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">ธนาคาร</label><input class="a-inp" id="a_bank" placeholder="กสิกร, SCB..."></div></div>
+      <div><label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">ธนาคาร</label><input class="a-inp" id="a_bank" placeholder="กสิกร, SCB..."></div></div>
       <label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px">
         <input type="checkbox" id="a_vat" style="accent-color:var(--accent);width:14px;height:14px;cursor:pointer">
         <span style="font-size:13px">มี VAT 7%</span>
       </label>
-    </div>
+      <div>
+        <label style="display:block;font-size:11px;color:var(--text2);margin-bottom:4px">รูปภาพ (สูงสุด 3 รูป)</label>
+        <div class="photo-upload-area" onclick="document.getElementById('a_photos').click()">
+          <input type="file" id="a_photos" accept="image/*" multiple onchange="handlePhotoUpload(event)">
+          <div style="font-size:12px;color:var(--text2)">📷 คลิกเพื่อเลือกรูป</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:3px">JPG, PNG ขนาดไม่เกิน 2MB ต่อรูป</div>
+        </div>
+        <div class="photo-preview-grid" id="photoPreviewGrid"></div>
+      </div>    </div>
     <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end">
       <button onclick="closeAddModal()" style="padding:7px 14px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer">ยกเลิก</button>
       <button onclick="saveNewOrder()" style="padding:7px 16px;border-radius:7px;border:none;background:var(--accent);color:#111;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer">บันทึกลงคลัง</button>
@@ -182,6 +201,50 @@ body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--t
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzwUjqW8HS-dQ80PIjxfBJ14t56wu_gCnwtLv2juQ9CzA6bMd2eN86mbEOVyH-GMeAHWQ/exec';
 let orders = [];
 let syncTimer = null;
+let pendingPhotos = [];
+
+function handlePhotoUpload(e) {
+  const files = Array.from(e.target.files);
+  const remaining = 3 - pendingPhotos.length;
+  if (remaining <= 0) { alert('แนบรูปได้สูงสุด 3 รูปเท่านั้น'); return; }
+  const toAdd = files.slice(0, remaining);
+  toAdd.forEach(file => {
+    if (file.size > 2*1024*1024) { alert(file.name + ' ใหญ่เกิน 2MB'); return; }
+    const reader = new FileReader();
+    reader.onload = ev => {
+      pendingPhotos.push(ev.target.result);
+      renderPhotoPreview();
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = '';
+}
+
+function renderPhotoPreview() {
+  const grid = document.getElementById('photoPreviewGrid');
+  if (!grid) return;
+  grid.innerHTML = pendingPhotos.map((src,i) => `
+    <div class="photo-thumb">
+      <img src="${src}">
+      <button class="photo-thumb-del" onclick="removePhoto(${i})">✕</button>
+    </div>
+  `).join('');
+  const area = document.querySelector('.photo-upload-area div');
+  if (area) area.textContent = pendingPhotos.length >= 3 ? '✅ เต็มแล้ว (3/3)' : `📷 คลิกเพื่อเพิ่มรูป (${pendingPhotos.length}/3)`;
+}
+
+function removePhoto(i) {
+  pendingPhotos.splice(i, 1);
+  renderPhotoPreview();
+}
+
+function openLightbox(src) {
+  const lb = document.createElement('div');
+  lb.className = 'photo-lightbox';
+  lb.innerHTML = `<button class="photo-lightbox-close" onclick="this.parentElement.remove()">✕</button><img src="${src}">`;
+  lb.onclick = e => { if(e.target===lb) lb.remove(); };
+  document.body.appendChild(lb);
+}
 
 function showSyncStatus(msg, color='var(--text2)') {
   let el = document.getElementById('syncStatus');
@@ -345,11 +408,9 @@ function renderTable() {
       <td style="text-align:center;font-family:var(--mono)">${o.qty||'-'}</td>
       <td style="font-family:var(--mono);color:var(--text2)">฿${base.toLocaleString()}</td>
       <td style="font-family:var(--mono);color:var(--accent2)">${vat ? '+฿'+vat.toLocaleString() : '<span style="color:var(--text3)">-</span>'}</td>
-      <td style="font-family:var(--mono);color:var(--red)">${o.wht?'-฿'+(+(o.wht)).toLocaleString():'-'}</td>
       <td style="font-family:var(--mono);color:var(--accent);font-weight:600">฿${total.toLocaleString()}</td>
-      <td style="color:var(--text2)">${fmtDate(o.deadline)||'-'}</td>
+      <td style="color:var(--text2)">${fmtDate(o.date)}</td>
       <td style="color:var(--green)">${fmtDateTime(o.archivedAt)}</td>
-      <td style="color:var(--text2)">${o.bank||'-'}</td>
     </tr>`;
   }).join('');
 }
@@ -393,7 +454,7 @@ function openDetail(id) {
       <div style="margin-top:7px;padding:9px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
         <div class="det-row"><span style="color:var(--text2)">ราคาต่อชิ้น</span><span style="font-family:var(--mono);font-weight:600">฿${unitPrice.toLocaleString()}</span></div>
         <div class="det-row"><span style="color:var(--text2)">ราคารวม (×${qty})</span><span>฿${base.toLocaleString()}</span></div>
-        ${o.useVat?`<div class="det-row"><span style="color:var(--text2)">VAT 7%</span><span style="color:var(--accent2)">+฿${vat.toLocaleString()}</span></div>`:''}${o.wht?`<div class="det-row"><span style="color:var(--text2)">หัก ณ ที่จ่าย</span><span style="color:var(--red)">-฿${(+(o.wht)).toLocaleString()}</span></div>`:''}
+        ${o.useVat?`<div class="det-row"><span style="color:var(--text2)">VAT 7%</span><span style="color:var(--accent2)">+฿${vat.toLocaleString()}</span></div>`:''}
         <div style="height:1px;background:var(--border);margin:5px 0"></div>
         <div class="det-row"><span style="font-weight:700">ยอดรวมทั้งหมด</span><span style="font-family:var(--mono);font-size:16px;font-weight:700;color:var(--accent)">฿${total.toLocaleString()}</span></div>
       </div>
@@ -407,10 +468,14 @@ function openDetail(id) {
     </div>
     ${o.address?`<div class="det-section"><div class="det-section-title">ที่อยู่</div><div style="font-size:12px;color:var(--text2)">${o.address}</div></div>`:''}
     ${o.note?`<div class="det-section"><div class="det-section-title">หมายเหตุ</div><div style="font-size:12px;color:var(--text2)">${o.note}</div></div>`:''}
-    ${o.bank?`<div class="det-section"><div class="det-section-title">ธนาคาร</div><div style="font-size:14px;font-weight:600;color:var(--accent)">${o.bank}</div></div>`:''}
-    <div class="det-section" style="border-bottom:none;display:flex;gap:8px">
-      <button onclick="openEditArchive('${o.id}')" style="flex:1;padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer">✏️ แก้ไข</button>
-      <button onclick="deleteFromArchive('${o.id}')" style="flex:1;padding:8px;background:#ef444422;border:1px solid #ef444444;border-radius:7px;color:var(--red);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer">🗑 ลบ</button>
+    ${o.photos&&o.photos.length?`<div class="det-section">
+      <div class="det-section-title">รูปภาพ (${o.photos.length} รูป)</div>
+      <div class="photo-full-grid">
+        ${o.photos.map((src,i)=>`<div class="photo-full-thumb" onclick="openLightbox('${src}')"><img src="${src}" loading="lazy"></div>`).join('')}
+      </div>
+    </div>`:''}
+    <div class="det-section" style="border-bottom:none">
+      <button onclick="deleteFromArchive('\${o.id}')" style="width:100%;padding:8px;background:#ef444422;border:1px solid #ef444444;border-radius:7px;color:var(--red);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer">🗑 ลบออกจากคลัง</button>
     </div>
   `;
   document.getElementById('detOverlay').classList.add('open');
@@ -432,11 +497,14 @@ function deleteFromArchive(id) {
 // auto-refresh handled by setInterval above
 
 function openAddModal(){
-  ['a_name','a_product','a_subproduct','a_qty','a_price','a_note','a_bank','a_wht'].forEach(id=>document.getElementById(id).value='');
+  ['a_name','a_product','a_subproduct','a_qty','a_price','a_note','a_bank'].forEach(id=>document.getElementById(id).value='');
   document.getElementById('a_vat').checked=false;
+  document.getElementById('a_date').value=today();
   document.getElementById('a_paiddate').value=today();
   document.getElementById('a_deadline').value='';
   document.getElementById('addCalcPreview').style.display='none';
+  pendingPhotos=[];
+  document.getElementById('photoPreviewGrid').innerHTML='';
   document.getElementById('addOverlay').classList.add('open');
 }
 function closeAddModal(){ document.getElementById('addOverlay').classList.remove('open'); }
@@ -464,15 +532,16 @@ function saveNewOrder(){
     subproduct: document.getElementById('a_subproduct').value.trim(),
     qty: document.getElementById('a_qty').value,
     price: document.getElementById('a_price').value,
-deadline: document.getElementById('a_deadline').value,
+    date: document.getElementById('a_date').value,
+    deadline: document.getElementById('a_deadline').value,
     bank: document.getElementById('a_bank').value.trim(),
-    wht: document.getElementById('a_wht').value ? +(document.getElementById('a_wht').value) : 0,
     note: document.getElementById('a_note').value.trim(),
     useVat: document.getElementById('a_vat').checked,
     payStage: 'paid',
     paidAt: paidISO,
     archivedAt: paidISO,
     manualEntry: true,
+    photos: [...pendingPhotos],
   };
   orders.unshift(o);
   save();
@@ -634,77 +703,5 @@ loadFromSheet();
 }
 </style>
 
-<!-- EDIT ARCHIVE MODAL -->
-<div class="det-overlay" id="editArchiveOverlay" onclick="if(event.target===this)closeEditArchive()">
-  <div class="det-modal" style="padding:0">
-    <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-      <div style="font-size:15px;font-weight:700">✏️ แก้ไขออเดอร์</div>
-      <button onclick="closeEditArchive()" style="background:none;border:none;color:var(--text2);font-size:17px;cursor:pointer">✕</button>
-    </div>
-    <div style="padding:16px;display:flex;flex-direction:column;gap:10px;max-height:70vh;overflow-y:auto">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">ชื่อลูกค้า *</label><input class="a-inp" id="ea_name"></div>
-        <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">สินค้า</label><input class="a-inp" id="ea_product"></div>
-        <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">สินค้าย่อย</label><input class="a-inp" id="ea_subproduct" placeholder="สี, รุ่น..."></div>
-        <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">จำนวน</label><input class="a-inp" id="ea_qty" type="number"></div>
-        <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">ราคาต่อชิ้น</label><input class="a-inp" id="ea_price" type="number"></div>
-        <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">กำหนดส่ง</label><input class="a-inp" id="ea_deadline" type="date"></div>
-        <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">วันที่จ่ายเงิน</label><input class="a-inp" id="ea_paiddate" type="date"></div>
-        <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">หัก ณ ที่จ่าย (บาท)</label><input class="a-inp" id="ea_wht" type="number" placeholder="0"></div>
-      </div>
-      <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">หมายเหตุ</label><input class="a-inp" id="ea_note"></div>
-      <div><label style="font-size:11px;color:var(--text2);display:block;margin-bottom:4px">ธนาคาร</label><input class="a-inp" id="ea_bank" placeholder="กสิกร, SCB..."></div>
-      <label style="display:flex;align-items:center;gap:9px;cursor:pointer;padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px">
-        <input type="checkbox" id="ea_vat" style="accent-color:var(--accent);width:14px;height:14px">
-        <span style="font-size:13px">มี VAT 7%</span>
-      </label>
-      <div style="display:flex;gap:8px;margin-top:4px">
-        <button onclick="closeEditArchive()" style="flex:1;padding:9px;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--text2);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer">ยกเลิก</button>
-        <button onclick="saveEditArchive()" style="flex:2;padding:9px;background:var(--accent);border:none;border-radius:7px;color:#111;font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer">💾 บันทึก</button>
-      </div>
-    </div>
-  </div>
-</div>
-<script>
-let editArchiveId = null;
-function openEditArchive(id) {
-  const o = orders.find(x => x.id === id);
-  if (!o) return;
-  editArchiveId = id;
-  document.getElementById('ea_name').value = o.name||'';
-  document.getElementById('ea_product').value = o.product||'';
-  document.getElementById('ea_subproduct').value = o.subproduct||'';
-  document.getElementById('ea_qty').value = o.qty||'';
-  document.getElementById('ea_price').value = o.price||'';
-  document.getElementById('ea_deadline').value = o.deadline||'';
-  document.getElementById('ea_paiddate').value = o.paiddate||'';
-  document.getElementById('ea_wht').value = o.wht||'';
-  document.getElementById('ea_note').value = o.note||'';
-  document.getElementById('ea_bank').value = o.bank||'';
-  document.getElementById('ea_vat').checked = o.useVat||false;
-  document.getElementById('editArchiveOverlay').classList.add('open');
-}
-function closeEditArchive() { document.getElementById('editArchiveOverlay').classList.remove('open'); }
-function saveEditArchive() {
-  const o = orders.find(x => x.id === editArchiveId);
-  if (!o) return;
-  const name = document.getElementById('ea_name').value.trim();
-  if (!name) { alert('กรุณากรอกชื่อลูกค้า'); return; }
-  o.name = name;
-  o.product = document.getElementById('ea_product').value.trim();
-  o.subproduct = document.getElementById('ea_subproduct').value.trim();
-  o.qty = document.getElementById('ea_qty').value;
-  o.price = document.getElementById('ea_price').value;
-  o.deadline = document.getElementById('ea_deadline').value;
-  o.paiddate = document.getElementById('ea_paiddate').value;
-  o.wht = document.getElementById('ea_wht').value ? +(document.getElementById('ea_wht').value) : 0;
-  o.note = document.getElementById('ea_note').value.trim();
-  o.bank = document.getElementById('ea_bank').value.trim();
-  o.useVat = document.getElementById('ea_vat').checked;
-  save(); render();
-  closeEditArchive();
-  openDetail(editArchiveId);
-}
-</script>
 </body>
 </html>
