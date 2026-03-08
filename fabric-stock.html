@@ -15,7 +15,6 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
-/* HEADER */
 .header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; height: 54px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 100; }
 .logo { font-family: var(--mono); font-size: 16px; font-weight: 500; color: var(--accent); }
 .logo span { color: var(--text3); }
@@ -28,77 +27,94 @@ body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--t
 .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
 .btn-ghost:hover { border-color: var(--text2); color: var(--text); }
 
-/* STATS */
 .stats-bar { display: flex; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--border); overflow-x: auto; }
 .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; display: flex; flex-direction: column; gap: 3px; min-width: 130px; flex-shrink: 0; }
 .stat-label { font-size: 11px; color: var(--text2); }
 .stat-val { font-family: var(--mono); font-size: 18px; font-weight: 500; }
 .stat-sub { font-size: 11px; color: var(--text3); }
 
-/* TABS */
 .tab-bar { display: flex; gap: 4px; padding: 12px 20px 0; border-bottom: 1px solid var(--border); }
 .tab { padding: 8px 16px; border-radius: 8px 8px 0 0; border: 1px solid transparent; border-bottom: none; font-size: 13px; cursor: pointer; color: var(--text2); background: transparent; font-family: 'Sarabun', sans-serif; transition: all 0.15s; }
 .tab.active { background: var(--surface); border-color: var(--border); color: var(--text); }
-.tab:hover:not(.active) { color: var(--text); }
 
-/* TOOLBAR */
 .toolbar { display: flex; gap: 8px; padding: 14px 20px; align-items: center; flex-wrap: wrap; }
 .search-wrap { position: relative; flex: 1; min-width: 180px; }
 .search-wrap input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px 8px 34px; color: var(--text); font-family: 'Sarabun', sans-serif; font-size: 13px; outline: none; }
 .search-wrap input:focus { border-color: var(--accent); }
-.search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 14px; }
+.search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); }
 .filter-select { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; color: var(--text); font-family: 'Sarabun', sans-serif; font-size: 13px; outline: none; cursor: pointer; }
-.filter-select:focus { border-color: var(--accent); }
 
-/* TABLE */
-.table-wrap { padding: 0 20px 20px; overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-thead th { padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; }
-thead th:hover { color: var(--text); }
-tbody tr { border-bottom: 1px solid #1e1e1e; transition: background 0.1s; }
-tbody tr:hover { background: var(--surface); }
-tbody td { padding: 10px 12px; vertical-align: middle; }
-.type-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: var(--mono); }
-.type-in { background: #22c55e22; color: var(--green); border: 1px solid #22c55e44; }
-.type-out { background: #ef444422; color: var(--red); border: 1px solid #ef444444; }
-.color-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; flex-shrink: 0; }
-.num { font-family: var(--mono); font-size: 12px; }
-.num.in { color: var(--green); }
-.num.out { color: var(--red); }
-.action-btn { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 14px; padding: 4px; border-radius: 4px; transition: color 0.1s; }
-.action-btn:hover { color: var(--red); }
-.empty-row td { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
+/* ROLL CARDS */
+.rolls-wrap { padding: 0 20px 20px; }
+.rolls-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px,1fr)); gap: 12px; }
 
-/* MODAL */
+.roll-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; transition: border-color 0.15s; }
+.roll-card.full  { border-left: 3px solid var(--green); }
+.roll-card.partial { border-left: 3px solid var(--accent2); }
+.roll-card.depleted { border-left: 3px solid var(--red); opacity: 0.55; }
+
+.roll-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.roll-color-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+.roll-name { font-weight: 600; font-size: 14px; }
+.roll-color-label { font-size: 12px; color: var(--text2); margin-top: 2px; }
+.roll-status-badge { font-size: 11px; font-family: var(--mono); padding: 2px 8px; border-radius: 10px; flex-shrink: 0; margin-left: auto; }
+.status-full    { background: #22c55e22; color: var(--green);   border: 1px solid #22c55e44; }
+.status-partial { background: #e0783022; color: var(--accent2); border: 1px solid #e0783044; }
+.status-depleted{ background: #ef444422; color: var(--red);     border: 1px solid #ef444444; }
+
+.roll-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; margin-bottom: 10px; font-size: 12px; color: var(--text2); }
+.roll-meta span { color: var(--text); font-family: var(--mono); }
+
+.progress-wrap { margin-bottom: 10px; }
+.progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--text2); margin-bottom: 4px; }
+.progress-bar { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+.usage-log { margin-bottom: 10px; }
+.usage-item { font-size: 11px; color: var(--text3); padding: 3px 0; border-bottom: 1px solid #1e1e1e; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.usage-item:last-child { border-bottom: none; }
+.usage-item-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 11px; padding: 0 2px; flex-shrink: 0; }
+.usage-item-del:hover { color: var(--red); }
+
+.roll-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.roll-btn { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-family: 'Sarabun', sans-serif; font-size: 12px; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+.roll-btn.use-all  { border-color: #ef444444; color: var(--red);     background: #ef444411; }
+.roll-btn.use-all:hover  { background: #ef444422; }
+.roll-btn.use-part { border-color: #e0783044; color: var(--accent2); background: #e0783011; }
+.roll-btn.use-part:hover { background: #e0783022; }
+.roll-btn.restore  { border-color: #22c55e44; color: var(--green);   background: #22c55e11; }
+.roll-btn.restore:hover  { background: #22c55e22; }
+.roll-btn:hover { border-color: var(--text2); color: var(--text); }
+.roll-btn.use-all:hover,.roll-btn.use-part:hover,.roll-btn.restore:hover { color: inherit; }
+
+/* SUMMARY */
+.summary-wrap { padding: 0 20px 20px; }
+.month-nav { display: flex; align-items: center; gap: 10px; }
+.month-nav button { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 14px; }
+#monthLabel { font-family: var(--mono); font-size: 13px; min-width: 100px; text-align: center; }
+.sum-title { font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; padding: 8px 0; border-bottom: 1px solid var(--border); margin-bottom: 10px; }
+.sum-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px,1fr)); gap: 10px; margin-bottom: 20px; }
+.sum-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+.sum-card-name { font-weight: 600; font-size: 13px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.sum-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; }
+.sum-row .lbl { color: var(--text2); }
+.sum-row .val { font-family: var(--mono); }
+
+/* MODALS */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 500; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
 .modal-overlay.open { opacity: 1; pointer-events: all; }
-.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; transform: translateY(10px); transition: transform 0.2s; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; width: 100%; max-width: 460px; max-height: 90vh; overflow-y: auto; transform: translateY(10px); transition: transform 0.2s; }
 .modal-overlay.open .modal { transform: translateY(0); }
-.modal-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+.modal-title { font-size: 16px; font-weight: 600; margin-bottom: 18px; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .form-grid .full { grid-column: 1/-1; }
 .form-group { display: flex; flex-direction: column; gap: 6px; }
 .form-group label { font-size: 12px; color: var(--text2); }
 .form-group input, .form-group select { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-family: 'Sarabun', sans-serif; font-size: 13px; outline: none; width: 100%; }
-.form-group input:focus, .form-group select:focus { border-color: var(--accent); }
-.type-toggle { display: flex; gap: 8px; }
-.type-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-family: 'Sarabun', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
-.type-btn.in.active { background: #22c55e22; border-color: var(--green); color: var(--green); }
-.type-btn.out.active { background: #ef444422; border-color: var(--red); color: var(--red); }
-.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
-
-/* SUMMARY TABLE */
-.summary-wrap { padding: 0 20px 20px; }
-.summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
-.fabric-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
-.fabric-card-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
-.fabric-card-sub { font-size: 12px; color: var(--text2); margin-bottom: 12px; }
-.fabric-card-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 4px 0; border-bottom: 1px solid #1e1e1e; }
-.fabric-card-row:last-child { border-bottom: none; }
-.fabric-card-row .lbl { color: var(--text2); }
-.fabric-card-row .val { font-family: var(--mono); font-weight: 500; }
-
-/* COLOR PICKER */
+.form-group input:focus { border-color: var(--accent); }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+.info-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 13px; margin-bottom: 14px; line-height: 1.7; }
+.info-box span { color: var(--accent); font-family: var(--mono); font-weight: 500; }
 .color-presets { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
 .color-preset { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border-color 0.1s; }
 .color-preset.selected { border-color: white; }
@@ -112,87 +128,68 @@ tbody td { padding: 10px 12px; vertical-align: middle; }
   <div class="header-right">
     <span id="syncStatus"></span>
     <button class="btn btn-ghost" onclick="exportCSV()">📥 Export</button>
-    <button class="btn btn-primary" onclick="openModal()">+ เพิ่มรายการ</button>
+    <button class="btn btn-primary" onclick="openAddModal()">+ เพิ่มม้วนผ้า</button>
   </div>
 </div>
 
 <div class="stats-bar" id="statsBar"></div>
 
 <div class="tab-bar">
-  <button class="tab active" id="tab-log" onclick="switchTab('log')">📋 รายการทั้งหมด</button>
-  <button class="tab" id="tab-summary" onclick="switchTab('summary')">📦 สรุปสต็อก</button>
+  <button class="tab active" id="tab-stock" onclick="switchTab('stock')">🧵 ม้วนผ้าทั้งหมด</button>
+  <button class="tab" id="tab-summary" onclick="switchTab('summary')">📊 สรุปการใช้งาน</button>
 </div>
 
-<!-- LOG TAB -->
-<div id="view-log">
+<!-- STOCK TAB -->
+<div id="view-stock">
   <div class="toolbar">
     <div class="search-wrap">
       <span class="search-icon">🔍</span>
-      <input type="text" id="searchInput" placeholder="ค้นหาชื่อผ้า สี ร้านผ้า..." oninput="renderTable()">
+      <input type="text" id="searchInput" placeholder="ค้นหาชื่อผ้า สี ร้านผ้า..." oninput="renderRolls()">
     </div>
-    <select class="filter-select" id="filterType" onchange="renderTable()">
-      <option value="">ทุกประเภท</option>
-      <option value="in">เข้า (Stock In)</option>
-      <option value="out">ออก (Stock Out)</option>
+    <select class="filter-select" id="filterStatus" onchange="renderRolls()">
+      <option value="">ทุกสถานะ</option>
+      <option value="full">เต็มม้วน</option>
+      <option value="partial">ใช้บางส่วน</option>
+      <option value="depleted">ใช้หมดแล้ว</option>
     </select>
-    <select class="filter-select" id="filterFabric" onchange="renderTable()">
+    <select class="filter-select" id="filterFabric" onchange="renderRolls()">
       <option value="">ทุกผ้า</option>
     </select>
   </div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th onclick="sortBy('date')">วันที่ ↕</th>
-          <th>ประเภท</th>
-          <th onclick="sortBy('fabricName')">ชื่อผ้า ↕</th>
-          <th>สี</th>
-          <th onclick="sortBy('shop')">ชื่อร้านผ้า ↕</th>
-          <th onclick="sortBy('weight')">น้ำหนัก (กก.) ↕</th>
-          <th onclick="sortBy('yards')">จำนวน (หลา) ↕</th>
-          <th>หมายเหตุ</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
+  <div class="rolls-wrap">
+    <div class="rolls-grid" id="rollsGrid"></div>
   </div>
 </div>
 
 <!-- SUMMARY TAB -->
 <div id="view-summary" style="display:none">
   <div class="toolbar">
-    <div class="search-wrap">
-      <span class="search-icon">🔍</span>
-      <input type="text" id="searchSummary" placeholder="ค้นหาชื่อผ้า..." oninput="renderSummary()">
+    <div class="month-nav">
+      <button onclick="prevMonth()">‹</button>
+      <span id="monthLabel"></span>
+      <button onclick="nextMonth()">›</button>
     </div>
   </div>
-  <div class="summary-wrap">
-    <div class="summary-grid" id="summaryGrid"></div>
-  </div>
+  <div class="summary-wrap" id="summaryWrap"></div>
 </div>
 
-<!-- MODAL -->
-<div class="modal-overlay" id="modalOverlay">
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="addModal">
   <div class="modal">
-    <div class="modal-title" id="modalTitle">➕ เพิ่มรายการ</div>
-    <div class="type-toggle" style="margin-bottom:16px">
-      <button class="type-btn in active" id="typeInBtn" onclick="setType('in')">📥 Stock In (เข้า)</button>
-      <button class="type-btn out" id="typeOutBtn" onclick="setType('out')">📤 Stock Out (ออก)</button>
-    </div>
+    <div class="modal-title" id="addModalTitle">➕ เพิ่มม้วนผ้าใหม่</div>
     <div class="form-grid">
       <div class="form-group full">
-        <label>วันที่</label>
+        <label>วันที่รับผ้า</label>
         <input type="date" id="f_date">
       </div>
       <div class="form-group">
         <label>ชื่อผ้า</label>
-        <input type="text" id="f_fabric" placeholder="เช่น ผ้าฝ้าย, ผ้าลินิน" list="fabricList">
+        <input type="text" id="f_fabric" placeholder="เช่น ผ้าฝ้าย" list="fabricList">
         <datalist id="fabricList"></datalist>
       </div>
       <div class="form-group">
         <label>สี</label>
-        <input type="text" id="f_color" placeholder="เช่น ขาว, ดำ, ฟ้า">
+        <input type="text" id="f_color" placeholder="เช่น ขาว, ดำ">
         <div class="color-presets" id="colorPresets"></div>
       </div>
       <div class="form-group full">
@@ -210,12 +207,47 @@ tbody td { padding: 10px 12px; vertical-align: middle; }
       </div>
       <div class="form-group full">
         <label>หมายเหตุ</label>
-        <input type="text" id="f_note" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)">
+        <input type="text" id="f_note" placeholder="หมายเหตุ (ถ้ามี)">
       </div>
     </div>
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
-      <button class="btn btn-primary" onclick="saveEntry()">บันทึก</button>
+      <button class="btn btn-ghost" onclick="closeAddModal()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveRoll()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- USE MODAL -->
+<div class="modal-overlay" id="useModal">
+  <div class="modal">
+    <div class="modal-title" id="useModalTitle">ใช้ผ้า</div>
+    <div class="info-box" id="useInfo"></div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>วันที่ใช้</label>
+        <input type="date" id="u_date">
+      </div>
+      <div class="form-group" id="u_weight_wrap">
+        <label>ใช้ไป (กิโลกรัม)</label>
+        <input type="number" id="u_weight" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <div class="form-group" id="u_yards_wrap">
+        <label>ใช้ไป (หลา)</label>
+        <input type="number" id="u_yards" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <div class="form-group full">
+        <label>ใช้ในงาน</label>
+        <input type="text" id="u_job" placeholder="ชื่องาน / ออเดอร์" list="jobHints">
+        <datalist id="jobHints"></datalist>
+      </div>
+      <div class="form-group full">
+        <label>หมายเหตุ</label>
+        <input type="text" id="u_note" placeholder="หมายเหตุ">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeUseModal()">ยกเลิก</button>
+      <button class="btn btn-primary" id="useConfirmBtn" onclick="confirmUse()">ยืนยัน</button>
     </div>
   </div>
 </div>
@@ -223,16 +255,16 @@ tbody td { padding: 10px 12px; vertical-align: middle; }
 <script>
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzwUjqW8HS-dQ80PIjxfBJ14t56wu_gCnwtLv2juQ9CzA6bMd2eN86mbEOVyH-GMeAHWQ/exec';
 const STORE = 'jojo_fabric';
+const COLOR_PRESETS_LIST = ['#ffffff','#e5e5e5','#111111','#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#a855f7','#ec4899','#06b6d4','#92400e','#1e3a5f','#4a1942','#064e3b'];
+const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
-let entries = [];
-let editId = null;
-let currentType = 'in';
-let sortKey = 'date';
-let sortDir = -1;
-let currentTab = 'log';
+let rolls = [];
+let editRollId = null;
+let useRollId = null;
+let useMode = '';
 let syncTimer = null;
-
-const COLOR_PRESETS = ['#ffffff','#111111','#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#a855f7','#ec4899','#06b6d4','#84cc16','#f59e0b','#6b7280','#92400e','#1e3a5f'];
+const nowD = new Date();
+let sumYear = nowD.getFullYear(), sumMonth = nowD.getMonth();
 
 function showSyncStatus(msg, color='var(--text2)') {
   const el = document.getElementById('syncStatus');
@@ -243,40 +275,36 @@ async function loadFromSheet() {
   showSyncStatus('⏳ กำลังโหลด...', 'var(--text2)');
   try {
     const res = await fetch(GAS_URL + '?store=' + STORE + '&t=' + Date.now());
-    const text = await res.text();
-    const data = JSON.parse(text);
-    entries = Array.isArray(data) ? data : [];
-    localStorage.setItem(STORE, JSON.stringify(entries));
+    const data = JSON.parse(await res.text());
+    rolls = Array.isArray(data) ? data : [];
+    localStorage.setItem(STORE, JSON.stringify(rolls));
     showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)');
   } catch(e) {
     const cached = localStorage.getItem(STORE);
-    entries = cached ? JSON.parse(cached) : [];
+    rolls = cached ? JSON.parse(cached) : [];
     showSyncStatus('⚠️ ออฟไลน์', 'var(--accent2)');
   }
   renderAll();
 }
 
 function save() {
-  localStorage.setItem(STORE, JSON.stringify(entries));
+  localStorage.setItem(STORE, JSON.stringify(rolls));
   showSyncStatus('💾 กำลังบันทึก...', 'var(--text2)');
   clearTimeout(syncTimer);
   syncTimer = setTimeout(async () => {
     try {
-      await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ store: STORE, data: entries }) });
+      await fetch(GAS_URL, { method:'POST', body: JSON.stringify({ store: STORE, data: rolls }) });
       showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)');
-    } catch(e) {
-      showSyncStatus('⚠️ บันทึกออฟไลน์', 'var(--accent2)');
-    }
+    } catch(e) { showSyncStatus('⚠️ บันทึกออฟไลน์', 'var(--accent2)'); }
   }, 800);
 }
 
 setInterval(async () => {
   try {
-    const res = await fetch(GAS_URL + '?store=' + STORE + '&t=' + Date.now());
-    const data = await res.json();
-    if (JSON.stringify(data) !== JSON.stringify(entries)) {
-      entries = Array.isArray(data) ? data : [];
-      localStorage.setItem(STORE, JSON.stringify(entries));
+    const data = await (await fetch(GAS_URL + '?store=' + STORE + '&t=' + Date.now())).json();
+    if (JSON.stringify(data) !== JSON.stringify(rolls)) {
+      rolls = Array.isArray(data) ? data : [];
+      localStorage.setItem(STORE, JSON.stringify(rolls));
       renderAll();
       showSyncStatus('🔄 อัปเดตจากเครื่องอื่น', 'var(--blue)');
       setTimeout(() => showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)'), 2000);
@@ -284,248 +312,303 @@ setInterval(async () => {
   } catch(e) {}
 }, 30000);
 
-// ── RENDER ──────────────────────────────────────────────────────
-function renderAll() {
-  renderStats();
-  renderTable();
-  renderSummary();
-  updateDataLists();
+// ── HELPERS ──────────────────────────────────────────────────────
+function getRollStatus(r) {
+  if (r.status === 'depleted') return 'depleted';
+  const usedY = (r.usages||[]).reduce((a,u)=>a+(+u.yards||0),0);
+  const usedW = (r.usages||[]).reduce((a,u)=>a+(+u.weight||0),0);
+  return (usedY > 0 || usedW > 0) ? 'partial' : 'full';
 }
+function getRemY(r) { return Math.max(0,(+r.yards||0)-(r.usages||[]).reduce((a,u)=>a+(+u.yards||0),0)); }
+function getRemW(r) { return Math.max(0,(+r.weight||0)-(r.usages||[]).reduce((a,u)=>a+(+u.weight||0),0)); }
+function fmtDate(d) { if(!d) return '-'; const [y,m,day]=d.split('-'); return `${day}/${m}/${String(y).slice(2)}`; }
+function fmt2(n) { return (+n||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+
+// ── RENDER ALL ──────────────────────────────────────────────────
+function renderAll() { renderStats(); renderRolls(); updateDataLists(); if(document.getElementById('view-summary').style.display!=='none') renderSummary(); }
 
 function renderStats() {
-  const totalIn_y = entries.filter(e=>e.type==='in').reduce((a,e)=>a+(+e.yards||0),0);
-  const totalOut_y = entries.filter(e=>e.type==='out').reduce((a,e)=>a+(+e.yards||0),0);
-  const totalIn_w = entries.filter(e=>e.type==='in').reduce((a,e)=>a+(+e.weight||0),0);
-  const totalOut_w = entries.filter(e=>e.type==='out').reduce((a,e)=>a+(+e.weight||0),0);
-  const fabrics = [...new Set(entries.map(e=>e.fabricName).filter(Boolean))];
-
+  const active = rolls.filter(r=>getRollStatus(r)!=='depleted');
+  const depCount = rolls.filter(r=>getRollStatus(r)==='depleted').length;
+  const remY = active.reduce((a,r)=>a+getRemY(r),0);
+  const remW = active.reduce((a,r)=>a+getRemW(r),0);
+  const ym = new Date().toISOString().slice(0,7);
+  const monthUse = rolls.flatMap(r=>(r.usages||[]).filter(u=>(u.date||'').startsWith(ym)));
+  const monthY = monthUse.reduce((a,u)=>a+(+u.yards||0),0);
   document.getElementById('statsBar').innerHTML = `
-    <div class="stat-card">
-      <div class="stat-label">สต็อกคงเหลือ (หลา)</div>
-      <div class="stat-val" style="color:var(--accent)">${(totalIn_y - totalOut_y).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-      <div class="stat-sub">หลา</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">สต็อกคงเหลือ (กก.)</div>
-      <div class="stat-val" style="color:var(--blue)">${(totalIn_w - totalOut_w).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-      <div class="stat-sub">กิโลกรัม</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">ผ้าเข้า (หลา)</div>
-      <div class="stat-val" style="color:var(--green)">${totalIn_y.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-      <div class="stat-sub">${entries.filter(e=>e.type==='in').length} รายการ</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">ผ้าออก (หลา)</div>
-      <div class="stat-val" style="color:var(--red)">${totalOut_y.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
-      <div class="stat-sub">${entries.filter(e=>e.type==='out').length} รายการ</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">ประเภทผ้า</div>
-      <div class="stat-val" style="color:var(--purple)">${fabrics.length}</div>
-      <div class="stat-sub">ชนิด</div>
-    </div>
+    <div class="stat-card"><div class="stat-label">ม้วนที่ใช้งานอยู่</div><div class="stat-val" style="color:var(--accent)">${active.length}</div><div class="stat-sub">ม้วน</div></div>
+    <div class="stat-card"><div class="stat-label">คงเหลือ (หลา)</div><div class="stat-val" style="color:var(--green)">${fmt2(remY)}</div><div class="stat-sub">หลา</div></div>
+    <div class="stat-card"><div class="stat-label">คงเหลือ (กก.)</div><div class="stat-val" style="color:var(--blue)">${fmt2(remW)}</div><div class="stat-sub">กิโลกรัม</div></div>
+    <div class="stat-card"><div class="stat-label">ใช้เดือนนี้ (หลา)</div><div class="stat-val" style="color:var(--accent2)">${fmt2(monthY)}</div><div class="stat-sub">${monthUse.length} ครั้ง</div></div>
+    <div class="stat-card"><div class="stat-label">ใช้หมดแล้ว</div><div class="stat-val" style="color:var(--text3)">${depCount}</div><div class="stat-sub">ม้วน</div></div>
   `;
 }
 
-function getFiltered() {
+function renderRolls() {
   const q = document.getElementById('searchInput').value.toLowerCase();
-  const typeF = document.getElementById('filterType').value;
+  const stF = document.getElementById('filterStatus').value;
   const fabF = document.getElementById('filterFabric').value;
-  return entries.filter(e => {
-    if (typeF && e.type !== typeF) return false;
-    if (fabF && e.fabricName !== fabF) return false;
-    if (q && !`${e.fabricName} ${e.color} ${e.shop} ${e.note}`.toLowerCase().includes(q)) return false;
+  const list = rolls.filter(r => {
+    const st = getRollStatus(r);
+    if (stF && st !== stF) return false;
+    if (fabF && r.fabricName !== fabF) return false;
+    if (q && !`${r.fabricName} ${r.color} ${r.shop}`.toLowerCase().includes(q)) return false;
     return true;
   }).sort((a,b) => {
-    let va = a[sortKey]||'', vb = b[sortKey]||'';
-    if (!isNaN(+va) && !isNaN(+vb)) { va = +va; vb = +vb; }
-    return va < vb ? -sortDir : va > vb ? sortDir : 0;
+    const o = {full:0,partial:1,depleted:2};
+    const d = o[getRollStatus(a)] - o[getRollStatus(b)];
+    return d !== 0 ? d : (b.date||'').localeCompare(a.date||'');
   });
-}
 
-function fmtDate(d) {
-  if (!d) return '-';
-  const [y,m,day] = d.split('-');
-  return `${day}/${m}/${String(y).slice(2)}`;
-}
+  const grid = document.getElementById('rollsGrid');
+  if (!list.length) { grid.innerHTML=`<div style="color:var(--text3);padding:40px;text-align:center;grid-column:1/-1">ยังไม่มีม้วนผ้า — กด "+ เพิ่มม้วนผ้า" เพื่อเริ่มต้น</div>`; return; }
 
-function renderTable() {
-  const rows = getFiltered();
-  const tbody = document.getElementById('tableBody');
-  if (rows.length === 0) {
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="9">ยังไม่มีรายการ</td></tr>`;
-    return;
-  }
-  tbody.innerHTML = rows.map(e => `
-    <tr>
-      <td style="color:var(--text2);font-family:var(--mono);font-size:12px">${fmtDate(e.date)}</td>
-      <td><span class="type-badge type-${e.type}">${e.type==='in'?'📥 เข้า':'📤 ออก'}</span></td>
-      <td style="font-weight:500">${e.fabricName||'-'}</td>
-      <td><span class="color-dot" style="background:${e.colorHex||'#555'}"></span>${e.color||'-'}</td>
-      <td style="color:var(--text2)">${e.shop||'-'}</td>
-      <td class="num ${e.type}">${e.type==='in'?'+':'-'}${(+e.weight||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
-      <td class="num ${e.type}">${e.type==='in'?'+':'-'}${(+e.yards||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
-      <td style="color:var(--text3);font-size:12px">${e.note||''}</td>
-      <td><button class="action-btn" onclick="deleteEntry('${e.id}')" title="ลบ">🗑</button></td>
-    </tr>
-  `).join('');
-}
+  grid.innerHTML = list.map(r => {
+    const st = getRollStatus(r);
+    const remY = getRemY(r), remW = getRemW(r);
+    const totalY = +r.yards||0;
+    const pct = totalY > 0 ? Math.round((remY/totalY)*100) : 0;
+    const progColor = pct>50?'var(--green)':pct>20?'var(--accent2)':'var(--red)';
+    const stLabel = st==='full'?'เต็มม้วน':st==='partial'?'ใช้บางส่วน':'ใช้หมดแล้ว';
+    const lastUsages = (r.usages||[]).slice(-3).reverse();
 
-function renderSummary() {
-  const q = document.getElementById('searchSummary').value.toLowerCase();
-  const fabrics = [...new Set(entries.map(e=>e.fabricName).filter(Boolean))].filter(f => f.toLowerCase().includes(q));
-  const grid = document.getElementById('summaryGrid');
-  if (fabrics.length === 0) {
-    grid.innerHTML = `<div style="color:var(--text3);padding:40px;text-align:center;grid-column:1/-1">ยังไม่มีข้อมูล</div>`;
-    return;
-  }
-  grid.innerHTML = fabrics.map(fab => {
-    const fabEntries = entries.filter(e => e.fabricName === fab);
-    const colors = [...new Set(fabEntries.map(e=>e.color).filter(Boolean))];
-    const inY = fabEntries.filter(e=>e.type==='in').reduce((a,e)=>a+(+e.yards||0),0);
-    const outY = fabEntries.filter(e=>e.type==='out').reduce((a,e)=>a+(+e.yards||0),0);
-    const inW = fabEntries.filter(e=>e.type==='in').reduce((a,e)=>a+(+e.weight||0),0);
-    const outW = fabEntries.filter(e=>e.type==='out').reduce((a,e)=>a+(+e.weight||0),0);
-    const netY = inY - outY;
-    const netW = inW - outW;
-    const colorDots = colors.map(c => {
-      const hex = fabEntries.find(e=>e.color===c)?.colorHex || '#555';
-      return `<span class="color-dot" style="background:${hex}" title="${c}"></span>`;
-    }).join('');
-    return `
-      <div class="fabric-card">
-        <div class="fabric-card-name">${fab}</div>
-        <div class="fabric-card-sub" style="display:flex;align-items:center;gap:4px">${colorDots} ${colors.join(', ')||'-'}</div>
-        <div class="fabric-card-row"><span class="lbl">คงเหลือ (หลา)</span><span class="val" style="color:${netY>=0?'var(--green)':'var(--red)'}">${netY.toLocaleString('th-TH',{minimumFractionDigits:2})}</span></div>
-        <div class="fabric-card-row"><span class="lbl">คงเหลือ (กก.)</span><span class="val" style="color:${netW>=0?'var(--blue)':'var(--red)'}">${netW.toLocaleString('th-TH',{minimumFractionDigits:2})}</span></div>
-        <div class="fabric-card-row"><span class="lbl">เข้าทั้งหมด</span><span class="val" style="color:var(--green)">${inY.toLocaleString('th-TH',{minimumFractionDigits:2})} หลา</span></div>
-        <div class="fabric-card-row"><span class="lbl">ออกทั้งหมด</span><span class="val" style="color:var(--red)">${outY.toLocaleString('th-TH',{minimumFractionDigits:2})} หลา</span></div>
-        <div class="fabric-card-row"><span class="lbl">รายการ</span><span class="val">${fabEntries.length} รายการ</span></div>
+    return `<div class="roll-card ${st}">
+      <div class="roll-header">
+        <div class="roll-color-dot" style="background:${r.colorHex||'#555'}"></div>
+        <div>
+          <div class="roll-name">${r.fabricName||'ไม่ระบุ'}</div>
+          <div class="roll-color-label">${r.color||'-'} · ${r.shop||'-'}</div>
+        </div>
+        <span class="roll-status-badge status-${st}">${stLabel}</span>
       </div>
-    `;
+
+      ${totalY>0?`<div class="progress-wrap">
+        <div class="progress-label"><span>คงเหลือ ${fmt2(remY)} หลา</span><span>${pct}%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${progColor}"></div></div>
+      </div>`:''}
+
+      <div class="roll-meta">
+        <div>รับมา <span>${fmt2(r.yards)} หลา</span></div>
+        <div>น้ำหนัก <span>${fmt2(r.weight)} กก.</span></div>
+        <div>วันที่รับ <span>${fmtDate(r.date)}</span></div>
+        <div>เหลือ (กก.) <span>${fmt2(remW)}</span></div>
+      </div>
+
+      ${lastUsages.length?`<div class="usage-log">${lastUsages.map((u,i) => `
+        <div class="usage-item">
+          <span>${fmtDate(u.date)}${u.job?' · '+u.job:''}</span>
+          <span style="color:var(--red);flex-shrink:0">-${fmt2(u.yards)}ย</span>
+          <button class="usage-item-del" onclick="deleteUsage('${r.id}','${u.id}')" title="ลบรายการนี้">✕</button>
+        </div>`).join('')}</div>`:''}
+
+      <div class="roll-actions">
+        ${st!=='depleted'?`
+          <button class="roll-btn use-all" onclick="openUseModal('${r.id}','all')">✅ ใช้หมดม้วน</button>
+          <button class="roll-btn use-part" onclick="openUseModal('${r.id}','partial')">✂️ ใช้บางส่วน</button>
+        `:`<button class="roll-btn restore" onclick="restoreRoll('${r.id}')">↩️ คืนสถานะ</button>`}
+        <button class="roll-btn" onclick="editRoll('${r.id}')" style="margin-left:auto">✏️</button>
+        <button class="roll-btn" onclick="deleteRoll('${r.id}')" style="color:var(--red)">🗑</button>
+      </div>
+    </div>`;
   }).join('');
 }
 
-function updateDataLists() {
-  const fabrics = [...new Set(entries.map(e=>e.fabricName).filter(Boolean))];
-  const shops = [...new Set(entries.map(e=>e.shop).filter(Boolean))];
-  document.getElementById('fabricList').innerHTML = fabrics.map(f=>`<option value="${f}">`).join('');
-  document.getElementById('shopList').innerHTML = shops.map(s=>`<option value="${s}">`).join('');
-  const sel = document.getElementById('filterFabric');
-  const cur = sel.value;
-  sel.innerHTML = `<option value="">ทุกผ้า</option>` + fabrics.map(f=>`<option value="${f}" ${f===cur?'selected':''}>${f}</option>`).join('');
+// ── SUMMARY ──────────────────────────────────────────────────────
+function prevMonth(){sumMonth--;if(sumMonth<0){sumMonth=11;sumYear--;}renderSummary();}
+function nextMonth(){sumMonth++;if(sumMonth>11){sumMonth=0;sumYear++;}renderSummary();}
+
+function renderSummary() {
+  const ym = `${sumYear}-${String(sumMonth+1).padStart(2,'0')}`;
+  document.getElementById('monthLabel').textContent = `${MONTHS_TH[sumMonth]} ${sumYear+543}`;
+
+  const allUsages = [];
+  rolls.forEach(r => (r.usages||[]).filter(u=>(u.date||'').startsWith(ym)).forEach(u => allUsages.push({...u,fabricName:r.fabricName,colorHex:r.colorHex})));
+  const depRolls = rolls.filter(r=>r.status==='depleted'&&(r.depletedAt||'').startsWith(ym));
+
+  const totalY = allUsages.reduce((a,u)=>a+(+u.yards||0),0);
+  const totalW = allUsages.reduce((a,u)=>a+(+u.weight||0),0);
+
+  const byFabric = {};
+  allUsages.forEach(u => {
+    const k = u.fabricName||'ไม่ระบุ';
+    if(!byFabric[k]) byFabric[k]={name:k,hex:u.colorHex,yards:0,weight:0,times:0,jobs:new Set()};
+    byFabric[k].yards+=+u.yards||0; byFabric[k].weight+=+u.weight||0; byFabric[k].times++;
+    if(u.job) byFabric[k].jobs.add(u.job);
+  });
+
+  const wrap = document.getElementById('summaryWrap');
+  if(!allUsages.length && !depRolls.length){wrap.innerHTML=`<div style="color:var(--text3);padding:40px;text-align:center">ไม่มีรายการใช้ผ้าในเดือนนี้</div>`;return;}
+
+  wrap.innerHTML=`
+    <div style="display:flex;gap:10px;flex-wrap:wrap;padding:0 0 16px">
+      <div class="stat-card"><div class="stat-label">ใช้ไปรวม (หลา)</div><div class="stat-val" style="color:var(--accent2)">${fmt2(totalY)}</div><div class="stat-sub">${allUsages.length} ครั้ง</div></div>
+      <div class="stat-card"><div class="stat-label">ใช้ไปรวม (กก.)</div><div class="stat-val" style="color:var(--blue)">${fmt2(totalW)}</div><div class="stat-sub">กิโลกรัม</div></div>
+      <div class="stat-card"><div class="stat-label">ม้วนที่ใช้หมด</div><div class="stat-val" style="color:var(--red)">${depRolls.length}</div><div class="stat-sub">ม้วน</div></div>
+    </div>
+    ${Object.keys(byFabric).length?`
+    <div class="sum-title">แยกตามชนิดผ้า</div>
+    <div class="sum-grid">
+      ${Object.values(byFabric).sort((a,b)=>b.yards-a.yards).map(f=>`
+        <div class="sum-card">
+          <div class="sum-card-name"><span style="width:10px;height:10px;border-radius:50%;background:${f.hex||'#555'};display:inline-block;flex-shrink:0"></span>${f.name}</div>
+          <div class="sum-row"><span class="lbl">ใช้ไป (หลา)</span><span class="val" style="color:var(--accent2)">${fmt2(f.yards)}</span></div>
+          <div class="sum-row"><span class="lbl">ใช้ไป (กก.)</span><span class="val">${fmt2(f.weight)}</span></div>
+          <div class="sum-row"><span class="lbl">จำนวนครั้ง</span><span class="val">${f.times}</span></div>
+          ${f.jobs.size?`<div class="sum-row"><span class="lbl">งานที่ใช้</span><span class="val" style="font-size:11px">${[...f.jobs].join(', ')}</span></div>`:''}
+        </div>`).join('')}
+    </div>`:''}
+    ${depRolls.length?`
+    <div class="sum-title">ม้วนที่ใช้หมดเดือนนี้</div>
+    <div class="sum-grid">
+      ${depRolls.map(r=>`
+        <div class="sum-card">
+          <div class="sum-card-name"><span style="width:10px;height:10px;border-radius:50%;background:${r.colorHex||'#555'};display:inline-block;flex-shrink:0"></span>${r.fabricName||'ไม่ระบุ'}</div>
+          <div class="sum-row"><span class="lbl">สี</span><span class="val">${r.color||'-'}</span></div>
+          <div class="sum-row"><span class="lbl">รับมา (หลา)</span><span class="val">${fmt2(r.yards)}</span></div>
+          <div class="sum-row"><span class="lbl">ร้านผ้า</span><span class="val">${r.shop||'-'}</span></div>
+        </div>`).join('')}
+    </div>`:''}
+  `;
 }
 
-// ── SORT ──────────────────────────────────────────────────────
-function sortBy(key) {
-  if (sortKey === key) sortDir *= -1;
-  else { sortKey = key; sortDir = -1; }
-  renderTable();
+function updateDataLists() {
+  const fabrics=[...new Set(rolls.map(r=>r.fabricName).filter(Boolean))];
+  const shops=[...new Set(rolls.map(r=>r.shop).filter(Boolean))];
+  const jobs=[...new Set(rolls.flatMap(r=>(r.usages||[]).map(u=>u.job)).filter(Boolean))];
+  document.getElementById('fabricList').innerHTML=fabrics.map(f=>`<option value="${f}">`).join('');
+  document.getElementById('shopList').innerHTML=shops.map(s=>`<option value="${s}">`).join('');
+  document.getElementById('jobHints').innerHTML=jobs.map(j=>`<option value="${j}">`).join('');
+  const sel=document.getElementById('filterFabric');
+  const cur=sel.value;
+  sel.innerHTML=`<option value="">ทุกผ้า</option>`+fabrics.map(f=>`<option value="${f}"${f===cur?' selected':''}>${f}</option>`).join('');
 }
 
 // ── TABS ──────────────────────────────────────────────────────
-function switchTab(tab) {
-  currentTab = tab;
-  document.getElementById('view-log').style.display = tab === 'log' ? '' : 'none';
-  document.getElementById('view-summary').style.display = tab === 'summary' ? '' : 'none';
-  document.getElementById('tab-log').className = 'tab' + (tab==='log'?' active':'');
-  document.getElementById('tab-summary').className = 'tab' + (tab==='summary'?' active':'');
-  if (tab === 'summary') renderSummary();
+function switchTab(tab){
+  document.getElementById('view-stock').style.display=tab==='stock'?'':'none';
+  document.getElementById('view-summary').style.display=tab==='summary'?'':'none';
+  document.getElementById('tab-stock').className='tab'+(tab==='stock'?' active':'');
+  document.getElementById('tab-summary').className='tab'+(tab==='summary'?' active':'');
+  if(tab==='summary') renderSummary();
 }
 
-// ── MODAL ──────────────────────────────────────────────────────
-function buildColorPresets(selectedHex) {
-  document.getElementById('colorPresets').innerHTML = COLOR_PRESETS.map(hex =>
-    `<div class="color-preset${hex===selectedHex?' selected':''}" style="background:${hex}" onclick="pickColor('${hex}')" title="${hex}"></div>`
+// ── ADD/EDIT MODAL ──────────────────────────────────────────────
+function buildColorPresets(sel){
+  document.getElementById('colorPresets').innerHTML=COLOR_PRESETS_LIST.map(hex=>
+    `<div class="color-preset${hex===sel?' selected':''}" style="background:${hex}" onclick="pickColor('${hex}')"></div>`
   ).join('');
 }
-
-function pickColor(hex) {
-  document.querySelectorAll('.color-preset').forEach(el => el.classList.toggle('selected', el.style.background === hex || el.style.backgroundColor === hex));
-  // store hex temporarily
-  document.getElementById('f_color').dataset.hex = hex;
+function pickColor(hex){
+  document.querySelectorAll('.color-preset').forEach(el=>el.classList.remove('selected'));
+  event.target.classList.add('selected');
+  document.getElementById('f_color').dataset.hex=hex;
 }
-
-function setType(t) {
-  currentType = t;
-  document.getElementById('typeInBtn').className = 'type-btn in' + (t==='in'?' active':'');
-  document.getElementById('typeOutBtn').className = 'type-btn out' + (t==='out'?' active':'');
-}
-
-function openModal() {
-  editId = null;
-  currentType = 'in';
-  setType('in');
-  document.getElementById('modalTitle').textContent = '➕ เพิ่มรายการ';
-  document.getElementById('f_date').value = new Date().toISOString().split('T')[0];
-  ['f_fabric','f_color','f_shop','f_weight','f_yards','f_note'].forEach(id => document.getElementById(id).value = '');
-  document.getElementById('f_color').dataset.hex = '';
+function openAddModal(){
+  editRollId=null;
+  document.getElementById('addModalTitle').textContent='➕ เพิ่มม้วนผ้าใหม่';
+  document.getElementById('f_date').value=new Date().toISOString().split('T')[0];
+  ['f_fabric','f_color','f_shop','f_weight','f_yards','f_note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f_color').dataset.hex='';
   buildColorPresets('');
-  document.getElementById('modalOverlay').classList.add('open');
-  setTimeout(() => document.getElementById('f_fabric').focus(), 100);
+  document.getElementById('addModal').classList.add('open');
 }
-
-function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('open');
+function editRoll(id){
+  const r=rolls.find(x=>x.id===id); if(!r) return;
+  editRollId=id;
+  document.getElementById('addModalTitle').textContent='✏️ แก้ไขม้วนผ้า';
+  document.getElementById('f_date').value=r.date||'';
+  document.getElementById('f_fabric').value=r.fabricName||'';
+  document.getElementById('f_color').value=r.color||'';
+  document.getElementById('f_color').dataset.hex=r.colorHex||'';
+  document.getElementById('f_shop').value=r.shop||'';
+  document.getElementById('f_weight').value=r.weight||'';
+  document.getElementById('f_yards').value=r.yards||'';
+  document.getElementById('f_note').value=r.note||'';
+  buildColorPresets(r.colorHex||'');
+  document.getElementById('addModal').classList.add('open');
 }
-
-function saveEntry() {
-  const fabricName = document.getElementById('f_fabric').value.trim();
-  const date = document.getElementById('f_date').value;
-  if (!fabricName) { alert('กรุณากรอกชื่อผ้า'); return; }
-  if (!date) { alert('กรุณาเลือกวันที่'); return; }
-
-  const colorEl = document.getElementById('f_color');
-  const colorHex = colorEl.dataset.hex || '#555';
-
-  const entry = {
-    id: editId || 'FAB-' + Date.now(),
-    type: currentType,
-    date,
-    fabricName,
-    color: colorEl.value.trim(),
-    colorHex,
-    shop: document.getElementById('f_shop').value.trim(),
-    weight: document.getElementById('f_weight').value || '0',
-    yards: document.getElementById('f_yards').value || '0',
-    note: document.getElementById('f_note').value.trim(),
+function closeAddModal(){document.getElementById('addModal').classList.remove('open');}
+function saveRoll(){
+  const fabricName=document.getElementById('f_fabric').value.trim();
+  const date=document.getElementById('f_date').value;
+  if(!fabricName){alert('กรุณากรอกชื่อผ้า');return;}
+  if(!date){alert('กรุณาเลือกวันที่');return;}
+  const roll={
+    id:editRollId||'ROLL-'+Date.now(), date, fabricName,
+    color:document.getElementById('f_color').value.trim(),
+    colorHex:document.getElementById('f_color').dataset.hex||'#555',
+    shop:document.getElementById('f_shop').value.trim(),
+    weight:document.getElementById('f_weight').value||'0',
+    yards:document.getElementById('f_yards').value||'0',
+    note:document.getElementById('f_note').value.trim(),
+    status:'full', usages:[],
   };
+  if(editRollId){
+    const idx=rolls.findIndex(r=>r.id===editRollId);
+    if(idx>-1){roll.usages=rolls[idx].usages||[];roll.status=rolls[idx].status;rolls[idx]=roll;}
+  } else { rolls.unshift(roll); }
+  save(); renderAll(); closeAddModal();
+}
+function deleteRoll(id){if(!confirm('ลบม้วนผ้านี้?'))return;rolls=rolls.filter(r=>r.id!==id);save();renderAll();}
+function restoreRoll(id){const r=rolls.find(x=>x.id===id);if(!r)return;r.status='partial';r.depletedAt=null;save();renderAll();}
 
-  if (editId) {
-    const idx = entries.findIndex(e => e.id === editId);
-    if (idx > -1) entries[idx] = entry;
+// ── USE MODAL ──────────────────────────────────────────────────
+function openUseModal(id,mode){
+  const r=rolls.find(x=>x.id===id); if(!r) return;
+  useRollId=id; useMode=mode;
+  const remY=getRemY(r), remW=getRemW(r);
+  document.getElementById('useModalTitle').textContent=mode==='all'?'✅ ใช้หมดทั้งม้วน':'✂️ ใช้ผ้าบางส่วน';
+  document.getElementById('useInfo').innerHTML=`<b>${r.fabricName}</b>${r.color?' · '+r.color:''}<br>คงเหลือ: <span>${fmt2(remY)} หลา</span> / <span>${fmt2(remW)} กก.</span>`;
+  document.getElementById('u_date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('u_job').value='';
+  document.getElementById('u_note').value='';
+  if(mode==='all'){
+    document.getElementById('u_yards').value=remY.toFixed(2);
+    document.getElementById('u_weight').value=remW.toFixed(2);
+    document.getElementById('useConfirmBtn').textContent='✅ ยืนยันใช้หมดม้วน';
   } else {
-    entries.unshift(entry);
+    document.getElementById('u_yards').value='';
+    document.getElementById('u_weight').value='';
+    document.getElementById('useConfirmBtn').textContent='✂️ ยืนยันบันทึก';
   }
-  save();
-  renderAll();
-  closeModal();
+  document.getElementById('useModal').classList.add('open');
+}
+function closeUseModal(){document.getElementById('useModal').classList.remove('open');}
+function confirmUse(){
+  const r=rolls.find(x=>x.id===useRollId); if(!r) return;
+  const date=document.getElementById('u_date').value;
+  if(!date){alert('กรุณาเลือกวันที่');return;}
+  const usedY=+document.getElementById('u_yards').value||0;
+  const usedW=+document.getElementById('u_weight').value||0;
+  if(!r.usages) r.usages=[];
+  r.usages.push({id:'USE-'+Date.now(),date,yards:usedY,weight:usedW,job:document.getElementById('u_job').value.trim(),note:document.getElementById('u_note').value.trim()});
+  if(useMode==='all'){r.status='depleted';r.depletedAt=date;}
+  else r.status='partial';
+  save(); renderAll(); closeUseModal();
+}
+function deleteUsage(rollId,useId){
+  const r=rolls.find(x=>x.id===rollId); if(!r) return;
+  r.usages=(r.usages||[]).filter(u=>u.id!==useId);
+  if(r.status==='depleted') r.status='partial';
+  save(); renderAll();
 }
 
-function deleteEntry(id) {
-  if (!confirm('ลบรายการนี้?')) return;
-  entries = entries.filter(e => e.id !== id);
-  save();
-  renderAll();
-}
-
-// ── EXPORT CSV ──────────────────────────────────────────────────
-function exportCSV() {
-  const rows = [['วันที่','ประเภท','ชื่อผ้า','สี','ชื่อร้านผ้า','น้ำหนัก(กก.)','จำนวน(หลา)','หมายเหตุ']];
-  entries.forEach(e => rows.push([e.date, e.type==='in'?'เข้า':'ออก', e.fabricName, e.color, e.shop, e.weight, e.yards, e.note]));
-  const csv = rows.map(r => r.map(v => `"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-  a.download = 'fabric-stock-' + new Date().toISOString().split('T')[0] + '.csv';
-  a.click();
+// ── EXPORT ──────────────────────────────────────────────────────
+function exportCSV(){
+  const rows=[['วันที่รับ','ชื่อผ้า','สี','ร้านผ้า','น้ำหนัก(กก.)','จำนวน(หลา)','สถานะ','คงเหลือ(หลา)','วันที่ใช้','ใช้(หลา)','ใช้ในงาน']];
+  rolls.forEach(r=>{
+    rows.push([r.date,r.fabricName,r.color,r.shop,r.weight,r.yards,getRollStatus(r),fmt2(getRemY(r)),'','','']);
+    (r.usages||[]).forEach(u=>rows.push(['','','','','','','','',u.date,u.yards,u.job]));
+  });
+  const csv=rows.map(r=>r.map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='fabric-stock-'+new Date().toISOString().split('T')[0]+'.csv';a.click();
 }
 
 // ── INIT ──────────────────────────────────────────────────────
-document.getElementById('modalOverlay').addEventListener('click', e => {
-  if (e.target === document.getElementById('modalOverlay')) closeModal();
-});
-
+document.getElementById('addModal').addEventListener('click',e=>{if(e.target===document.getElementById('addModal'))closeAddModal();});
+document.getElementById('useModal').addEventListener('click',e=>{if(e.target===document.getElementById('useModal'))closeUseModal();});
 loadFromSheet();
 </script>
 </body>
