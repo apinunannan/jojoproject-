@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The jojo project — คลังผ้า</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #242424; --border: #2e2e2e;
+  --accent: #f0c040; --accent2: #e07830; --text: #f0ede8; --text2: #888; --text3: #555;
+  --green: #22c55e; --red: #ef4444; --blue: #4a9eff; --purple: #a855f7;
+  --mono: 'IBM Plex Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* HEADER */
+.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; height: 54px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 100; }
+.logo { font-family: var(--mono); font-size: 16px; font-weight: 500; color: var(--accent); }
+.logo span { color: var(--text3); }
+.logo-sub { font-size: 12px; padding: 3px 8px; background: #4a9eff22; border: 1px solid #4a9eff44; border-radius: 20px; color: var(--blue); }
+.header-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+#syncStatus { font-size: 11px; color: var(--text2); font-family: var(--mono); }
+.btn { padding: 7px 14px; border-radius: 7px; border: none; cursor: pointer; font-family: 'Sarabun', sans-serif; font-size: 13px; font-weight: 500; transition: all 0.15s; }
+.btn-primary { background: var(--accent); color: #111; }
+.btn-primary:hover { background: #f8d060; transform: translateY(-1px); }
+.btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--text2); color: var(--text); }
+
+/* STATS */
+.stats-bar { display: flex; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; display: flex; flex-direction: column; gap: 3px; min-width: 130px; flex-shrink: 0; }
+.stat-label { font-size: 11px; color: var(--text2); }
+.stat-val { font-family: var(--mono); font-size: 18px; font-weight: 500; }
+.stat-sub { font-size: 11px; color: var(--text3); }
+
+/* TABS */
+.tab-bar { display: flex; gap: 4px; padding: 12px 20px 0; border-bottom: 1px solid var(--border); }
+.tab { padding: 8px 16px; border-radius: 8px 8px 0 0; border: 1px solid transparent; border-bottom: none; font-size: 13px; cursor: pointer; color: var(--text2); background: transparent; font-family: 'Sarabun', sans-serif; transition: all 0.15s; }
+.tab.active { background: var(--surface); border-color: var(--border); color: var(--text); }
+.tab:hover:not(.active) { color: var(--text); }
+
+/* TOOLBAR */
+.toolbar { display: flex; gap: 8px; padding: 14px 20px; align-items: center; flex-wrap: wrap; }
+.search-wrap { position: relative; flex: 1; min-width: 180px; }
+.search-wrap input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px 8px 34px; color: var(--text); font-family: 'Sarabun', sans-serif; font-size: 13px; outline: none; }
+.search-wrap input:focus { border-color: var(--accent); }
+.search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 14px; }
+.filter-select { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; color: var(--text); font-family: 'Sarabun', sans-serif; font-size: 13px; outline: none; cursor: pointer; }
+.filter-select:focus { border-color: var(--accent); }
+
+/* TABLE */
+.table-wrap { padding: 0 20px 20px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th { padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; }
+thead th:hover { color: var(--text); }
+tbody tr { border-bottom: 1px solid #1e1e1e; transition: background 0.1s; }
+tbody tr:hover { background: var(--surface); }
+tbody td { padding: 10px 12px; vertical-align: middle; }
+.type-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: var(--mono); }
+.type-in { background: #22c55e22; color: var(--green); border: 1px solid #22c55e44; }
+.type-out { background: #ef444422; color: var(--red); border: 1px solid #ef444444; }
+.color-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; flex-shrink: 0; }
+.num { font-family: var(--mono); font-size: 12px; }
+.num.in { color: var(--green); }
+.num.out { color: var(--red); }
+.action-btn { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 14px; padding: 4px; border-radius: 4px; transition: color 0.1s; }
+.action-btn:hover { color: var(--red); }
+.empty-row td { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 500; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; transform: translateY(10px); transition: transform 0.2s; }
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-grid .full { grid-column: 1/-1; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label { font-size: 12px; color: var(--text2); }
+.form-group input, .form-group select { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-family: 'Sarabun', sans-serif; font-size: 13px; outline: none; width: 100%; }
+.form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+.type-toggle { display: flex; gap: 8px; }
+.type-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-family: 'Sarabun', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.type-btn.in.active { background: #22c55e22; border-color: var(--green); color: var(--green); }
+.type-btn.out.active { background: #ef444422; border-color: var(--red); color: var(--red); }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+/* SUMMARY TABLE */
+.summary-wrap { padding: 0 20px 20px; }
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.fabric-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.fabric-card-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.fabric-card-sub { font-size: 12px; color: var(--text2); margin-bottom: 12px; }
+.fabric-card-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 4px 0; border-bottom: 1px solid #1e1e1e; }
+.fabric-card-row:last-child { border-bottom: none; }
+.fabric-card-row .lbl { color: var(--text2); }
+.fabric-card-row .val { font-family: var(--mono); font-weight: 500; }
+
+/* COLOR PICKER */
+.color-presets { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.color-preset { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: border-color 0.1s; }
+.color-preset.selected { border-color: white; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">jojo<span>/</span>fabric</div>
+  <div class="logo-sub">คลังผ้า</div>
+  <div class="header-right">
+    <span id="syncStatus"></span>
+    <button class="btn btn-ghost" onclick="exportCSV()">📥 Export</button>
+    <button class="btn btn-primary" onclick="openModal()">+ เพิ่มรายการ</button>
+  </div>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+
+<div class="tab-bar">
+  <button class="tab active" id="tab-log" onclick="switchTab('log')">📋 รายการทั้งหมด</button>
+  <button class="tab" id="tab-summary" onclick="switchTab('summary')">📦 สรุปสต็อก</button>
+</div>
+
+<!-- LOG TAB -->
+<div id="view-log">
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="ค้นหาชื่อผ้า สี ร้านผ้า..." oninput="renderTable()">
+    </div>
+    <select class="filter-select" id="filterType" onchange="renderTable()">
+      <option value="">ทุกประเภท</option>
+      <option value="in">เข้า (Stock In)</option>
+      <option value="out">ออก (Stock Out)</option>
+    </select>
+    <select class="filter-select" id="filterFabric" onchange="renderTable()">
+      <option value="">ทุกผ้า</option>
+    </select>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('date')">วันที่ ↕</th>
+          <th>ประเภท</th>
+          <th onclick="sortBy('fabricName')">ชื่อผ้า ↕</th>
+          <th>สี</th>
+          <th onclick="sortBy('shop')">ชื่อร้านผ้า ↕</th>
+          <th onclick="sortBy('weight')">น้ำหนัก (กก.) ↕</th>
+          <th onclick="sortBy('yards')">จำนวน (หลา) ↕</th>
+          <th>หมายเหตุ</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SUMMARY TAB -->
+<div id="view-summary" style="display:none">
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchSummary" placeholder="ค้นหาชื่อผ้า..." oninput="renderSummary()">
+    </div>
+  </div>
+  <div class="summary-wrap">
+    <div class="summary-grid" id="summaryGrid"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">➕ เพิ่มรายการ</div>
+    <div class="type-toggle" style="margin-bottom:16px">
+      <button class="type-btn in active" id="typeInBtn" onclick="setType('in')">📥 Stock In (เข้า)</button>
+      <button class="type-btn out" id="typeOutBtn" onclick="setType('out')">📤 Stock Out (ออก)</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>วันที่</label>
+        <input type="date" id="f_date">
+      </div>
+      <div class="form-group">
+        <label>ชื่อผ้า</label>
+        <input type="text" id="f_fabric" placeholder="เช่น ผ้าฝ้าย, ผ้าลินิน" list="fabricList">
+        <datalist id="fabricList"></datalist>
+      </div>
+      <div class="form-group">
+        <label>สี</label>
+        <input type="text" id="f_color" placeholder="เช่น ขาว, ดำ, ฟ้า">
+        <div class="color-presets" id="colorPresets"></div>
+      </div>
+      <div class="form-group full">
+        <label>ชื่อร้านผ้า</label>
+        <input type="text" id="f_shop" placeholder="เช่น ร้านผ้าสยาม" list="shopList">
+        <datalist id="shopList"></datalist>
+      </div>
+      <div class="form-group">
+        <label>น้ำหนัก (กิโลกรัม)</label>
+        <input type="number" id="f_weight" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <div class="form-group">
+        <label>จำนวน (หลา)</label>
+        <input type="number" id="f_yards" placeholder="0.00" step="0.01" min="0">
+      </div>
+      <div class="form-group full">
+        <label>หมายเหตุ</label>
+        <input type="text" id="f_note" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveEntry()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzwUjqW8HS-dQ80PIjxfBJ14t56wu_gCnwtLv2juQ9CzA6bMd2eN86mbEOVyH-GMeAHWQ/exec';
+const STORE = 'jojo_fabric';
+
+let entries = [];
+let editId = null;
+let currentType = 'in';
+let sortKey = 'date';
+let sortDir = -1;
+let currentTab = 'log';
+let syncTimer = null;
+
+const COLOR_PRESETS = ['#ffffff','#111111','#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#a855f7','#ec4899','#06b6d4','#84cc16','#f59e0b','#6b7280','#92400e','#1e3a5f'];
+
+function showSyncStatus(msg, color='var(--text2)') {
+  const el = document.getElementById('syncStatus');
+  if (el) { el.textContent = msg; el.style.color = color; }
+}
+
+async function loadFromSheet() {
+  showSyncStatus('⏳ กำลังโหลด...', 'var(--text2)');
+  try {
+    const res = await fetch(GAS_URL + '?store=' + STORE + '&t=' + Date.now());
+    const text = await res.text();
+    const data = JSON.parse(text);
+    entries = Array.isArray(data) ? data : [];
+    localStorage.setItem(STORE, JSON.stringify(entries));
+    showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)');
+  } catch(e) {
+    const cached = localStorage.getItem(STORE);
+    entries = cached ? JSON.parse(cached) : [];
+    showSyncStatus('⚠️ ออฟไลน์', 'var(--accent2)');
+  }
+  renderAll();
+}
+
+function save() {
+  localStorage.setItem(STORE, JSON.stringify(entries));
+  showSyncStatus('💾 กำลังบันทึก...', 'var(--text2)');
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(async () => {
+    try {
+      await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ store: STORE, data: entries }) });
+      showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)');
+    } catch(e) {
+      showSyncStatus('⚠️ บันทึกออฟไลน์', 'var(--accent2)');
+    }
+  }, 800);
+}
+
+setInterval(async () => {
+  try {
+    const res = await fetch(GAS_URL + '?store=' + STORE + '&t=' + Date.now());
+    const data = await res.json();
+    if (JSON.stringify(data) !== JSON.stringify(entries)) {
+      entries = Array.isArray(data) ? data : [];
+      localStorage.setItem(STORE, JSON.stringify(entries));
+      renderAll();
+      showSyncStatus('🔄 อัปเดตจากเครื่องอื่น', 'var(--blue)');
+      setTimeout(() => showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)'), 2000);
+    }
+  } catch(e) {}
+}, 30000);
+
+// ── RENDER ──────────────────────────────────────────────────────
+function renderAll() {
+  renderStats();
+  renderTable();
+  renderSummary();
+  updateDataLists();
+}
+
+function renderStats() {
+  const totalIn_y = entries.filter(e=>e.type==='in').reduce((a,e)=>a+(+e.yards||0),0);
+  const totalOut_y = entries.filter(e=>e.type==='out').reduce((a,e)=>a+(+e.yards||0),0);
+  const totalIn_w = entries.filter(e=>e.type==='in').reduce((a,e)=>a+(+e.weight||0),0);
+  const totalOut_w = entries.filter(e=>e.type==='out').reduce((a,e)=>a+(+e.weight||0),0);
+  const fabrics = [...new Set(entries.map(e=>e.fabricName).filter(Boolean))];
+
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">สต็อกคงเหลือ (หลา)</div>
+      <div class="stat-val" style="color:var(--accent)">${(totalIn_y - totalOut_y).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+      <div class="stat-sub">หลา</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">สต็อกคงเหลือ (กก.)</div>
+      <div class="stat-val" style="color:var(--blue)">${(totalIn_w - totalOut_w).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+      <div class="stat-sub">กิโลกรัม</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">ผ้าเข้า (หลา)</div>
+      <div class="stat-val" style="color:var(--green)">${totalIn_y.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+      <div class="stat-sub">${entries.filter(e=>e.type==='in').length} รายการ</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">ผ้าออก (หลา)</div>
+      <div class="stat-val" style="color:var(--red)">${totalOut_y.toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+      <div class="stat-sub">${entries.filter(e=>e.type==='out').length} รายการ</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">ประเภทผ้า</div>
+      <div class="stat-val" style="color:var(--purple)">${fabrics.length}</div>
+      <div class="stat-sub">ชนิด</div>
+    </div>
+  `;
+}
+
+function getFiltered() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const typeF = document.getElementById('filterType').value;
+  const fabF = document.getElementById('filterFabric').value;
+  return entries.filter(e => {
+    if (typeF && e.type !== typeF) return false;
+    if (fabF && e.fabricName !== fabF) return false;
+    if (q && !`${e.fabricName} ${e.color} ${e.shop} ${e.note}`.toLowerCase().includes(q)) return false;
+    return true;
+  }).sort((a,b) => {
+    let va = a[sortKey]||'', vb = b[sortKey]||'';
+    if (!isNaN(+va) && !isNaN(+vb)) { va = +va; vb = +vb; }
+    return va < vb ? -sortDir : va > vb ? sortDir : 0;
+  });
+}
+
+function fmtDate(d) {
+  if (!d) return '-';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${String(y).slice(2)}`;
+}
+
+function renderTable() {
+  const rows = getFiltered();
+  const tbody = document.getElementById('tableBody');
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="9">ยังไม่มีรายการ</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(e => `
+    <tr>
+      <td style="color:var(--text2);font-family:var(--mono);font-size:12px">${fmtDate(e.date)}</td>
+      <td><span class="type-badge type-${e.type}">${e.type==='in'?'📥 เข้า':'📤 ออก'}</span></td>
+      <td style="font-weight:500">${e.fabricName||'-'}</td>
+      <td><span class="color-dot" style="background:${e.colorHex||'#555'}"></span>${e.color||'-'}</td>
+      <td style="color:var(--text2)">${e.shop||'-'}</td>
+      <td class="num ${e.type}">${e.type==='in'?'+':'-'}${(+e.weight||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td class="num ${e.type}">${e.type==='in'?'+':'-'}${(+e.yards||0).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td style="color:var(--text3);font-size:12px">${e.note||''}</td>
+      <td><button class="action-btn" onclick="deleteEntry('${e.id}')" title="ลบ">🗑</button></td>
+    </tr>
+  `).join('');
+}
+
+function renderSummary() {
+  const q = document.getElementById('searchSummary').value.toLowerCase();
+  const fabrics = [...new Set(entries.map(e=>e.fabricName).filter(Boolean))].filter(f => f.toLowerCase().includes(q));
+  const grid = document.getElementById('summaryGrid');
+  if (fabrics.length === 0) {
+    grid.innerHTML = `<div style="color:var(--text3);padding:40px;text-align:center;grid-column:1/-1">ยังไม่มีข้อมูล</div>`;
+    return;
+  }
+  grid.innerHTML = fabrics.map(fab => {
+    const fabEntries = entries.filter(e => e.fabricName === fab);
+    const colors = [...new Set(fabEntries.map(e=>e.color).filter(Boolean))];
+    const inY = fabEntries.filter(e=>e.type==='in').reduce((a,e)=>a+(+e.yards||0),0);
+    const outY = fabEntries.filter(e=>e.type==='out').reduce((a,e)=>a+(+e.yards||0),0);
+    const inW = fabEntries.filter(e=>e.type==='in').reduce((a,e)=>a+(+e.weight||0),0);
+    const outW = fabEntries.filter(e=>e.type==='out').reduce((a,e)=>a+(+e.weight||0),0);
+    const netY = inY - outY;
+    const netW = inW - outW;
+    const colorDots = colors.map(c => {
+      const hex = fabEntries.find(e=>e.color===c)?.colorHex || '#555';
+      return `<span class="color-dot" style="background:${hex}" title="${c}"></span>`;
+    }).join('');
+    return `
+      <div class="fabric-card">
+        <div class="fabric-card-name">${fab}</div>
+        <div class="fabric-card-sub" style="display:flex;align-items:center;gap:4px">${colorDots} ${colors.join(', ')||'-'}</div>
+        <div class="fabric-card-row"><span class="lbl">คงเหลือ (หลา)</span><span class="val" style="color:${netY>=0?'var(--green)':'var(--red)'}">${netY.toLocaleString('th-TH',{minimumFractionDigits:2})}</span></div>
+        <div class="fabric-card-row"><span class="lbl">คงเหลือ (กก.)</span><span class="val" style="color:${netW>=0?'var(--blue)':'var(--red)'}">${netW.toLocaleString('th-TH',{minimumFractionDigits:2})}</span></div>
+        <div class="fabric-card-row"><span class="lbl">เข้าทั้งหมด</span><span class="val" style="color:var(--green)">${inY.toLocaleString('th-TH',{minimumFractionDigits:2})} หลา</span></div>
+        <div class="fabric-card-row"><span class="lbl">ออกทั้งหมด</span><span class="val" style="color:var(--red)">${outY.toLocaleString('th-TH',{minimumFractionDigits:2})} หลา</span></div>
+        <div class="fabric-card-row"><span class="lbl">รายการ</span><span class="val">${fabEntries.length} รายการ</span></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function updateDataLists() {
+  const fabrics = [...new Set(entries.map(e=>e.fabricName).filter(Boolean))];
+  const shops = [...new Set(entries.map(e=>e.shop).filter(Boolean))];
+  document.getElementById('fabricList').innerHTML = fabrics.map(f=>`<option value="${f}">`).join('');
+  document.getElementById('shopList').innerHTML = shops.map(s=>`<option value="${s}">`).join('');
+  const sel = document.getElementById('filterFabric');
+  const cur = sel.value;
+  sel.innerHTML = `<option value="">ทุกผ้า</option>` + fabrics.map(f=>`<option value="${f}" ${f===cur?'selected':''}>${f}</option>`).join('');
+}
+
+// ── SORT ──────────────────────────────────────────────────────
+function sortBy(key) {
+  if (sortKey === key) sortDir *= -1;
+  else { sortKey = key; sortDir = -1; }
+  renderTable();
+}
+
+// ── TABS ──────────────────────────────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('view-log').style.display = tab === 'log' ? '' : 'none';
+  document.getElementById('view-summary').style.display = tab === 'summary' ? '' : 'none';
+  document.getElementById('tab-log').className = 'tab' + (tab==='log'?' active':'');
+  document.getElementById('tab-summary').className = 'tab' + (tab==='summary'?' active':'');
+  if (tab === 'summary') renderSummary();
+}
+
+// ── MODAL ──────────────────────────────────────────────────────
+function buildColorPresets(selectedHex) {
+  document.getElementById('colorPresets').innerHTML = COLOR_PRESETS.map(hex =>
+    `<div class="color-preset${hex===selectedHex?' selected':''}" style="background:${hex}" onclick="pickColor('${hex}')" title="${hex}"></div>`
+  ).join('');
+}
+
+function pickColor(hex) {
+  document.querySelectorAll('.color-preset').forEach(el => el.classList.toggle('selected', el.style.background === hex || el.style.backgroundColor === hex));
+  // store hex temporarily
+  document.getElementById('f_color').dataset.hex = hex;
+}
+
+function setType(t) {
+  currentType = t;
+  document.getElementById('typeInBtn').className = 'type-btn in' + (t==='in'?' active':'');
+  document.getElementById('typeOutBtn').className = 'type-btn out' + (t==='out'?' active':'');
+}
+
+function openModal() {
+  editId = null;
+  currentType = 'in';
+  setType('in');
+  document.getElementById('modalTitle').textContent = '➕ เพิ่มรายการ';
+  document.getElementById('f_date').value = new Date().toISOString().split('T')[0];
+  ['f_fabric','f_color','f_shop','f_weight','f_yards','f_note'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f_color').dataset.hex = '';
+  buildColorPresets('');
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('f_fabric').focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function saveEntry() {
+  const fabricName = document.getElementById('f_fabric').value.trim();
+  const date = document.getElementById('f_date').value;
+  if (!fabricName) { alert('กรุณากรอกชื่อผ้า'); return; }
+  if (!date) { alert('กรุณาเลือกวันที่'); return; }
+
+  const colorEl = document.getElementById('f_color');
+  const colorHex = colorEl.dataset.hex || '#555';
+
+  const entry = {
+    id: editId || 'FAB-' + Date.now(),
+    type: currentType,
+    date,
+    fabricName,
+    color: colorEl.value.trim(),
+    colorHex,
+    shop: document.getElementById('f_shop').value.trim(),
+    weight: document.getElementById('f_weight').value || '0',
+    yards: document.getElementById('f_yards').value || '0',
+    note: document.getElementById('f_note').value.trim(),
+  };
+
+  if (editId) {
+    const idx = entries.findIndex(e => e.id === editId);
+    if (idx > -1) entries[idx] = entry;
+  } else {
+    entries.unshift(entry);
+  }
+  save();
+  renderAll();
+  closeModal();
+}
+
+function deleteEntry(id) {
+  if (!confirm('ลบรายการนี้?')) return;
+  entries = entries.filter(e => e.id !== id);
+  save();
+  renderAll();
+}
+
+// ── EXPORT CSV ──────────────────────────────────────────────────
+function exportCSV() {
+  const rows = [['วันที่','ประเภท','ชื่อผ้า','สี','ชื่อร้านผ้า','น้ำหนัก(กก.)','จำนวน(หลา)','หมายเหตุ']];
+  entries.forEach(e => rows.push([e.date, e.type==='in'?'เข้า':'ออก', e.fabricName, e.color, e.shop, e.weight, e.yards, e.note]));
+  const csv = rows.map(r => r.map(v => `"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'fabric-stock-' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+});
+
+loadFromSheet();
+</script>
+</body>
+</html>
