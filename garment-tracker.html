@@ -150,7 +150,10 @@ tbody td { padding: 10px 12px; vertical-align: middle; }
           <th onclick="sortBy('date')">วันที่ ↕</th>
           <th>ประเภท</th>
           <th onclick="sortBy('jobName')">ชื่องาน ↕</th>
+          <th onclick="sortBy('customer')">ลูกค้า ↕</th>
+          <th>สินค้าย่อย</th>
           <th onclick="sortBy('workers')">จำนวนคน ↕</th>
+          <th>คนเย็บ</th>
           <th onclick="sortBy('qty')">จำนวนตัว ↕</th>
           <th>หมายเหตุ</th>
           <th></th>
@@ -200,9 +203,23 @@ tbody td { padding: 10px 12px; vertical-align: middle; }
         <input type="text" id="f_job" placeholder="เช่น เสื้อโปโล, ชุดยูนิฟอร์ม" list="jobList">
         <datalist id="jobList"></datalist>
       </div>
+      <div class="form-group full">
+        <label>ชื่อลูกค้า</label>
+        <input type="text" id="f_customer" placeholder="เช่น บริษัท ABC, คุณสมชาย" list="customerList">
+        <datalist id="customerList"></datalist>
+      </div>
+      <div class="form-group full">
+        <label>ชื่อสินค้าย่อย</label>
+        <input type="text" id="f_subproduct" placeholder="เช่น สีขาวคอกลม, ลายดอกไม้">
+      </div>
       <div class="form-group">
         <label>จำนวนคนเย็บ</label>
         <input type="number" id="f_workers" placeholder="0" min="1" step="1">
+      </div>
+      <div class="form-group full">
+        <label>ชื่อคนเย็บ</label>
+        <input type="text" id="f_sewers" placeholder="เช่น แอน, นิด, มาลี (คั่นด้วยจุลภาค)" list="sewerList">
+        <datalist id="sewerList"></datalist>
       </div>
       <div class="form-group">
         <label>จำนวนตัว</label>
@@ -369,7 +386,10 @@ function renderTable() {
       <td style="color:var(--text2);font-family:var(--mono);font-size:12px">${fmtDate(e.date)}</td>
       <td><span class="type-badge type-${e.type}">${e.type==='order'?'📦 ออเดอร์':'🧵 ตัวอย่าง'}</span></td>
       <td style="font-weight:500">${e.jobName||'-'}</td>
+      <td style="color:var(--text2)">${e.customer||'-'}</td>
+      <td style="color:var(--text3);font-size:12px">${e.subproduct||'-'}</td>
       <td class="num">${e.workers||0} <span style="color:var(--text3);font-size:11px">คน</span></td>
+      <td style="color:var(--text2);font-size:12px">${e.sewers||'-'}</td>
       <td class="num" style="color:var(--accent)">${(+e.qty||0).toLocaleString()} <span style="color:var(--text3);font-size:11px">ตัว</span></td>
       <td style="color:var(--text3);font-size:12px">${e.note||''}</td>
       <td style="display:flex;gap:4px">
@@ -407,10 +427,11 @@ function renderSummary() {
   const jobs = {};
   filtered.forEach(e => {
     const k = (e.jobName||'ไม่ระบุ') + '|' + e.type;
-    if (!jobs[k]) jobs[k] = { jobName: e.jobName||'ไม่ระบุ', type: e.type, qty: 0, workers: 0, days: 0 };
+    if (!jobs[k]) jobs[k] = { jobName: e.jobName||'ไม่ระบุ', type: e.type, qty: 0, workers: 0, days: 0, customers: new Set() };
     jobs[k].qty += +e.qty||0;
     jobs[k].workers += +e.workers||0;
     jobs[k].days += 1;
+    if (e.customer) jobs[k].customers.add(e.customer);
   });
 
   const jobList = Object.values(jobs).sort((a,b) => b.qty - a.qty);
@@ -435,7 +456,8 @@ function renderSummary() {
             <span class="type-badge type-${j.type}" style="font-size:10px;padding:2px 8px">${j.type==='order'?'📦 ออเดอร์':'🧵 ตัวอย่าง'}</span>
           </div>
           <div class="job-card-name">${j.jobName}</div>
-          <div style="height:6px"></div>
+          ${j.customers.size ? `<div style="font-size:11px;color:var(--text2);margin-bottom:6px">${[...j.customers].join(', ')}</div>` : ''}
+          <div style="height:4px"></div>
           <div class="job-card-row"><span class="lbl">จำนวนตัว</span><span class="val" style="color:var(--accent)">${j.qty.toLocaleString()} ตัว</span></div>
           <div class="job-card-row"><span class="lbl">คน-วัน</span><span class="val">${j.workers.toLocaleString()}</span></div>
           <div class="job-card-row"><span class="lbl">จำนวนครั้ง</span><span class="val">${j.days} รายการ</span></div>
@@ -458,7 +480,11 @@ function updateMonthFilter() {
 
 function updateJobList() {
   const jobs = [...new Set(entries.map(e=>e.jobName).filter(Boolean))];
+  const customers = [...new Set(entries.map(e=>e.customer).filter(Boolean))];
+  const sewers = [...new Set(entries.flatMap(e=>(e.sewers||'').split(',').map(s=>s.trim())).filter(Boolean))];
   document.getElementById('jobList').innerHTML = jobs.map(j=>`<option value="${j}">`).join('');
+  document.getElementById('customerList').innerHTML = customers.map(c=>`<option value="${c}">`).join('');
+  document.getElementById('sewerList').innerHTML = sewers.map(s=>`<option value="${s}">`).join('');
 }
 
 // ── SORT ──────────────────────────────────────────────────────
@@ -489,7 +515,7 @@ function openModal() {
   setType('order');
   document.getElementById('modalTitle').textContent = '➕ เพิ่มรายการ';
   document.getElementById('f_date').value = new Date().toISOString().split('T')[0];
-  ['f_job','f_workers','f_qty','f_note'].forEach(id => document.getElementById(id).value = '');
+  ['f_job','f_customer','f_subproduct','f_workers','f_sewers','f_qty','f_note'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('modalOverlay').classList.add('open');
   setTimeout(() => document.getElementById('f_job').focus(), 100);
 }
@@ -502,7 +528,10 @@ function editEntry(id) {
   document.getElementById('modalTitle').textContent = '✏️ แก้ไขรายการ';
   document.getElementById('f_date').value = e.date || '';
   document.getElementById('f_job').value = e.jobName || '';
+  document.getElementById('f_customer').value = e.customer || '';
+  document.getElementById('f_subproduct').value = e.subproduct || '';
   document.getElementById('f_workers').value = e.workers || '';
+  document.getElementById('f_sewers').value = e.sewers || '';
   document.getElementById('f_qty').value = e.qty || '';
   document.getElementById('f_note').value = e.note || '';
   document.getElementById('modalOverlay').classList.add('open');
@@ -523,7 +552,10 @@ function saveEntry() {
     type: currentType,
     date,
     jobName,
+    customer: document.getElementById('f_customer').value.trim(),
+    subproduct: document.getElementById('f_subproduct').value.trim(),
     workers: document.getElementById('f_workers').value || '0',
+    sewers: document.getElementById('f_sewers').value.trim(),
     qty: document.getElementById('f_qty').value || '0',
     note: document.getElementById('f_note').value.trim(),
   };
@@ -548,8 +580,8 @@ function deleteEntry(id) {
 
 // ── EXPORT CSV ──────────────────────────────────────────────────
 function exportCSV() {
-  const rows = [['วันที่','ประเภท','ชื่องาน','จำนวนคน','จำนวนตัว','หมายเหตุ']];
-  entries.forEach(e => rows.push([e.date, e.type==='order'?'งานออเดอร์':'งานตัวอย่าง', e.jobName, e.workers, e.qty, e.note]));
+  const rows = [['วันที่','ประเภท','ชื่องาน','ลูกค้า','สินค้าย่อย','จำนวนคน','คนเย็บ','จำนวนตัว','หมายเหตุ']];
+  entries.forEach(e => rows.push([e.date, e.type==='order'?'งานออเดอร์':'งานตัวอย่าง', e.jobName, e.customer, e.subproduct, e.workers, e.sewers, e.qty, e.note]));
   const csv = rows.map(r => r.map(v => `"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
