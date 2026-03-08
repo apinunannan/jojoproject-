@@ -668,6 +668,90 @@ function openPrintModal() {
 function closePrintModal() { document.getElementById('printOverlay').classList.remove('open'); }
 
 loadFromSheet();
+
+let editingId = null;
+let editPhotos = [];
+
+function openEditModal(id) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  editingId = id;
+  editPhotos = o.photos ? [...o.photos] : [];
+  document.getElementById('e_name').value = o.name || '';
+  document.getElementById('e_product').value = o.product || '';
+  document.getElementById('e_subproduct').value = o.subproduct || '';
+  document.getElementById('e_qty').value = o.qty || '';
+  document.getElementById('e_price').value = o.price || '';
+  document.getElementById('e_date').value = o.date || '';
+  document.getElementById('e_deadline').value = o.deadline || '';
+  document.getElementById('e_paiddate').value = o.paidAt ? o.paidAt.slice(0,10) : '';
+  document.getElementById('e_note').value = o.note || '';
+  document.getElementById('e_bank').value = o.bank || '';
+  document.getElementById('e_vat').checked = !!o.useVat;
+  renderEditPhotoPreview();
+  document.getElementById('detOverlay').classList.remove('open');
+  document.getElementById('editOverlay').classList.add('open');
+}
+
+function closeEditModal() {
+  document.getElementById('editOverlay').classList.remove('open');
+}
+
+function handleEditPhotoUpload(e) {
+  const files = Array.from(e.target.files);
+  const remaining = 3 - editPhotos.length;
+  if (remaining <= 0) { alert('แนบรูปได้สูงสุด 3 รูป'); return; }
+  files.slice(0, remaining).forEach(file => {
+    if (file.size > 2*1024*1024) { alert(file.name + ' ใหญ่เกิน 2MB'); return; }
+    const reader = new FileReader();
+    reader.onload = ev => { editPhotos.push(ev.target.result); renderEditPhotoPreview(); };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = '';
+}
+
+function renderEditPhotoPreview() {
+  const grid = document.getElementById('editPhotoPreviewGrid');
+  if (!grid) return;
+  grid.innerHTML = editPhotos.map((src, i) => `
+    <div class="photo-thumb">
+      <img src="${src}">
+      <button class="photo-thumb-del" onclick="removeEditPhoto(${i})">✕</button>
+    </div>
+  `).join('');
+  const lbl = document.getElementById('e_photo_label');
+  if (lbl) lbl.textContent = editPhotos.length >= 3 ? '✅ เต็มแล้ว (3/3)' : `📷 คลิกเพื่อเพิ่มรูป (${editPhotos.length}/3)`;
+}
+
+function removeEditPhoto(i) {
+  editPhotos.splice(i, 1);
+  renderEditPhotoPreview();
+}
+
+function saveEdit() {
+  const name = document.getElementById('e_name').value.trim();
+  const product = document.getElementById('e_product').value.trim();
+  if (!name) { alert('กรุณากรอกชื่อลูกค้า'); return; }
+  if (!product) { alert('กรุณากรอกชื่อสินค้า'); return; }
+  const o = orders.find(x => x.id === editingId);
+  if (!o) return;
+  const paiddate = document.getElementById('e_paiddate').value;
+  o.name = name;
+  o.product = product;
+  o.subproduct = document.getElementById('e_subproduct').value.trim();
+  o.qty = document.getElementById('e_qty').value;
+  o.price = document.getElementById('e_price').value;
+  o.date = document.getElementById('e_date').value;
+  o.deadline = document.getElementById('e_deadline').value;
+  o.note = document.getElementById('e_note').value.trim();
+  o.bank = document.getElementById('e_bank').value.trim();
+  o.useVat = document.getElementById('e_vat').checked;
+  o.photos = [...editPhotos];
+  if (paiddate) o.paidAt = new Date(paiddate + 'T12:00:00').toISOString();
+  save();
+  render();
+  closeEditModal();
+}
 </script>
 <!-- PRODUCT SUMMARY MODAL -->
 <div class="det-overlay" id="summaryOverlay" onclick="if(event.target===this)closeSummary()">
