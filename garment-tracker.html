@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The jojo project — Garment Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0f0f; --surface: #1a1a1a; --surface2: #242424; --border: #2e2e2e;
+  --accent: #f0c040; --accent2: #e07830; --text: #f0ede8; --text2: #888; --text3: #555;
+  --green: #22c55e; --red: #ef4444; --blue: #4a9eff; --purple: #a855f7; --yellow: #f0c040;
+  --mono: 'IBM Plex Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* HEADER */
+.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 20px; height: 54px; display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: 100; }
+.logo { font-family: var(--mono); font-size: 16px; font-weight: 500; color: var(--accent); }
+.logo span { color: var(--text3); }
+.logo-sub { font-size: 12px; padding: 3px 8px; background: #a855f722; border: 1px solid #a855f744; border-radius: 20px; color: var(--purple); }
+.header-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+#syncStatus { font-size: 11px; color: var(--text2); font-family: var(--mono); }
+.btn { padding: 7px 14px; border-radius: 7px; border: none; cursor: pointer; font-family: 'Sarabun', sans-serif; font-size: 13px; font-weight: 500; transition: all 0.15s; }
+.btn-primary { background: var(--accent); color: #111; }
+.btn-primary:hover { background: #f8d060; transform: translateY(-1px); }
+.btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--text2); color: var(--text); }
+
+/* STATS */
+.stats-bar { display: flex; gap: 10px; padding: 14px 20px; border-bottom: 1px solid var(--border); overflow-x: auto; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; display: flex; flex-direction: column; gap: 3px; min-width: 140px; flex-shrink: 0; }
+.stat-label { font-size: 11px; color: var(--text2); }
+.stat-val { font-family: var(--mono); font-size: 20px; font-weight: 500; }
+.stat-sub { font-size: 11px; color: var(--text3); }
+
+/* TABS */
+.tab-bar { display: flex; gap: 4px; padding: 12px 20px 0; border-bottom: 1px solid var(--border); }
+.tab { padding: 8px 16px; border-radius: 8px 8px 0 0; border: 1px solid transparent; border-bottom: none; font-size: 13px; cursor: pointer; color: var(--text2); background: transparent; font-family: 'Sarabun', sans-serif; transition: all 0.15s; }
+.tab.active { background: var(--surface); border-color: var(--border); color: var(--text); }
+.tab:hover:not(.active) { color: var(--text); }
+
+/* TOOLBAR */
+.toolbar { display: flex; gap: 8px; padding: 14px 20px; align-items: center; flex-wrap: wrap; }
+.search-wrap { position: relative; flex: 1; min-width: 180px; }
+.search-wrap input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px 8px 34px; color: var(--text); font-family: 'Sarabun', sans-serif; font-size: 13px; outline: none; }
+.search-wrap input:focus { border-color: var(--accent); }
+.search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 14px; }
+.filter-select { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; color: var(--text); font-family: 'Sarabun', sans-serif; font-size: 13px; outline: none; cursor: pointer; }
+.filter-select:focus { border-color: var(--accent); }
+
+/* TABLE */
+.table-wrap { padding: 0 20px 20px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th { padding: 10px 12px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; }
+thead th:hover { color: var(--text); }
+tbody tr { border-bottom: 1px solid #1e1e1e; transition: background 0.1s; }
+tbody tr:hover { background: var(--surface); }
+tbody td { padding: 10px 12px; vertical-align: middle; }
+.type-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: var(--mono); }
+.type-order { background: #4a9eff22; color: var(--blue); border: 1px solid #4a9eff44; }
+.type-sample { background: #a855f722; color: var(--purple); border: 1px solid #a855f744; }
+.num { font-family: var(--mono); font-size: 13px; }
+.action-btn { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 14px; padding: 4px; border-radius: 4px; transition: color 0.1s; }
+.action-btn:hover { color: var(--red); }
+.action-btn.edit:hover { color: var(--blue); }
+.empty-row td { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 500; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; transform: translateY(10px); transition: transform 0.2s; }
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal-title { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-grid .full { grid-column: 1/-1; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group label { font-size: 12px; color: var(--text2); }
+.form-group input, .form-group select { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; color: var(--text); font-family: 'Sarabun', sans-serif; font-size: 13px; outline: none; width: 100%; }
+.form-group input:focus, .form-group select:focus { border-color: var(--accent); }
+.type-toggle { display: flex; gap: 8px; margin-bottom: 16px; }
+.type-btn { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text2); font-family: 'Sarabun', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+.type-btn.order.active { background: #4a9eff22; border-color: var(--blue); color: var(--blue); }
+.type-btn.sample.active { background: #a855f722; border-color: var(--purple); color: var(--purple); }
+.modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+/* SUMMARY */
+.summary-wrap { padding: 0 20px 20px; }
+.month-section { margin-bottom: 24px; }
+.month-header { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+.month-title { font-size: 15px; font-weight: 600; }
+.month-meta { font-size: 12px; color: var(--text2); font-family: var(--mono); }
+.month-stats { display: flex; gap: 16px; margin-left: auto; }
+.month-stat { font-size: 12px; font-family: var(--mono); }
+.job-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap: 10px; }
+.job-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+.job-card-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.job-card-name { font-weight: 600; font-size: 13px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.job-card-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; }
+.job-card-row .lbl { color: var(--text2); }
+.job-card-row .val { font-family: var(--mono); font-weight: 500; }
+
+/* MONTH PICKER */
+.month-nav { display: flex; align-items: center; gap: 10px; }
+.month-nav button { background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: 6px; width: 28px; height: 28px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; }
+.month-nav button:hover { border-color: var(--text2); }
+#monthLabel { font-family: var(--mono); font-size: 13px; min-width: 90px; text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">jojo<span>/</span>tracker</div>
+  <div class="logo-sub">Garment Tracker</div>
+  <div class="header-right">
+    <span id="syncStatus"></span>
+    <button class="btn btn-ghost" onclick="exportCSV()">📥 Export</button>
+    <button class="btn btn-primary" onclick="openModal()">+ เพิ่มรายการ</button>
+  </div>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+
+<div class="tab-bar">
+  <button class="tab active" id="tab-log" onclick="switchTab('log')">📋 รายการทั้งหมด</button>
+  <button class="tab" id="tab-summary" onclick="switchTab('summary')">📊 สรุปรายเดือน</button>
+</div>
+
+<!-- LOG TAB -->
+<div id="view-log">
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="ค้นหาชื่องาน..." oninput="renderTable()">
+    </div>
+    <select class="filter-select" id="filterType" onchange="renderTable()">
+      <option value="">ทุกประเภท</option>
+      <option value="order">งานออเดอร์</option>
+      <option value="sample">งานตัวอย่าง</option>
+    </select>
+    <select class="filter-select" id="filterMonth" onchange="renderTable()">
+      <option value="">ทุกเดือน</option>
+    </select>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('date')">วันที่ ↕</th>
+          <th>ประเภท</th>
+          <th onclick="sortBy('jobName')">ชื่องาน ↕</th>
+          <th onclick="sortBy('workers')">จำนวนคน ↕</th>
+          <th onclick="sortBy('qty')">จำนวนตัว ↕</th>
+          <th>หมายเหตุ</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- SUMMARY TAB -->
+<div id="view-summary" style="display:none">
+  <div class="toolbar">
+    <div class="month-nav">
+      <button onclick="prevMonth()">‹</button>
+      <span id="monthLabel"></span>
+      <button onclick="nextMonth()">›</button>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchSummary" placeholder="ค้นหาชื่องาน..." oninput="renderSummary()">
+    </div>
+    <select class="filter-select" id="filterSumType" onchange="renderSummary()">
+      <option value="">ทุกประเภท</option>
+      <option value="order">งานออเดอร์</option>
+      <option value="sample">งานตัวอย่าง</option>
+    </select>
+  </div>
+  <div class="summary-wrap" id="summaryWrap"></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">➕ เพิ่มรายการ</div>
+    <div class="type-toggle">
+      <button class="type-btn order active" id="typeOrderBtn" onclick="setType('order')">📦 งานออเดอร์</button>
+      <button class="type-btn sample" id="typeSampleBtn" onclick="setType('sample')">🧵 งานตัวอย่าง</button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>วันที่</label>
+        <input type="date" id="f_date">
+      </div>
+      <div class="form-group full">
+        <label>ชื่องาน</label>
+        <input type="text" id="f_job" placeholder="เช่น เสื้อโปโล, ชุดยูนิฟอร์ม" list="jobList">
+        <datalist id="jobList"></datalist>
+      </div>
+      <div class="form-group">
+        <label>จำนวนคนเย็บ</label>
+        <input type="number" id="f_workers" placeholder="0" min="1" step="1">
+      </div>
+      <div class="form-group">
+        <label>จำนวนตัว</label>
+        <input type="number" id="f_qty" placeholder="0" min="0" step="1">
+      </div>
+      <div class="form-group full">
+        <label>หมายเหตุ</label>
+        <input type="text" id="f_note" placeholder="หมายเหตุเพิ่มเติม (ถ้ามี)">
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveEntry()">บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzwUjqW8HS-dQ80PIjxfBJ14t56wu_gCnwtLv2juQ9CzA6bMd2eN86mbEOVyH-GMeAHWQ/exec';
+const STORE = 'jojo_tracker';
+
+let entries = [];
+let editId = null;
+let currentType = 'order';
+let sortKey = 'date';
+let sortDir = -1;
+let syncTimer = null;
+
+// summary month nav
+const now = new Date();
+let sumYear = now.getFullYear();
+let sumMonth = now.getMonth(); // 0-indexed
+
+const MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+function showSyncStatus(msg, color='var(--text2)') {
+  const el = document.getElementById('syncStatus');
+  if (el) { el.textContent = msg; el.style.color = color; }
+}
+
+async function loadFromSheet() {
+  showSyncStatus('⏳ กำลังโหลด...', 'var(--text2)');
+  try {
+    const res = await fetch(GAS_URL + '?store=' + STORE + '&t=' + Date.now());
+    const text = await res.text();
+    const data = JSON.parse(text);
+    entries = Array.isArray(data) ? data : [];
+    localStorage.setItem(STORE, JSON.stringify(entries));
+    showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)');
+  } catch(e) {
+    const cached = localStorage.getItem(STORE);
+    entries = cached ? JSON.parse(cached) : [];
+    showSyncStatus('⚠️ ออฟไลน์', 'var(--accent2)');
+  }
+  renderAll();
+}
+
+function save() {
+  localStorage.setItem(STORE, JSON.stringify(entries));
+  showSyncStatus('💾 กำลังบันทึก...', 'var(--text2)');
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(async () => {
+    try {
+      await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ store: STORE, data: entries }) });
+      showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)');
+    } catch(e) {
+      showSyncStatus('⚠️ บันทึกออฟไลน์', 'var(--accent2)');
+    }
+  }, 800);
+}
+
+setInterval(async () => {
+  try {
+    const res = await fetch(GAS_URL + '?store=' + STORE + '&t=' + Date.now());
+    const data = await res.json();
+    if (JSON.stringify(data) !== JSON.stringify(entries)) {
+      entries = Array.isArray(data) ? data : [];
+      localStorage.setItem(STORE, JSON.stringify(entries));
+      renderAll();
+      showSyncStatus('🔄 อัปเดตจากเครื่องอื่น', 'var(--blue)');
+      setTimeout(() => showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)'), 2000);
+    }
+  } catch(e) {}
+}, 30000);
+
+// ── RENDER ──────────────────────────────────────────────────────
+function renderAll() {
+  renderStats();
+  renderTable();
+  updateMonthFilter();
+  updateJobList();
+  if (document.getElementById('view-summary').style.display !== 'none') renderSummary();
+}
+
+function renderStats() {
+  const thisMonth = new Date().toISOString().slice(0,7);
+  const thisMonthEntries = entries.filter(e => e.date && e.date.startsWith(thisMonth));
+  const totalQty = entries.reduce((a,e) => a + (+e.qty||0), 0);
+  const monthQty = thisMonthEntries.reduce((a,e) => a + (+e.qty||0), 0);
+  const orderQty = thisMonthEntries.filter(e=>e.type==='order').reduce((a,e) => a + (+e.qty||0), 0);
+  const sampleQty = thisMonthEntries.filter(e=>e.type==='sample').reduce((a,e) => a + (+e.qty||0), 0);
+  const totalWorkerDays = entries.reduce((a,e) => a + (+e.workers||0), 0);
+
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">เดือนนี้ (ตัว)</div>
+      <div class="stat-val" style="color:var(--accent)">${monthQty.toLocaleString()}</div>
+      <div class="stat-sub">${thisMonthEntries.length} รายการ</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">งานออเดอร์ เดือนนี้</div>
+      <div class="stat-val" style="color:var(--blue)">${orderQty.toLocaleString()}</div>
+      <div class="stat-sub">ตัว</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">งานตัวอย่าง เดือนนี้</div>
+      <div class="stat-val" style="color:var(--purple)">${sampleQty.toLocaleString()}</div>
+      <div class="stat-sub">ตัว</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">รวมทั้งหมด</div>
+      <div class="stat-val" style="color:var(--green)">${totalQty.toLocaleString()}</div>
+      <div class="stat-sub">ตัว</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">คน-วันรวม</div>
+      <div class="stat-val" style="color:var(--accent2)">${totalWorkerDays.toLocaleString()}</div>
+      <div class="stat-sub">คน-วัน</div>
+    </div>
+  `;
+}
+
+function fmtDate(d) {
+  if (!d) return '-';
+  const [y,m,day] = d.split('-');
+  return `${day}/${m}/${String(y).slice(2)}`;
+}
+
+function getFiltered() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const typeF = document.getElementById('filterType').value;
+  const monthF = document.getElementById('filterMonth').value;
+  return entries.filter(e => {
+    if (typeF && e.type !== typeF) return false;
+    if (monthF && !(e.date||'').startsWith(monthF)) return false;
+    if (q && !(e.jobName||'').toLowerCase().includes(q)) return false;
+    return true;
+  }).sort((a,b) => {
+    let va = a[sortKey]||'', vb = b[sortKey]||'';
+    if (!isNaN(+va) && !isNaN(+vb)) { va=+va; vb=+vb; }
+    return va < vb ? -sortDir : va > vb ? sortDir : 0;
+  });
+}
+
+function renderTable() {
+  const rows = getFiltered();
+  const tbody = document.getElementById('tableBody');
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="7">ยังไม่มีรายการ</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(e => `
+    <tr>
+      <td style="color:var(--text2);font-family:var(--mono);font-size:12px">${fmtDate(e.date)}</td>
+      <td><span class="type-badge type-${e.type}">${e.type==='order'?'📦 ออเดอร์':'🧵 ตัวอย่าง'}</span></td>
+      <td style="font-weight:500">${e.jobName||'-'}</td>
+      <td class="num">${e.workers||0} <span style="color:var(--text3);font-size:11px">คน</span></td>
+      <td class="num" style="color:var(--accent)">${(+e.qty||0).toLocaleString()} <span style="color:var(--text3);font-size:11px">ตัว</span></td>
+      <td style="color:var(--text3);font-size:12px">${e.note||''}</td>
+      <td style="display:flex;gap:4px">
+        <button class="action-btn edit" onclick="editEntry('${e.id}')" title="แก้ไข">✏️</button>
+        <button class="action-btn" onclick="deleteEntry('${e.id}')" title="ลบ">🗑</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// ── SUMMARY ──────────────────────────────────────────────────────
+function prevMonth() { sumMonth--; if(sumMonth<0){sumMonth=11;sumYear--;} renderSummary(); }
+function nextMonth() { sumMonth++; if(sumMonth>11){sumMonth=0;sumYear++;} renderSummary(); }
+
+function renderSummary() {
+  const ym = `${sumYear}-${String(sumMonth+1).padStart(2,'0')}`;
+  document.getElementById('monthLabel').textContent = `${MONTHS_TH[sumMonth]} ${sumYear+543}`;
+
+  const q = document.getElementById('searchSummary').value.toLowerCase();
+  const typeF = document.getElementById('filterSumType').value;
+
+  const monthEntries = entries.filter(e => (e.date||'').startsWith(ym));
+  const filtered = monthEntries.filter(e => {
+    if (typeF && e.type !== typeF) return false;
+    if (q && !(e.jobName||'').toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  const totalQty = filtered.reduce((a,e)=>a+(+e.qty||0),0);
+  const totalWorkers = filtered.reduce((a,e)=>a+(+e.workers||0),0);
+  const orderQty = filtered.filter(e=>e.type==='order').reduce((a,e)=>a+(+e.qty||0),0);
+  const sampleQty = filtered.filter(e=>e.type==='sample').reduce((a,e)=>a+(+e.qty||0),0);
+
+  // group by jobName
+  const jobs = {};
+  filtered.forEach(e => {
+    const k = (e.jobName||'ไม่ระบุ') + '|' + e.type;
+    if (!jobs[k]) jobs[k] = { jobName: e.jobName||'ไม่ระบุ', type: e.type, qty: 0, workers: 0, days: 0 };
+    jobs[k].qty += +e.qty||0;
+    jobs[k].workers += +e.workers||0;
+    jobs[k].days += 1;
+  });
+
+  const jobList = Object.values(jobs).sort((a,b) => b.qty - a.qty);
+
+  const wrap = document.getElementById('summaryWrap');
+  if (filtered.length === 0) {
+    wrap.innerHTML = `<div style="color:var(--text3);padding:40px;text-align:center">ไม่มีรายการในเดือนนี้</div>`;
+    return;
+  }
+
+  wrap.innerHTML = `
+    <div style="display:flex;gap:12px;flex-wrap:wrap;padding:0 0 16px">
+      <div class="stat-card"><div class="stat-label">รวมทั้งหมด</div><div class="stat-val" style="color:var(--accent)">${totalQty.toLocaleString()}</div><div class="stat-sub">ตัว</div></div>
+      <div class="stat-card"><div class="stat-label">งานออเดอร์</div><div class="stat-val" style="color:var(--blue)">${orderQty.toLocaleString()}</div><div class="stat-sub">ตัว</div></div>
+      <div class="stat-card"><div class="stat-label">งานตัวอย่าง</div><div class="stat-val" style="color:var(--purple)">${sampleQty.toLocaleString()}</div><div class="stat-sub">ตัว</div></div>
+      <div class="stat-card"><div class="stat-label">คน-วัน</div><div class="stat-val" style="color:var(--accent2)">${totalWorkers.toLocaleString()}</div><div class="stat-sub">${filtered.length} วันที่บันทึก</div></div>
+    </div>
+    <div class="job-grid">
+      ${jobList.map(j => `
+        <div class="job-card">
+          <div class="job-card-top">
+            <span class="type-badge type-${j.type}" style="font-size:10px;padding:2px 8px">${j.type==='order'?'📦 ออเดอร์':'🧵 ตัวอย่าง'}</span>
+          </div>
+          <div class="job-card-name">${j.jobName}</div>
+          <div style="height:6px"></div>
+          <div class="job-card-row"><span class="lbl">จำนวนตัว</span><span class="val" style="color:var(--accent)">${j.qty.toLocaleString()} ตัว</span></div>
+          <div class="job-card-row"><span class="lbl">คน-วัน</span><span class="val">${j.workers.toLocaleString()}</span></div>
+          <div class="job-card-row"><span class="lbl">จำนวนครั้ง</span><span class="val">${j.days} รายการ</span></div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function updateMonthFilter() {
+  const months = [...new Set(entries.map(e=>(e.date||'').slice(0,7)).filter(Boolean))].sort().reverse();
+  const sel = document.getElementById('filterMonth');
+  const cur = sel.value;
+  sel.innerHTML = `<option value="">ทุกเดือน</option>` + months.map(m => {
+    const [y,mo] = m.split('-');
+    const label = `${MONTHS_TH[+mo-1]} ${+y+543}`;
+    return `<option value="${m}" ${m===cur?'selected':''}>${label}</option>`;
+  }).join('');
+}
+
+function updateJobList() {
+  const jobs = [...new Set(entries.map(e=>e.jobName).filter(Boolean))];
+  document.getElementById('jobList').innerHTML = jobs.map(j=>`<option value="${j}">`).join('');
+}
+
+// ── SORT ──────────────────────────────────────────────────────
+function sortBy(key) {
+  if (sortKey === key) sortDir *= -1;
+  else { sortKey = key; sortDir = -1; }
+  renderTable();
+}
+
+// ── TABS ──────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('view-log').style.display = tab === 'log' ? '' : 'none';
+  document.getElementById('view-summary').style.display = tab === 'summary' ? '' : 'none';
+  document.getElementById('tab-log').className = 'tab' + (tab==='log'?' active':'');
+  document.getElementById('tab-summary').className = 'tab' + (tab==='summary'?' active':'');
+  if (tab === 'summary') renderSummary();
+}
+
+// ── MODAL ──────────────────────────────────────────────────────
+function setType(t) {
+  currentType = t;
+  document.getElementById('typeOrderBtn').className = 'type-btn order' + (t==='order'?' active':'');
+  document.getElementById('typeSampleBtn').className = 'type-btn sample' + (t==='sample'?' active':'');
+}
+
+function openModal() {
+  editId = null;
+  setType('order');
+  document.getElementById('modalTitle').textContent = '➕ เพิ่มรายการ';
+  document.getElementById('f_date').value = new Date().toISOString().split('T')[0];
+  ['f_job','f_workers','f_qty','f_note'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('f_job').focus(), 100);
+}
+
+function editEntry(id) {
+  const e = entries.find(x => x.id === id);
+  if (!e) return;
+  editId = id;
+  setType(e.type || 'order');
+  document.getElementById('modalTitle').textContent = '✏️ แก้ไขรายการ';
+  document.getElementById('f_date').value = e.date || '';
+  document.getElementById('f_job').value = e.jobName || '';
+  document.getElementById('f_workers').value = e.workers || '';
+  document.getElementById('f_qty').value = e.qty || '';
+  document.getElementById('f_note').value = e.note || '';
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+function saveEntry() {
+  const jobName = document.getElementById('f_job').value.trim();
+  const date = document.getElementById('f_date').value;
+  if (!jobName) { alert('กรุณากรอกชื่องาน'); return; }
+  if (!date) { alert('กรุณาเลือกวันที่'); return; }
+
+  const entry = {
+    id: editId || 'TRK-' + Date.now(),
+    type: currentType,
+    date,
+    jobName,
+    workers: document.getElementById('f_workers').value || '0',
+    qty: document.getElementById('f_qty').value || '0',
+    note: document.getElementById('f_note').value.trim(),
+  };
+
+  if (editId) {
+    const idx = entries.findIndex(e => e.id === editId);
+    if (idx > -1) entries[idx] = entry;
+  } else {
+    entries.unshift(entry);
+  }
+  save();
+  renderAll();
+  closeModal();
+}
+
+function deleteEntry(id) {
+  if (!confirm('ลบรายการนี้?')) return;
+  entries = entries.filter(e => e.id !== id);
+  save();
+  renderAll();
+}
+
+// ── EXPORT CSV ──────────────────────────────────────────────────
+function exportCSV() {
+  const rows = [['วันที่','ประเภท','ชื่องาน','จำนวนคน','จำนวนตัว','หมายเหตุ']];
+  entries.forEach(e => rows.push([e.date, e.type==='order'?'งานออเดอร์':'งานตัวอย่าง', e.jobName, e.workers, e.qty, e.note]));
+  const csv = rows.map(r => r.map(v => `"${(v||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'garment-tracker-' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+});
+
+loadFromSheet();
+</script>
+</body>
+</html>
