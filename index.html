@@ -138,11 +138,14 @@
     .detail-label{font-size:9px!important}
     .detail-val{font-size:12px!important}
     .pre-wrap{font-size:11px!important}
-    .img-preview{max-height:140px!important;object-fit:cover}
-    .img-grid{gap:4px!important;margin-bottom:6px!important}
+    .img-preview{width:100%!important;height:auto!important;max-height:none!important;object-fit:contain!important}
+    .img-grid{gap:4px!important;margin-bottom:6px!important;break-inside:avoid!important}
+    .img-wrap{break-inside:avoid!important}
     .detail-size-table{font-size:11px!important}
     .detail-size-table th,.detail-size-table td{padding:3px 6px!important}
     .img-size-bar{display:none!important}
+    .img-remove{display:none!important}
+    .img-upload-box{display:none!important}
   }
 
   /* Responsive */
@@ -337,6 +340,7 @@ function renderForm(){
     :`<div class="img-upload-box" onclick="document.getElementById('img-file').click()">
       <div class="img-upload-icon">📷</div>
       <div class="img-upload-text">แตะเพื่อเพิ่มรูป (สูงสุด 3 รูป)</div>
+      <div style="font-size:11px;color:#93c5fd;margin-top:2px">หรือ Ctrl+V เพื่อ Paste รูป</div>
     </div>`;
 
   // Size rows
@@ -705,6 +709,37 @@ function openZoom(idx){
   document.getElementById('img-zoom-overlay').classList.add('open');
 }
 function closeZoom(){document.getElementById('img-zoom-overlay').classList.remove('open');}
+// ── PASTE IMAGE SUPPORT ───────────────────────────────────────────────────────
+document.addEventListener('paste', function(e){
+  if(!state.current) return;
+  const items = e.clipboardData && e.clipboardData.items;
+  if(!items) return;
+  for(let i=0; i<items.length; i++){
+    if(items[i].type.indexOf('image') !== -1){
+      const file = items[i].getAsFile();
+      if(!file) continue;
+      if(!state.current.images) state.current.images = [];
+      if(state.current.images.length >= 3){ 
+        showToast('แนบรูปได้สูงสุด 3 รูป'); 
+        return; 
+      }
+      const reader = new FileReader();
+      reader.onload = ev => {
+        collectForm();
+        if(!state.current.images) state.current.images = [];
+        if(state.current.images.length < 3){
+          state.current.images.push({src: ev.target.result, h: 200});
+          render();
+          showToast('📋 Paste รูปสำเร็จ');
+        }
+      };
+      reader.readAsDataURL(file);
+      e.preventDefault();
+      return;
+    }
+  }
+});
+
 function zoomIn(){_zScale=Math.min(4,Math.round((_zScale+0.25)*100)/100);applyZoom();}
 function zoomOut(){_zScale=Math.max(0.25,Math.round((_zScale-0.25)*100)/100);applyZoom();}
 function zoomReset(){_zScale=1;applyZoom();}
