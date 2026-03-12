@@ -522,6 +522,7 @@ function renderDetail(){
           <div><div class="detail-label">รวมทั้งหมด</div><div class="detail-val">${total>0?total+" ตัว":"-"}</div></div>
         </div>
         ${o.jobName?`<div class="detail-sep"><div class="detail-label">ชื่องาน</div><div class="detail-val blue">${escHtml(o.jobName)}</div></div>`:""}
+        ${o.customerName?`<div class="detail-sep"><div class="detail-label">ชื่อลูกค้า</div><div class="detail-val">${escHtml(o.customerName)}</div></div>`:""}
       </div>
 
       ${o.jobDetail?`<div class="section">
@@ -708,7 +709,7 @@ function resizeImg(i,delta){
   const imgs=state.current.images;
   if(!imgs||imgs[i]===undefined)return;
   if(typeof imgs[i]==='string') imgs[i]={src:imgs[i],h:120};
-  imgs[i].h=Math.max(60,Math.min(400,imgs[i].h+delta));
+  imgs[i].h=Math.max(60,Math.min(800,imgs[i].h+delta));
   render();
 }
 var _zScale=1,_zImgIdx=-1;
