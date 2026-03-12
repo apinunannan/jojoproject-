@@ -71,6 +71,8 @@
   /* Images */
   .img-upload-box{border:2px dashed #e2e8f0;border-radius:10px;padding:30px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;background:#f8fafc}
   .img-upload-box:hover{border-color:#93c5fd;background:#eff6ff}
+  .img-upload-box:focus{outline:none;border-color:#3b82f6;background:#eff6ff;box-shadow:0 0 0 3px rgba(59,130,246,0.15)}
+  .img-upload-box:focus .img-upload-text{color:#3b82f6}
   .img-upload-icon{font-size:36px}
   .img-upload-text{font-size:13px;color:#94a3b8}
   .img-grid{display:grid;gap:8px}
@@ -332,15 +334,21 @@ function renderForm(){
             <button class="img-sz-btn" onclick="resizeImg(${i},20)">＋</button>
           </div>
         </div>`;}).join("")}
-      ${o.images.length<3?`<div class="img-upload-box" onclick="document.getElementById('img-file').click()" style="padding:16px">
+      ${o.images.length<3?`<div class="img-upload-box" id="img-paste-zone" tabindex="0" style="padding:16px"
+        onclick="document.getElementById('img-file').click()"
+        onpaste="handlePasteEvent(event)"
+        onkeydown="if(event.key==='v'&&(event.ctrlKey||event.metaKey)){handlePasteEvent(event)}">
         <div style="font-size:24px">📷</div>
-        <div style="font-size:11px;color:#94a3b8">+ เพิ่มรูป</div>
+        <div style="font-size:11px;color:#94a3b8">+ เพิ่ม / Paste</div>
       </div>`:""}
     </div>`
-    :`<div class="img-upload-box" onclick="document.getElementById('img-file').click()">
+    :`<div class="img-upload-box" id="img-paste-zone" tabindex="0"
+        onclick="document.getElementById('img-file').click()"
+        onpaste="handlePasteEvent(event)"
+        onkeydown="if(event.key==='v'&&(event.ctrlKey||event.metaKey)){handlePasteEvent(event)}">
       <div class="img-upload-icon">📷</div>
-      <div class="img-upload-text">แตะเพื่อเพิ่มรูป (สูงสุด 3 รูป)</div>
-      <div style="font-size:11px;color:#93c5fd;margin-top:2px">หรือ Ctrl+V เพื่อ Paste รูป</div>
+      <div class="img-upload-text">คลิกเพื่อเลือกรูป หรือ Paste รูปที่นี่</div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:4px">คลิกกล่องนี้แล้วกด Ctrl+V</div>
     </div>`;
 
   // Size rows
@@ -710,18 +718,19 @@ function openZoom(idx){
 }
 function closeZoom(){document.getElementById('img-zoom-overlay').classList.remove('open');}
 // ── PASTE IMAGE SUPPORT ───────────────────────────────────────────────────────
-document.addEventListener('paste', function(e){
+function handlePasteEvent(e){
   if(!state.current) return;
-  const items = e.clipboardData && e.clipboardData.items;
+  const items = (e.clipboardData || (e.originalEvent && e.originalEvent.clipboardData)) && 
+                (e.clipboardData || e.originalEvent.clipboardData).items;
   if(!items) return;
   for(let i=0; i<items.length; i++){
     if(items[i].type.indexOf('image') !== -1){
       const file = items[i].getAsFile();
       if(!file) continue;
       if(!state.current.images) state.current.images = [];
-      if(state.current.images.length >= 3){ 
-        showToast('แนบรูปได้สูงสุด 3 รูป'); 
-        return; 
+      if(state.current.images.length >= 3){
+        showToast('แนบรูปได้สูงสุด 3 รูป');
+        return;
       }
       const reader = new FileReader();
       reader.onload = ev => {
@@ -731,6 +740,8 @@ document.addEventListener('paste', function(e){
           state.current.images.push({src: ev.target.result, h: 200});
           render();
           showToast('📋 Paste รูปสำเร็จ');
+          // re-focus paste zone after render
+          setTimeout(()=>{ const z=document.getElementById('img-paste-zone'); if(z) z.focus(); },100);
         }
       };
       reader.readAsDataURL(file);
@@ -738,7 +749,7 @@ document.addEventListener('paste', function(e){
       return;
     }
   }
-});
+}
 
 function zoomIn(){_zScale=Math.min(4,Math.round((_zScale+0.25)*100)/100);applyZoom();}
 function zoomOut(){_zScale=Math.max(0.25,Math.round((_zScale-0.25)*100)/100);applyZoom();}
