@@ -733,18 +733,26 @@ function openZoom(idx){
 function closeZoom(){document.getElementById('img-zoom-overlay').classList.remove('open');}
 // ── SMART PRINT: SHRINK IMAGES ONLY ─────────────────────────────────────────
 window.addEventListener('beforeprint', function(){
-  const MAX_IMG_PX = 300;
+  const MAX_PX = 300;
   document.querySelectorAll('.img-preview').forEach(function(img){
-    img.dataset.origStyle = img.getAttribute('style') || '';
-    // Override inline height with setAttribute to beat specificity
-    img.setAttribute('style', img.dataset.origStyle + ';height:auto!important;max-height:'+MAX_IMG_PX+'px!important;width:100%!important;object-fit:contain!important');
+    // Save original height
+    img.dataset.origH = img.style.height || '';
+    img.dataset.origW = img.style.width || '';
+    img.dataset.origMaxH = img.style.maxHeight || '';
+    img.dataset.origObjFit = img.style.objectFit || '';
+    // Directly set via style properties (beats inline style)
+    img.style.setProperty('height', 'auto', 'important');
+    img.style.setProperty('max-height', MAX_PX + 'px', 'important');
+    img.style.setProperty('width', '100%', 'important');
+    img.style.setProperty('object-fit', 'contain', 'important');
   });
 });
 window.addEventListener('afterprint', function(){
   document.querySelectorAll('.img-preview').forEach(function(img){
-    if(img.dataset.origStyle !== undefined){
-      img.setAttribute('style', img.dataset.origStyle);
-    }
+    img.style.setProperty('height', img.dataset.origH || '');
+    img.style.setProperty('max-height', img.dataset.origMaxH || '');
+    img.style.setProperty('width', img.dataset.origW || '');
+    img.style.setProperty('object-fit', img.dataset.origObjFit || '');
   });
 });
 
