@@ -334,21 +334,29 @@ function renderForm(){
             <button class="img-sz-btn" onclick="resizeImg(${i},20)">＋</button>
           </div>
         </div>`;}).join("")}
-      ${o.images.length<3?`<div class="img-upload-box" id="img-paste-zone" tabindex="0" style="padding:16px"
-        onclick="document.getElementById('img-file').click()"
-        onpaste="handlePasteEvent(event)"
-        onkeydown="if(event.key==='v'&&(event.ctrlKey||event.metaKey)){handlePasteEvent(event)}">
-        <div style="font-size:24px">📷</div>
-        <div style="font-size:11px;color:#94a3b8">+ เพิ่ม / Paste</div>
+      ${o.images.length<3?`<div style="display:flex;flex-direction:column;gap:4px">
+        <div class="img-upload-box" style="padding:10px" onclick="document.getElementById('img-file').click()">
+          <div style="font-size:18px">📷</div>
+          <div style="font-size:10px;color:#94a3b8">เลือกรูป</div>
+        </div>
+        <div class="img-upload-box" id="img-paste-zone" tabindex="0" style="padding:10px;border-color:#93c5fd;background:#f0f9ff"
+          onpaste="handlePasteEvent(event)">
+          <div style="font-size:18px">📋</div>
+          <div style="font-size:10px;color:#3b82f6">Paste</div>
+        </div>
       </div>`:""}
     </div>`
-    :`<div class="img-upload-box" id="img-paste-zone" tabindex="0"
-        onclick="document.getElementById('img-file').click()"
-        onpaste="handlePasteEvent(event)"
-        onkeydown="if(event.key==='v'&&(event.ctrlKey||event.metaKey)){handlePasteEvent(event)}">
-      <div class="img-upload-icon">📷</div>
-      <div class="img-upload-text">คลิกเพื่อเลือกรูป หรือ Paste รูปที่นี่</div>
-      <div style="font-size:11px;color:#94a3b8;margin-top:4px">คลิกกล่องนี้แล้วกด Ctrl+V</div>
+    :`<div style="display:flex;gap:8px">
+      <div class="img-upload-box" style="flex:1" onclick="document.getElementById('img-file').click()">
+        <div class="img-upload-icon">📷</div>
+        <div class="img-upload-text">เลือกรูป</div>
+      </div>
+      <div class="img-upload-box" id="img-paste-zone" tabindex="0" style="flex:1;border-color:#93c5fd;background:#f0f9ff"
+        onpaste="handlePasteEvent(event)">
+        <div class="img-upload-icon">📋</div>
+        <div class="img-upload-text" style="color:#3b82f6">คลิกแล้ว Ctrl+V</div>
+        <div style="font-size:10px;color:#93c5fd;margin-top:2px">Paste รูปที่นี่</div>
+      </div>
     </div>`;
 
   // Size rows
