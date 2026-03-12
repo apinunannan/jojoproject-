@@ -141,7 +141,7 @@
     .detail-val{font-size:12px!important}
     .pre-wrap{font-size:11px!important}
     .img-grid{gap:4px!important;margin-bottom:6px!important;width:100%!important}
-    .img-preview{width:100%!important;height:auto!important;max-height:200mm!important;object-fit:contain!important;display:block!important}
+    .img-preview{width:100%!important;height:auto!important;max-height:280px!important;object-fit:contain!important;display:block!important}
     .detail-size-table{font-size:11px!important}
     .detail-size-table th,.detail-size-table td{padding:3px 6px!important}
     .img-size-bar{display:none!important}
@@ -731,6 +731,27 @@ function openZoom(idx){
   document.getElementById('img-zoom-overlay').classList.add('open');
 }
 function closeZoom(){document.getElementById('img-zoom-overlay').classList.remove('open');}
+// ── SMART PRINT: SHRINK IMAGES ONLY ─────────────────────────────────────────
+window.addEventListener('beforeprint', function(){
+  // A4 printable height ~257mm at 96dpi = ~970px, leave ~300px for text/tables
+  const MAX_IMG_PX = 320;
+  document.querySelectorAll('.img-preview').forEach(function(img){
+    img.dataset.origStyle = img.getAttribute('style') || '';
+    // Force image to shrink if taller than MAX
+    img.style.maxHeight = MAX_IMG_PX + 'px';
+    img.style.width = '100%';
+    img.style.height = 'auto';
+    img.style.objectFit = 'contain';
+  });
+});
+window.addEventListener('afterprint', function(){
+  document.querySelectorAll('.img-preview').forEach(function(img){
+    if(img.dataset.origStyle !== undefined){
+      img.setAttribute('style', img.dataset.origStyle);
+    }
+  });
+});
+
 // ── PASTE IMAGE SUPPORT ───────────────────────────────────────────────────────
 function activatePasteArea(){
   // Focus hidden textarea so it can receive paste
