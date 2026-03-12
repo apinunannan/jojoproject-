@@ -733,15 +733,11 @@ function openZoom(idx){
 function closeZoom(){document.getElementById('img-zoom-overlay').classList.remove('open');}
 // ── SMART PRINT: SHRINK IMAGES ONLY ─────────────────────────────────────────
 window.addEventListener('beforeprint', function(){
-  // A4 printable height ~257mm at 96dpi = ~970px, leave ~300px for text/tables
-  const MAX_IMG_PX = 320;
+  const MAX_IMG_PX = 300;
   document.querySelectorAll('.img-preview').forEach(function(img){
     img.dataset.origStyle = img.getAttribute('style') || '';
-    // Force image to shrink if taller than MAX
-    img.style.maxHeight = MAX_IMG_PX + 'px';
-    img.style.width = '100%';
-    img.style.height = 'auto';
-    img.style.objectFit = 'contain';
+    // Override inline height with setAttribute to beat specificity
+    img.setAttribute('style', img.dataset.origStyle + ';height:auto!important;max-height:'+MAX_IMG_PX+'px!important;width:100%!important;object-fit:contain!important');
   });
 });
 window.addEventListener('afterprint', function(){
