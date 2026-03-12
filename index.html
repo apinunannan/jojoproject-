@@ -726,37 +726,52 @@ function openZoom(idx){
 }
 function closeZoom(){document.getElementById('img-zoom-overlay').classList.remove('open');}
 // ── PASTE IMAGE SUPPORT ───────────────────────────────────────────────────────
-function handlePasteEvent(e){
-  if(!state.current) return;
-  const items = (e.clipboardData || (e.originalEvent && e.originalEvent.clipboardData)) && 
-                (e.clipboardData || e.originalEvent.clipboardData).items;
-  if(!items) return;
+function pasteImageFromClipboard(items){
+  if(!state.current) return false;
   for(let i=0; i<items.length; i++){
     if(items[i].type.indexOf('image') !== -1){
       const file = items[i].getAsFile();
       if(!file) continue;
+      collectForm();
       if(!state.current.images) state.current.images = [];
       if(state.current.images.length >= 3){
         showToast('แนบรูปได้สูงสุด 3 รูป');
-        return;
+        return true;
       }
       const reader = new FileReader();
       reader.onload = ev => {
-        collectForm();
         if(!state.current.images) state.current.images = [];
         if(state.current.images.length < 3){
           state.current.images.push({src: ev.target.result, h: 200});
           render();
           showToast('📋 Paste รูปสำเร็จ');
-          // re-focus paste zone after render
-          setTimeout(()=>{ const z=document.getElementById('img-paste-zone'); if(z) z.focus(); },100);
         }
       };
       reader.readAsDataURL(file);
-      e.preventDefault();
-      return;
+      return true;
     }
   }
+  return false;
+}
+
+// Global paste listener - fires when NOT typing in an input/textarea
+document.addEventListener('paste', function(e){
+  const tag = document.activeElement && document.activeElement.tagName;
+  // ถ้า focus อยู่ใน input หรือ textarea ให้ paste ข้อความตามปกติ
+  if(tag === 'INPUT' || tag === 'TEXTAREA') return;
+  // ถ้าไม่ได้อยู่ในหน้าฟอร์ม ไม่ทำอะไร
+  if(!state.current) return;
+  const items = e.clipboardData && e.clipboardData.items;
+  if(!items) return;
+  if(pasteImageFromClipboard(items)){
+    e.preventDefault();
+  }
+});
+
+function handlePasteEvent(e){
+  // ยังคงไว้สำหรับ onpaste attribute แต่ redirect ไป global handler
+  const items = e.clipboardData && e.clipboardData.items;
+  if(items) pasteImageFromClipboard(items);
 }
 
 function zoomIn(){_zScale=Math.min(4,Math.round((_zScale+0.25)*100)/100);applyZoom();}
