@@ -198,6 +198,10 @@ body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--t
         <datalist id="shopList"></datalist>
       </div>
       <div class="form-group">
+        <label>จำนวนม้วน</label>
+        <input type="number" id="f_rolls" placeholder="1" step="1" min="1" value="1">
+      </div>
+      <div class="form-group">
         <label>น้ำหนัก (กิโลกรัม)</label>
         <input type="number" id="f_weight" placeholder="0.00" step="0.01" min="0">
       </div>
@@ -389,6 +393,7 @@ function renderRolls() {
 
       <div class="roll-meta">
         <div>รับมา <span>${fmt2(r.yards)} หลา</span></div>
+        <div>จำนวน <span>${r.rolls||1} ม้วน</span></div>
         <div>น้ำหนัก <span>${fmt2(r.weight)} กก.</span></div>
         <div>วันที่รับ <span>${fmtDate(r.date)}</span></div>
         <div>เหลือ (กก.) <span>${fmt2(remW)}</span></div>
@@ -507,7 +512,8 @@ function openAddModal(){
   editRollId=null;
   document.getElementById('addModalTitle').textContent='➕ เพิ่มม้วนผ้าใหม่';
   document.getElementById('f_date').value=new Date().toISOString().split('T')[0];
-  ['f_fabric','f_color','f_shop','f_weight','f_yards','f_note'].forEach(id=>document.getElementById(id).value='');
+  ['f_fabric','f_color','f_shop','f_weight','f_rolls','f_yards','f_note'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f_rolls').value='1';
   document.getElementById('f_color').dataset.hex='';
   buildColorPresets('');
   document.getElementById('addModal').classList.add('open');
@@ -522,6 +528,7 @@ function editRoll(id){
   document.getElementById('f_color').dataset.hex=r.colorHex||'';
   document.getElementById('f_shop').value=r.shop||'';
   document.getElementById('f_weight').value=r.weight||'';
+  document.getElementById('f_rolls').value=r.rolls||'1';
   document.getElementById('f_yards').value=r.yards||'';
   document.getElementById('f_note').value=r.note||'';
   buildColorPresets(r.colorHex||'');
@@ -539,6 +546,7 @@ function saveRoll(){
     colorHex:document.getElementById('f_color').dataset.hex||'#555',
     shop:document.getElementById('f_shop').value.trim(),
     weight:document.getElementById('f_weight').value||'0',
+    rolls:document.getElementById('f_rolls').value||'1',
     yards:document.getElementById('f_yards').value||'0',
     note:document.getElementById('f_note').value.trim(),
     status:'full', usages:[],
