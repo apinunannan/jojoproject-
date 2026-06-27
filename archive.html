@@ -198,11 +198,10 @@ body { font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--t
 </div>
 
 <script>
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzwUjqW8HS-dQ80PIjxfBJ14t56wu_gCnwtLv2juQ9CzA6bMd2eN86mbEOVyH-GMeAHWQ/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxhdgDFkRx_d5VZm5DmvOSYeUzpTprCbCaVWiHZIoZMx_Azy7M0dM2Ga3RipmVhA3cDSA/exec';
 let orders = [];
 let syncTimer = null;
 let pendingPhotos = [];
-let isSaving = false;
 
 function handlePhotoUpload(e) {
   const files = Array.from(e.target.files);
@@ -254,31 +253,17 @@ function showSyncStatus(msg, color='var(--text2)') {
 
 async function loadFromSheet() {
   showSyncStatus('⏳ กำลังโหลด...', 'var(--text2)');
-  const cached = localStorage.getItem('jojo_archive');
-  const savedAt = parseInt(localStorage.getItem('jojo_archive_savedAt') || '0');
-  const localOrders = cached ? JSON.parse(cached) : [];
-
   try {
     const res = await fetch(GAS_URL + '?store=jojo_archive&t=' + Date.now());
     const text = await res.text();
     const data = JSON.parse(text);
-    const serverOrders = Array.isArray(data) ? data : [];
-
-    // ถ้าบันทึกล่าสุดเมื่อไม่เกิน 10 วินาที และ local มีข้อมูลมากกว่า server → ใช้ local
-    const recentlySaved = (Date.now() - savedAt) < 10000;
-    if (recentlySaved && localOrders.length > serverOrders.length) {
-      orders = localOrders;
-      showSyncStatus('💾 รอซิงค์...', 'var(--accent2)');
-      // ส่งข้อมูล local ขึ้น server ใหม่
-      await fetch(GAS_URL, { method:'POST', body: JSON.stringify({store:'jojo_archive', data:orders}) });
-      showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)');
-    } else {
-      orders = serverOrders;
-      localStorage.setItem('jojo_archive', JSON.stringify(orders));
-      showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)');
-    }
+    orders = Array.isArray(data) ? data : [];
+    localStorage.setItem('jojo_archive', JSON.stringify(orders));
+    showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)');
   } catch(e) {
-    orders = localOrders;
+    console.error('loadFromSheet error:', e);
+    const cached = localStorage.getItem('jojo_archive');
+    orders = cached ? JSON.parse(cached) : [];
     showSyncStatus('⚠️ ออฟไลน์ (ข้อมูลจากเครื่องนี้)', 'var(--accent2)');
   }
   render();
@@ -286,9 +271,7 @@ async function loadFromSheet() {
 
 function save() {
   localStorage.setItem('jojo_archive', JSON.stringify(orders));
-  localStorage.setItem('jojo_archive_savedAt', Date.now().toString());
   showSyncStatus('💾 กำลังบันทึก...', 'var(--text2)');
-  isSaving = true;
   clearTimeout(syncTimer);
   syncTimer = setTimeout(async () => {
     try {
@@ -296,14 +279,11 @@ function save() {
       showSyncStatus('✅ ซิงค์แล้ว', 'var(--green)');
     } catch(e) {
       showSyncStatus('⚠️ บันทึกออฟไลน์', 'var(--accent2)');
-    } finally {
-      isSaving = false;
     }
   }, 800);
 }
 
 setInterval(async () => {
-  if (isSaving) return;
   try {
     const res = await fetch(GAS_URL + '?store=jojo_archive&t=' + Date.now());
     const data = await res.json();
