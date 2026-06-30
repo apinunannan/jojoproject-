@@ -170,7 +170,7 @@ const today = () => new Date().toISOString().split('T')[0];
 const fmtDate = d => { if(!d) return '-'; const [y,m,day]=d.split('-'); return `${day}/${m}/${String(y).slice(2)}`; };
 const fmtDateTime = s => { if(!s) return '-'; const d=new Date(s); return `${d.getDate()}/${d.getMonth()+1}/${String(d.getFullYear()).slice(2)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
 const initials = n => n ? n[0].toUpperCase() : '?';
-const colorFor = n => { let h=0; for(let i=0;i<n.length;i++) h=(h*31+n.charCodeAt(i))&0xffffffff; return COLORS[Math.abs(h)%COLORS.length]; };
+const colorFor = n => { n = n || ''; let h=0; for(let i=0;i<n.length;i++) h=(h*31+n.charCodeAt(i))&0xffffffff; return COLORS[Math.abs(h)%COLORS.length]; };
 const calcTotal = o => { const u=+(o.price)||0, q=+(o.qty)||1, b=u*q; return o.useVat ? b+Math.round(b*0.07) : b; };
 
 function render() {

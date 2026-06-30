@@ -465,7 +465,7 @@ setInterval(async () => {
 const today = () => new Date().toISOString().split('T')[0];
 const fmtDate = d => { if(!d) return '-'; const [y,m,day]=d.split('-'); return `${day}/${m}/${String(y).slice(2)}`; };
 const initials = n => n ? n[0].toUpperCase() : '?';
-const colorFor = n => { let h=0; for(let i=0;i<n.length;i++) h=(h*31+n.charCodeAt(i))&0xffffffff; return COLORS[Math.abs(h)%COLORS.length]; };
+const colorFor = n => { n = n || ''; let h=0; for(let i=0;i<n.length;i++) h=(h*31+n.charCodeAt(i))&0xffffffff; return COLORS[Math.abs(h)%COLORS.length]; };
 const calcVat = o => { const unitPrice=+(o.price)||0; const qty=+(o.qty)||1; const b=unitPrice*qty; if(!o.useVat) return {base:b,vat:0,total:b,unitPrice}; const v=Math.round(b*0.07); return {base:b,vat:v,total:b+v,unitPrice}; };
 const gSt = (o,k) => (o.steps||{})[k]||null;
 const gPre = (o,k) => (o.preSteps||{})[k]||null;
